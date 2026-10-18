@@ -78,6 +78,29 @@
         }
       },
       "license": "AGPL-3.0"
+    },
+    "valerie-core": {
+      "description": "**Full Changelog**: https://github.com/SSL-ACTX/valerie-core/commits/v0.1.0-alpha.1",
+      "author": "SSL-ACTX",
+      "repository": "https://github.com/SSL-ACTX/valerie-core",
+      "versions": {
+        "0.1.0-alpha.1": {
+          "binaries": {
+            "valerie-core": "bin/valerie-core"
+          },
+          "targets": {
+            "aarch64-linux-gnu": {
+              "url": "https://github.com/SSL-ACTX/valerie-core/releases/download/v0.1.0-alpha.1/valerie-compiler-v0.1.0-alpha.1-aarch64-unknown-linux-gnu.tar.gz",
+              "sha256": "7e189f30151963f53478f20bce9562166c751343d79ecf80ba59471bb45b6267"
+            },
+            "aarch64-linux-musl": {
+              "url": "https://github.com/SSL-ACTX/valerie-core/releases/download/v0.1.0-alpha.1/valerie-compiler-v0.1.0-alpha.1-aarch64-unknown-linux-musl.tar.gz",
+              "sha256": "0d6a7dcc3d59db6e10167efc492d7dc014ec4958186be7d83d9a28502f4a34ff"
+            }
+          }
+        }
+      },
+      "license": "AGPL-3.0"
     }
   }
 }
