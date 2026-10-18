@@ -78,6 +78,24 @@
         }
       },
       "license": "AGPL-3.0"
+    },
+    "crush": {
+      "description": "Glamourous agentic coding for all \ud83d\udc98",
+      "author": "charmbracelet",
+      "repository": "https://github.com/charmbracelet/crush",
+      "versions": {
+        "nightly": {
+          "binaries": {
+            "crush": "bin/crush"
+          },
+          "targets": {
+            "armv7-linux-gnu": {
+              "url": "https://github.com/charmbracelet/crush/releases/download/nightly/crush_0.99.0-nightly_Linux_armv7.tar.gz",
+              "sha256": "4746f38fb9f97cff2776638daa7a73518d2db117ce62e4ae3f51fc53cedde264"
+            }
+          }
+        }
+      }
     }
   }
 }
