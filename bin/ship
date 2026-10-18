@@ -1,0 +1,1641 @@
+#!/bin/sh
+set -eu
+
+# ship - Agnostic Shell Package Orchestrator
+VERSION="0.0.1"
+
+# Environment & Directory Configuration
+if [ -z "${SHIP_ROOT:-}" ]; then
+  if [ -n "${TERMUX_VERSION:-}" ]; then
+    SHIP_ROOT="${PREFIX:-/data/data/com.termux/files/usr}/share/ship"
+  else
+    SHIP_ROOT="${HOME}/.local/share/ship"
+  fi
+fi
+
+if [ -z "${SHIP_BIN_DIR:-}" ]; then
+  if [ -d "${HOME}/.local/bin" ] && [ -w "${HOME}/.local/bin" ]; then
+    SHIP_BIN_DIR="${HOME}/.local/bin"
+  elif [ -n "${TERMUX_VERSION:-}" ]; then
+    SHIP_BIN_DIR="${PREFIX:-/data/data/com.termux/files/usr}/bin"
+  else
+    SHIP_BIN_DIR="${HOME}/.local/bin"
+  fi
+fi
+
+SHIP_CACHE_DIR="${SHIP_ROOT}/cache"
+SHIP_STORE_DIR="${SHIP_ROOT}/store"
+SHIP_INTERNAL_BIN="${SHIP_ROOT}/bin"
+SHIP_BACKUP_DIR="${SHIP_ROOT}/backups"
+SHIP_STATE_FILE="${SHIP_ROOT}/state.json"
+SHIP_LAST_CHECK_FILE="${SHIP_ROOT}/.last_update_check"
+SHIP_UPDATE_NOTICE_FILE="${SHIP_ROOT}/.update_available"
+
+SHIP_REGISTRY_URL="${SHIP_REGISTRY_URL:-https://raw.githubusercontent.com/SSL-ACTX/ship-pm/main/registry.json}"
+SHIP_UPDATE_URL="${SHIP_UPDATE_URL:-https://raw.githubusercontent.com/SSL-ACTX/ship-pm/main/bin/ship}"
+SHIP_REGISTRY_CACHE="${SHIP_CACHE_DIR}/registry.json"
+
+# UI Engine & Styling Abstraction
+# Cargo-identical formatting: 12-character right-aligned status headers to stderr.
+# Respects NO_COLOR, SHIP_TERM_COLOR, TERM=dumb, and TTY redirection.
+ui_init() {
+  UI_COLOR=0
+  _term_color="${SHIP_TERM_COLOR:-auto}"
+
+  case "$_term_color" in
+    always)
+      UI_COLOR=1
+      ;;
+    never)
+      UI_COLOR=0
+      ;;
+    auto|*)
+      if { [ -t 1 ] || [ -t 2 ]; } && [ -z "${NO_COLOR:-}" ] && [ "${TERM:-dumb}" != "dumb" ]; then
+        UI_COLOR=1
+      fi
+      ;;
+  esac
+
+  if [ "$UI_COLOR" -eq 1 ]; then
+    _esc="$(printf '\033')"
+    C_RESET="${_esc}[0m"
+    C_BOLD="${_esc}[1m"
+    C_DIM="${_esc}[2m"
+    C_GREEN="${_esc}[1;32m"
+    C_YELLOW="${_esc}[1;33m"
+    C_RED="${_esc}[1;31m"
+    C_CYAN="${_esc}[1;36m"
+  else
+    C_RESET=""
+    C_BOLD=""
+    C_DIM=""
+    C_GREEN=""
+    C_YELLOW=""
+    C_RED=""
+    C_CYAN=""
+  fi
+}
+ui_init
+
+# Cargo-standard 12-character right-aligned status tag printer (routed to stderr)
+ui_cargo_status() {
+  _status="$1"
+  _color="$2"
+  shift 2
+  printf "%b%12s%b %s\n" "$_color" "$_status" "$C_RESET" "$*" >&2
+}
+
+# Categorized Handlers
+ui_status()  { _s="$1"; shift; ui_cargo_status "$_s" "$C_GREEN" "$*"; }
+ui_info()    { ui_cargo_status "info:" "$C_CYAN" "$*"; }
+ui_notice()  { ui_cargo_status "notice:" "$C_CYAN" "$*"; }
+ui_warn()    { ui_cargo_status "warning:" "$C_YELLOW" "$*"; }
+ui_err()     { ui_cargo_status "error:" "$C_RED" "$*"; }
+
+# Standard Output Printer (query outputs, help, etc. routed to stdout)
+ui_print() {
+  printf "%s\n" "$*"
+}
+
+# Key-Value Attribute Display
+ui_kv() {
+  _k="$1"
+  shift
+  printf "%12s %s\n" "$_k" "$*"
+}
+
+# Backward-compatible logging aliases
+log_info()   { ui_cargo_status "info:" "$C_CYAN" "$*"; }
+log_warn()   { ui_warn "$*"; }
+log_error()  { ui_err "$*"; }
+log_notice() { ui_notice "$*"; }
+
+die() {
+  ui_err "$*"
+  exit 1
+}
+
+# Ensure topology directories exist
+init_dirs() {
+  mkdir -p "$SHIP_ROOT" "$SHIP_CACHE_DIR" "$SHIP_STORE_DIR" "$SHIP_INTERNAL_BIN" "$SHIP_BIN_DIR" "$SHIP_BACKUP_DIR"
+  if [ ! -f "$SHIP_STATE_FILE" ]; then
+    echo '{"installed":{},"backups":{}}' > "$SHIP_STATE_FILE"
+  fi
+}
+
+# --- Background Update Check Logic ---
+# Non-blocking, detached background check runs at most once every 24 hours (86400s)
+trigger_background_update_check() {
+  _now="$(date +%s 2>/dev/null || echo 0)"
+  [ "$_now" -gt 0 ] || return 0
+
+  if [ -f "$SHIP_LAST_CHECK_FILE" ]; then
+    _last="$(cat "$SHIP_LAST_CHECK_FILE" 2>/dev/null || echo 0)"
+    _diff=$(( _now - _last ))
+    if [ "$_diff" -lt 86400 ]; then
+      return 0
+    fi
+  fi
+
+  # Record check timestamp now to prevent thundering herd
+  echo "$_now" > "$SHIP_LAST_CHECK_FILE" 2>/dev/null || true
+
+  # Spawn detached background subshell
+  (
+    # Check network connectivity quickly without waiting forever
+    if command -v curl >/dev/null 2>&1; then
+      _tmp_remote="$(curl -fsSL --connect-timeout 2 --max-time 4 "$SHIP_UPDATE_URL" 2>/dev/null || true)"
+    elif command -v wget >/dev/null 2>&1; then
+      _tmp_remote="$(wget -q --timeout=3 -O - "$SHIP_UPDATE_URL" 2>/dev/null || true)"
+    else
+      _tmp_remote=""
+    fi
+
+    if [ -n "$_tmp_remote" ]; then
+      _rem_ver="$(printf "%s\n" "$_tmp_remote" | grep -E '^VERSION=' | head -n 1 | cut -d'"' -f2 || true)"
+      if [ -n "$_rem_ver" ] && [ "$_rem_ver" != "$VERSION" ]; then
+        echo "$_rem_ver" > "$SHIP_UPDATE_NOTICE_FILE" 2>/dev/null || true
+      else
+        rm -f "$SHIP_UPDATE_NOTICE_FILE" 2>/dev/null || true
+      fi
+    fi
+  ) >/dev/null 2>&1 &
+}
+
+# Display pending update notice when exiting
+show_update_notice() {
+  if [ -f "$SHIP_UPDATE_NOTICE_FILE" ]; then
+    _new_ver="$(cat "$SHIP_UPDATE_NOTICE_FILE" 2>/dev/null || true)"
+    if [ -n "$_new_ver" ] && [ "$_new_ver" != "$VERSION" ]; then
+      log_notice "A new version of ship is available (v$_new_ver). Run 'ship update' to upgrade."
+    else
+      rm -f "$SHIP_UPDATE_NOTICE_FILE" 2>/dev/null || true
+    fi
+  fi
+}
+
+# JSON Fallback Engine (jq -> python3)
+json_get() {
+  _file="$1"
+  _jq_filter="$2"
+  _py_code="$3"
+
+  if command -v jq >/dev/null 2>&1; then
+    jq -r "$_jq_filter" "$_file" 2>/dev/null || true
+  elif command -v python3 >/dev/null 2>&1; then
+    python3 -c "
+import json, sys
+try:
+    with open('$_file', 'r') as f:
+        data = json.load(f)
+    $_py_code
+except Exception:
+    sys.exit(1)
+" 2>/dev/null || true
+  else
+    die "Neither 'jq' nor 'python3' was found. Please install one of them to parse JSON."
+  fi
+}
+
+fetch_file() {
+  _url="$1"
+  _dest="$2"
+  
+  case "$_url" in
+    file://*)
+      _local_path="${_url#file://}"
+      cp "$_local_path" "$_dest"
+      ;;
+    *)
+      if command -v curl >/dev/null 2>&1; then
+        curl -fsSL "$_url" -o "$_dest"
+      elif command -v wget >/dev/null 2>&1; then
+        wget -q -O "$_dest" "$_url"
+      else
+        die "Neither 'curl' nor 'wget' is available for downloading."
+      fi
+      ;;
+  esac
+}
+
+calc_sha256() {
+  _target_file="$1"
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum "$_target_file" | awk '{print $1}'
+  elif command -v shasum >/dev/null 2>&1; then
+    shasum -a 256 "$_target_file" | awk '{print $1}'
+  elif command -v python3 >/dev/null 2>&1; then
+    python3 -c "
+import hashlib
+h = hashlib.sha256()
+with open('$_target_file', 'rb') as f:
+    while chunk := f.read(65536):
+        h.update(chunk)
+print(h.hexdigest())
+"
+  else
+    die "No tool found to compute SHA-256 (requires sha256sum, shasum, or python3)."
+  fi
+}
+
+# Central Registry Fetching & Caching
+update_registry() {
+  init_dirs
+  ui_status "Updating" "central registry from $SHIP_REGISTRY_URL..."
+  _tmp_registry="${SHIP_CACHE_DIR}/registry.tmp.json"
+  if fetch_file "$SHIP_REGISTRY_URL" "$_tmp_registry"; then
+    mv "$_tmp_registry" "$SHIP_REGISTRY_CACHE"
+    ui_status "Finished" "central registry updated"
+    return 0
+  fi
+
+  # Fallback: check if running from repo clone with local registry.json
+  _script_dir="$(dirname "$(readlink -f "$0" 2>/dev/null || echo "$0")")"
+  _repo_dir="$(dirname "$_script_dir")"
+  if [ -f "$_repo_dir/registry.json" ]; then
+    ui_warn "Remote registry fetch failed. Using local registry at $_repo_dir/registry.json..."
+    cp "$_repo_dir/registry.json" "$SHIP_REGISTRY_CACHE"
+    ui_status "Finished" "registry updated from local file"
+    return 0
+  fi
+
+  die "Failed to fetch registry from $SHIP_REGISTRY_URL"
+}
+
+ensure_registry() {
+  if [ ! -f "$SHIP_REGISTRY_CACHE" ]; then
+    update_registry
+  fi
+}
+
+# Host Target Resolution
+resolve_target_keys() {
+  _raw_arch="$(uname -m)"
+  case "$_raw_arch" in
+    x86_64|amd64) ARCH="x86_64" ;;
+    aarch64|arm64) ARCH="aarch64" ;;
+    armv7*|armhf) ARCH="armv7" ;;
+    riscv64) ARCH="riscv64" ;;
+    i*86) ARCH="i686" ;;
+    *) ARCH="$_raw_arch" ;;
+  esac
+
+  # Target key formulation priority:
+  # Check if running inside Termux / Android environment:
+  # Android Bionic kernel can directly execute purely static Musl binaries without libc mismatches.
+  # Termux native targets (e.g. aarch64-linux-android / aarch64-termux) are best, followed by musl static, then gnu.
+  if [ -n "${TERMUX_VERSION:-}" ] || [ -d "/data/data/com.termux" ]; then
+    echo "${ARCH}-termux ${ARCH}-linux-android ${ARCH}-linux-musl ${ARCH}-linux-gnu"
+    return 0
+  fi
+
+  # Standard Linux: Detect libc (musl vs gnu glibc)
+  _is_musl=0
+  if command -v ldd >/dev/null 2>&1; then
+    if ldd --version 2>&1 | grep -qi "musl"; then
+      _is_musl=1
+    fi
+  elif [ -f /lib/ld-musl-*.so.1 ] || [ -f /usr/lib/ld-musl-*.so.1 ]; then
+    _is_musl=1
+  fi
+
+  if [ "$_is_musl" -eq 1 ]; then
+    # On Alpine / Musl systems: static/musl first, fallback to gnu
+    echo "${ARCH}-linux-musl ${ARCH}-linux-gnu"
+  else
+    # On GNU systems (Debian/Ubuntu/Fedora/Arch): gnu first, musl static second
+    echo "${ARCH}-linux-gnu ${ARCH}-linux-musl"
+  fi
+}
+
+# Query packages and versions from registry
+list_registry_packages() {
+  ensure_registry
+  if command -v jq >/dev/null 2>&1; then
+    jq -r '.packages | to_entries[] | "\(.key)\t\(.value.description // "")"' "$SHIP_REGISTRY_CACHE"
+  else
+    python3 -c "
+import json
+with open('$SHIP_REGISTRY_CACHE') as f:
+    d = json.load(f)
+for k, v in d.get('packages', {}).items():
+    print(f'{k}\t{v.get(\"description\", \"\")}')
+"
+  fi
+}
+
+package_exists_in_registry() {
+  _pkg="$1"
+  ensure_registry
+  if command -v jq >/dev/null 2>&1; then
+    _res="$(jq -r --arg p "$_pkg" '.packages[$p] // empty' "$SHIP_REGISTRY_CACHE")"
+    [ -n "$_res" ]
+  else
+    python3 -c "
+import json, sys
+with open('$SHIP_REGISTRY_CACHE') as f:
+    d = json.load(f)
+sys.exit(0 if '$_pkg' in d.get('packages', {}) else 1)
+"
+  fi
+}
+
+get_latest_version() {
+  _pkg="$1"
+  ensure_registry
+  if command -v jq >/dev/null 2>&1; then
+    jq -r --arg p "$_pkg" '.packages[$p].versions | keys_unsorted[-1] // empty' "$SHIP_REGISTRY_CACHE"
+  else
+    python3 -c "
+import json, sys
+with open('$SHIP_REGISTRY_CACHE') as f:
+    reg = json.load(f)
+pkg = reg.get('packages', {}).get('$_pkg')
+if not pkg or 'versions' not in pkg:
+    sys.exit(1)
+versions = list(pkg['versions'].keys())
+print(versions[-1])
+" 2>/dev/null || true
+  fi
+}
+
+# Resolve target metadata for a specific package and version into an output file
+resolve_package_target() {
+  _pkg="$1"
+  _ver="$2"
+  _out_file="$3"
+  _target_keys="$(resolve_target_keys)"
+
+  if command -v jq >/dev/null 2>&1; then
+    # Use jq to iterate over target priority keys
+    cat << 'EOF' > "${SHIP_CACHE_DIR}/resolve.jq"
+      .packages[$pkg] as $p |
+      if $p == null then
+        error("Package not found")
+      else
+        ($p.versions[$ver]) as $v |
+        if $v == null then
+          error("Version not found")
+        else
+          ($keys | split(" ")) as $klist |
+          reduce $klist[] as $k (null; if . != null then . else (if $v.targets[$k] != null then {key: $k, target: $v.targets[$k]} else null end) end) as $matched |
+          if $matched == null then
+            error("No compatible target found")
+          else
+            {
+              package: $pkg,
+              version: $ver,
+              target_key: $matched.key,
+              target: $matched.target,
+              binaries: ($v.binaries // {})
+            }
+          end
+        end
+      end
+EOF
+    jq --arg pkg "$_pkg" --arg ver "$_ver" --arg keys "$_target_keys" -f "${SHIP_CACHE_DIR}/resolve.jq" "$SHIP_REGISTRY_CACHE" > "$_out_file" 2>/dev/null || return 1
+    rm -f "${SHIP_CACHE_DIR}/resolve.jq"
+    return 0
+  else
+    python3 -c "
+import json, sys
+with open('$SHIP_REGISTRY_CACHE') as f:
+    reg = json.load(f)
+pkg = reg.get('packages', {}).get('$_pkg')
+if not pkg:
+    sys.exit(1)
+ver_data = pkg.get('versions', {}).get('$_ver')
+if not ver_data:
+    sys.exit(2)
+targets = ver_data.get('targets', {})
+target_keys = '$_target_keys'.split()
+matched = None
+for key in target_keys:
+    if key in targets:
+        matched = targets[key]
+        break
+if not matched:
+    sys.exit(3)
+
+out = {
+    'package': '$_pkg',
+    'version': '$_ver',
+    'target': matched,
+    'binaries': ver_data.get('binaries', {})
+}
+with open('$_out_file', 'w') as out_f:
+    json.dump(out, out_f)
+" 2>/dev/null || return 1
+    return 0
+  fi
+}
+
+# Package Installation Engine
+cmd_install() {
+  _pkg="$1"
+  _ver="${2:-}"
+
+  ensure_registry
+
+  if ! package_exists_in_registry "$_pkg"; then
+    die "Package '$_pkg' does not exist in registry."
+  fi
+
+  if [ -z "$_ver" ]; then
+    _ver="$(get_latest_version "$_pkg")"
+    [ -n "$_ver" ] || die "No available versions found for '$_pkg'."
+  fi
+
+  ui_status "Resolving" "$_pkg@$_ver"
+  RESOLVED_FILE="${SHIP_CACHE_DIR}/resolved_${_pkg}.json"
+  if ! resolve_package_target "$_pkg" "$_ver" "$RESOLVED_FILE"; then
+    rm -f "$RESOLVED_FILE"
+    die "Could not find compatible target for '$_pkg@$_ver' on architecture ($(uname -m))."
+  fi
+
+  if command -v jq >/dev/null 2>&1; then
+    URL="$(jq -r '.target.url // empty' "$RESOLVED_FILE")"
+    EXPECTED_SHA="$(jq -r '.target.sha256 // empty' "$RESOLVED_FILE")"
+    POST_INSTALL_HOOK="$(jq -r '.target.hooks.post_install // empty' "$RESOLVED_FILE")"
+  else
+    URL="$(python3 -c "import json; d=json.load(open('$RESOLVED_FILE')); print(d['target'].get('url', ''))")"
+    EXPECTED_SHA="$(python3 -c "import json; d=json.load(open('$RESOLVED_FILE')); print(d['target'].get('sha256', ''))")"
+    POST_INSTALL_HOOK="$(python3 -c "import json; d=json.load(open('$RESOLVED_FILE')); print(d['target'].get('hooks', {}).get('post_install', ''))")"
+  fi
+
+  [ -n "$URL" ] || die "Invalid target entry: URL is missing."
+
+  # Phase 3: Fetch & Verify
+  TARBALL_NAME="${_pkg}-${_ver}-$(echo "$URL" | awk -F/ '{print $NF}')"
+  [ -n "$TARBALL_NAME" ] || TARBALL_NAME="${_pkg}-${_ver}.tar.gz"
+  LOCAL_TARBALL="${SHIP_CACHE_DIR}/${TARBALL_NAME}"
+
+  ui_status "Downloading" "$URL"
+  fetch_file "$URL" "$LOCAL_TARBALL" || die "Download failed."
+
+  ui_status "Verifying" "SHA-256 checksum..."
+  ACTUAL_SHA="$(calc_sha256 "$LOCAL_TARBALL")"
+  if [ -n "$EXPECTED_SHA" ]; then
+    if [ "$ACTUAL_SHA" != "$EXPECTED_SHA" ]; then
+      rm -f "$LOCAL_TARBALL"
+      die "Checksum mismatch for $_pkg@$_ver! Expected: $EXPECTED_SHA, Got: $ACTUAL_SHA. Aborting."
+    fi
+  else
+    ui_warn "No checksum specified for $_pkg@$_ver, skipping verification."
+  fi
+
+  # Phase 4: Extraction & Hooks
+  INSTALL_DIR="${SHIP_STORE_DIR}/${_pkg}@${_ver}"
+  rm -rf "$INSTALL_DIR"
+  mkdir -p "$INSTALL_DIR"
+
+  ui_status "Extracting" "$INSTALL_DIR"
+  case "$LOCAL_TARBALL" in
+    *.tar.gz|*.tgz)
+      tar -xzf "$LOCAL_TARBALL" -C "$INSTALL_DIR"
+      ;;
+    *.tar.xz|*.txz)
+      tar -xJf "$LOCAL_TARBALL" -C "$INSTALL_DIR"
+      ;;
+    *.tar.bz2|*.tbz2)
+      tar -xjf "$LOCAL_TARBALL" -C "$INSTALL_DIR"
+      ;;
+    *.tar)
+      tar -xf "$LOCAL_TARBALL" -C "$INSTALL_DIR"
+      ;;
+    *.zip)
+      if command -v unzip >/dev/null 2>&1; then
+        unzip -q -o "$LOCAL_TARBALL" -d "$INSTALL_DIR"
+      elif command -v python3 >/dev/null 2>&1; then
+        python3 -c "import zipfile; zipfile.ZipFile('$LOCAL_TARBALL').extractall('$INSTALL_DIR')"
+      else
+        die "Cannot extract .zip artifact: please install 'unzip' or 'python3'."
+      fi
+      ;;
+    *)
+      # Check if tar archive or raw binary
+      if [ "$(head -c 4 "$LOCAL_TARBALL" 2>/dev/null)" = $'\x7fELF' ] || [ "$(head -c 2 "$LOCAL_TARBALL" 2>/dev/null)" = "#!" ]; then
+        # Standalone binary release (e.g. direct executable download from GitHub Releases)
+        _bin_basename="$(basename "$URL")"
+        cp "$LOCAL_TARBALL" "$INSTALL_DIR/$_bin_basename"
+        chmod +x "$INSTALL_DIR/$_bin_basename"
+      else
+        # Try generic tar extraction fallback
+        tar -xf "$LOCAL_TARBALL" -C "$INSTALL_DIR" 2>/dev/null || cp "$LOCAL_TARBALL" "$INSTALL_DIR/"
+      fi
+      ;;
+  esac
+
+  if [ -n "$POST_INSTALL_HOOK" ]; then
+    ui_status "Hook" "Executing post_install hook..."
+    (
+      export INSTALL_DIR="$INSTALL_DIR"
+      export HOME="$HOME"
+
+      # Check if running strictly in Termux / Android environment
+      _is_termux=0
+      if [ -n "${TERMUX_VERSION:-}" ] || [ -d "/data/data/com.termux" ]; then
+        _is_termux=1
+      fi
+
+      if [ "$_is_termux" -eq 1 ]; then
+        export PREFIX="${PREFIX:-/data/data/com.termux/files/usr}"
+        export GLIBC_PREFIX="${GLIBC_PREFIX:-$PREFIX/glibc}"
+        
+        # Termux CA certificate bundle fallback
+        if [ -f "$GLIBC_PREFIX/etc/ssl/certs/ca-certificates.crt" ]; then
+          export SSL_CERT_FILE="$GLIBC_PREFIX/etc/ssl/certs/ca-certificates.crt"
+        elif [ -f "$PREFIX/etc/tls/cert.pem" ]; then
+          export SSL_CERT_FILE="$PREFIX/etc/tls/cert.pem"
+        elif [ -f "$PREFIX/etc/ssl/certs/ca-certificates.crt" ]; then
+          export SSL_CERT_FILE="$PREFIX/etc/ssl/certs/ca-certificates.crt"
+        fi
+
+        # Determine Termux glibc dynamic loader for architecture
+        case "$(uname -m)" in
+          aarch64|arm64) DEFAULT_LOADER="ld-linux-aarch64.so.1" ;;
+          armv7*|armhf)   DEFAULT_LOADER="ld-linux-armhf.so.3" ;;
+          x86_64|amd64)  DEFAULT_LOADER="ld-linux-x86-64.so.2" ;;
+          i*86)          DEFAULT_LOADER="ld-linux.so.2" ;;
+          riscv64)       DEFAULT_LOADER="ld-linux-riscv64-lp64d.so.1" ;;
+          *)             DEFAULT_LOADER="" ;;
+        esac
+
+        if [ -n "$DEFAULT_LOADER" ] && [ -f "$GLIBC_PREFIX/lib/$DEFAULT_LOADER" ]; then
+          export INTERPRETER="$GLIBC_PREFIX/lib/$DEFAULT_LOADER"
+          export RPATH="$GLIBC_PREFIX/lib"
+        fi
+
+        # Termux helper for post_install hooks
+        auto_patch() {
+          _f="$1"
+          if [ -f "$_f" ] && command -v patchelf >/dev/null 2>&1; then
+            if [ -n "${INTERPRETER:-}" ] && [ -f "$INTERPRETER" ]; then
+              patchelf --set-interpreter "$INTERPRETER" --set-rpath "${RPATH:-$GLIBC_PREFIX/lib}" "$_f" 2>/dev/null || true
+            fi
+          fi
+        }
+      else
+        # Standard Linux: use native PREFIX
+        export PREFIX="${PREFIX:-/usr/local}"
+      fi
+
+      cd "$INSTALL_DIR"
+      sh -c "$POST_INSTALL_HOOK"
+    ) || die "post_install hook failed for $_pkg@$_ver."
+  fi
+
+  # Phase 5: Link & State Record
+  clean_package_symlinks "$_pkg"
+
+  ui_status "Linking" "Creating binary symlinks..."
+  # Create symlinks and record state
+  if command -v jq >/dev/null 2>&1; then
+    # Parse binaries with jq
+    _bin_entries="$(jq -r '.binaries | to_entries[] | "\(.key)=\(.value)"' "$RESOLVED_FILE" 2>/dev/null || true)"
+    _links_json="[]"
+    for item in $_bin_entries; do
+      [ -n "$item" ] || continue
+      symlink_name="${item%%=*}"
+      rel_path="${item#*=}"
+      
+      # Resolve target binary: check direct path or single root subfolder
+      target_bin="${INSTALL_DIR}/${rel_path}"
+      if [ ! -f "$target_bin" ]; then
+        _found="$(find "$INSTALL_DIR" -type f -name "$symlink_name" 2>/dev/null | head -n 1 || true)"
+        if [ -n "$_found" ] && [ -f "$_found" ]; then
+          target_bin="$_found"
+        fi
+      fi
+
+      if [ ! -f "$target_bin" ]; then
+        ui_warn "Binary target does not exist: $target_bin"
+        continue
+      fi
+      chmod +x "$target_bin"
+
+      # Check if an existing binary is already installed elsewhere in PATH
+      _existing_in_path="$(command -v "$symlink_name" 2>/dev/null || true)"
+      if [ -n "$_existing_in_path" ] && [ "$_existing_in_path" != "${SHIP_BIN_DIR}/${symlink_name}" ] && [ "$_existing_in_path" != "${SHIP_INTERNAL_BIN}/${symlink_name}" ]; then
+        ui_warn "Binary '$symlink_name' already exists at '$_existing_in_path' and may shadow or be shadowed."
+      fi
+
+      # Symlink to internal bin
+      rm -f "${SHIP_INTERNAL_BIN}/${symlink_name}"
+      ln -sf "$target_bin" "${SHIP_INTERNAL_BIN}/${symlink_name}"
+
+      # Symlink to public bin
+      pub_link="${SHIP_BIN_DIR}/${symlink_name}"
+      if [ -e "$pub_link" ] || [ -L "$pub_link" ]; then
+        # Check if the existing file is an unmanaged external binary or previous install
+        _is_ship_link=0
+        if [ -L "$pub_link" ]; then
+          _link_target="$(readlink "$pub_link" || true)"
+          case "$_link_target" in
+            *"${SHIP_ROOT}/store"*|*"${SHIP_INTERNAL_BIN}"*) _is_ship_link=1 ;;
+          esac
+        fi
+
+        if [ "$_is_ship_link" -eq 0 ]; then
+          # Backup old binary into temporary backup dir for rollback
+          _backup_ts="$(date +%s)"
+          _backup_file="${SHIP_BACKUP_DIR}/${symlink_name}.backup.${_backup_ts}"
+          ui_warn "Backing up pre-existing '$pub_link' to '$_backup_file' (can rollback if needed)..."
+          mv "$pub_link" "$_backup_file"
+        else
+          rm -f "$pub_link"
+        fi
+      fi
+
+      ln -sf "$target_bin" "$pub_link"
+      ui_status "Linked" "$symlink_name -> $pub_link"
+
+      _links_json="$(echo "$_links_json" | jq --arg l "$pub_link" '. + [$l]')"
+    done
+
+    # Update state.json via jq
+    _now="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+    jq --arg p "$_pkg" \
+       --arg v "$_ver" \
+       --arg dir "$INSTALL_DIR" \
+       --arg date "$_now" \
+       --argjson links "$_links_json" \
+       '.installed[$p] = {version: $v, install_dir: $dir, symlinks: $links, installed_at: $date}' \
+       "$SHIP_STATE_FILE" > "${SHIP_STATE_FILE}.tmp" && mv "${SHIP_STATE_FILE}.tmp" "$SHIP_STATE_FILE"
+  else
+    python3 -c "
+import json, os, sys
+
+info = json.load(open('$RESOLVED_FILE'))
+binaries = info.get('binaries', {})
+install_dir = '$INSTALL_DIR'
+pm_bin = '$SHIP_INTERNAL_BIN'
+pub_bin = '$SHIP_BIN_DIR'
+
+linked = []
+for symlink_name, rel_path in binaries.items():
+    target = os.path.join(install_dir, rel_path)
+    if not os.path.exists(target):
+        continue
+    os.chmod(target, 0o755)
+
+    link1 = os.path.join(pm_bin, symlink_name)
+    if os.path.islink(link1) or os.path.exists(link1):
+        os.remove(link1)
+    os.symlink(target, link1)
+
+    link2 = os.path.join(pub_bin, symlink_name)
+    if os.path.islink(link2) or os.path.exists(link2):
+        os.remove(link2)
+    os.symlink(target, link2)
+    linked.append(link2)
+
+with open('$SHIP_STATE_FILE', 'r') as f:
+    state = json.load(f)
+if 'installed' not in state:
+    state['installed'] = {}
+
+state['installed']['$_pkg'] = {
+    'version': '$_ver',
+    'install_dir': '$INSTALL_DIR',
+    'symlinks': linked,
+    'installed_at': '$(date -u +"%Y-%m-%dT%H:%M:%SZ")'
+}
+
+with open('$SHIP_STATE_FILE', 'w') as f:
+    json.dump(state, f, indent=2)
+"
+  fi
+
+  rm -f "$RESOLVED_FILE"
+  ui_status "Installed" "$_pkg@$_ver"
+}
+
+# Package State Management & Symlinks
+clean_package_symlinks() {
+  _pkg="$1"
+  if [ ! -f "$SHIP_STATE_FILE" ]; then
+    return 0
+  fi
+
+  if command -v jq >/dev/null 2>&1; then
+    _links="$(jq -r --arg p "$_pkg" '.installed[$p].symlinks[]? // empty' "$SHIP_STATE_FILE" 2>/dev/null || true)"
+    for l in $_links; do
+      rm -f "$l"
+    done
+    _inst_dir="$(jq -r --arg p "$_pkg" '.installed[$p].install_dir // empty' "$SHIP_STATE_FILE" 2>/dev/null || true)"
+    if [ -n "$_inst_dir" ] && [ -d "$SHIP_INTERNAL_BIN" ]; then
+      for internal_file in "$SHIP_INTERNAL_BIN"/*; do
+        if [ -L "$internal_file" ]; then
+          _dst="$(readlink "$internal_file" || true)"
+          case "$_dst" in
+            *"$_inst_dir"*) rm -f "$internal_file" ;;
+          esac
+        fi
+      done
+    fi
+  else
+    python3 -c "
+import json, os
+try:
+    with open('$SHIP_STATE_FILE') as f:
+        state = json.load(f)
+    pkg_data = state.get('installed', {}).get('$_pkg')
+    if pkg_data:
+        for symlink in pkg_data.get('symlinks', []):
+            if os.path.islink(symlink) or os.path.exists(symlink):
+                os.remove(symlink)
+        for item in os.listdir('$SHIP_INTERNAL_BIN'):
+            p = os.path.join('$SHIP_INTERNAL_BIN', item)
+            if os.path.islink(p) and pkg_data.get('install_dir') in os.path.realpath(p):
+                os.remove(p)
+except Exception:
+    pass
+"
+  fi
+}
+
+cmd_list() {
+  init_dirs
+  if command -v jq >/dev/null 2>&1; then
+    _count="$(jq -r '.installed | length' "$SHIP_STATE_FILE" 2>/dev/null || echo 0)"
+    if [ "$_count" -eq 0 ]; then
+      printf "%s\n" "No packages installed."
+      return 0
+    fi
+    printf "${C_BOLD}%-22s %-12s %s${C_RESET}\n" "PACKAGE" "VERSION" "INSTALLED AT"
+    jq -r '.installed | to_entries[] | "\(.key)\t\(.value.version // "unknown")\t\(.value.installed_at // "")"' "$SHIP_STATE_FILE" | \
+      while IFS="$(printf '\t')" read -r pkg ver date; do
+        printf "%-22s ${C_CYAN}%-12s${C_RESET} ${C_DIM}%s${C_RESET}\n" "$pkg" "$ver" "$date"
+      done
+  else
+    python3 -c "
+import json
+with open('$SHIP_STATE_FILE') as f:
+    state = json.load(f)
+installed = state.get('installed', {})
+if not installed:
+    print('No packages installed.')
+    exit(0)
+
+print(f'{\"PACKAGE\":<22} {\"VERSION\":<12} {\"INSTALLED AT\"}')
+for name, data in installed.items():
+    ver = data.get('version', 'unknown')
+    t = data.get('installed_at', '')
+    print(f'{name:<22} {ver:<12} {t}')
+"
+  fi
+}
+
+cmd_remove() {
+  _pkg="$1"
+  init_dirs
+
+  if command -v jq >/dev/null 2>&1; then
+    _has="$(jq -r --arg p "$_pkg" '.installed[$p] // empty' "$SHIP_STATE_FILE")"
+    [ -n "$_has" ] || die "Package '$_pkg' is not currently installed."
+    _inst_dir="$(jq -r --arg p "$_pkg" '.installed[$p].install_dir // empty' "$SHIP_STATE_FILE")"
+    
+    ui_status "Removing" "$_pkg..."
+    clean_package_symlinks "$_pkg"
+    [ -z "$_inst_dir" ] || rm -rf "$_inst_dir"
+
+    jq --arg p "$_pkg" 'del(.installed[$p])' "$SHIP_STATE_FILE" > "${SHIP_STATE_FILE}.tmp" && mv "${SHIP_STATE_FILE}.tmp" "$SHIP_STATE_FILE"
+  else
+    python3 -c "
+import json, shutil, os, sys
+with open('$SHIP_STATE_FILE') as f:
+    state = json.load(f)
+if '$_pkg' not in state.get('installed', {}):
+    sys.exit(1)
+pkg_data = state['installed'].pop('$_pkg')
+install_dir = pkg_data.get('install_dir')
+if install_dir and os.path.exists(install_dir):
+    shutil.rmtree(install_dir)
+with open('$SHIP_STATE_FILE', 'w') as f:
+    json.dump(state, f, indent=2)
+" || die "Package '$_pkg' is not currently installed."
+    clean_package_symlinks "$_pkg"
+  fi
+
+  ui_status "Removed" "$_pkg"
+}
+
+# Unified Update Engine
+# Smart single-point updater:
+# - ship update           -> updates ship client, refreshes registry, and updates installed packages
+# - ship update self      -> updates only the ship client
+# - ship update registry  -> refreshes only the central registry
+# - ship update <pkg>     -> updates a specific package
+cmd_update() {
+  _target="${1:-}"
+
+  case "$_target" in
+    self|ship)
+      cmd_self_update
+      return 0
+      ;;
+    registry|index)
+      update_registry
+      return 0
+      ;;
+    "")
+      # Full system update: client -> registry -> packages
+      cmd_self_update || true
+      update_registry
+      ensure_registry
+
+      if command -v jq >/dev/null 2>&1; then
+        pkgs="$(jq -r '.installed | keys[]' "$SHIP_STATE_FILE" 2>/dev/null || true)"
+      else
+        pkgs="$(python3 -c "
+import json
+with open('$SHIP_STATE_FILE') as f:
+    state = json.load(f)
+for k in state.get('installed', {}).keys():
+    print(k)
+" 2>/dev/null || true)"
+      fi
+
+      if [ -z "$pkgs" ]; then
+        ui_status "Finished" "ship and registry updated (no packages installed)"
+        return 0
+      fi
+
+      for p in $pkgs; do
+        cmd_update "$p"
+      done
+      return 0
+      ;;
+    *)
+      # Single package update
+      ensure_registry
+      ui_status "Checking" "updates for $_target..."
+      latest_ver="$(get_latest_version "$_target")"
+      [ -n "$latest_ver" ] || die "Package '$_target' not found in registry."
+
+      if command -v jq >/dev/null 2>&1; then
+        curr_ver="$(jq -r --arg p "$_target" '.installed[$p].version // empty' "$SHIP_STATE_FILE")"
+      else
+        curr_ver="$(python3 -c "
+import json
+with open('$SHIP_STATE_FILE') as f:
+    state = json.load(f)
+print(state.get('installed', {}).get('$_target', {}).get('version', ''))
+")"
+      fi
+
+      if [ "$curr_ver" = "$latest_ver" ]; then
+        ui_status "Finished" "$_target is already at latest version ($latest_ver)"
+      else
+        ui_status "Updating" "$_target ${curr_ver:-none} -> $latest_ver"
+        cmd_install "$_target" "$latest_ver"
+      fi
+      ;;
+  esac
+}
+
+cmd_search() {
+  _query="${1:-}"
+  ensure_registry
+  printf "${C_BOLD}%-22s %s${C_RESET}\n" "PACKAGE" "DESCRIPTION"
+  list_registry_packages | while IFS="$(printf '\t')" read -r pkg desc; do
+    if [ -z "$_query" ] || echo "$pkg $desc" | grep -qi "$_query"; then
+      printf "%-22s %s\n" "$pkg" "$desc"
+    fi
+  done
+}
+
+cmd_info() {
+  _pkg="$1"
+  ensure_registry
+  if ! package_exists_in_registry "$_pkg"; then
+    die "Package '$_pkg' not found in registry."
+  fi
+
+  if command -v jq >/dev/null 2>&1; then
+    desc="$(jq -r --arg p "$_pkg" '.packages[$p].description // ""' "$SHIP_REGISTRY_CACHE")"
+    author="$(jq -r --arg p "$_pkg" '.packages[$p].author // ""' "$SHIP_REGISTRY_CACHE")"
+    repo="$(jq -r --arg p "$_pkg" '.packages[$p].repository // ""' "$SHIP_REGISTRY_CACHE")"
+    homepage="$(jq -r --arg p "$_pkg" '.packages[$p].homepage // ""' "$SHIP_REGISTRY_CACHE")"
+    license="$(jq -r --arg p "$_pkg" '.packages[$p].license // ""' "$SHIP_REGISTRY_CACHE")"
+    vers="$(jq -r --arg p "$_pkg" '.packages[$p].versions | keys[]' "$SHIP_REGISTRY_CACHE" | tr '\n' ' ')"
+    inst_ver="$(jq -r --arg p "$_pkg" '.installed[$p].version // "not installed"' "$SHIP_STATE_FILE" 2>/dev/null || echo "not installed")"
+  else
+    desc="$(python3 -c "import json; d=json.load(open('$SHIP_REGISTRY_CACHE')); print(d['packages']['$_pkg'].get('description', ''))")"
+    author="$(python3 -c "import json; d=json.load(open('$SHIP_REGISTRY_CACHE')); print(d['packages']['$_pkg'].get('author', ''))")"
+    repo="$(python3 -c "import json; d=json.load(open('$SHIP_REGISTRY_CACHE')); print(d['packages']['$_pkg'].get('repository', ''))")"
+    homepage="$(python3 -c "import json; d=json.load(open('$SHIP_REGISTRY_CACHE')); print(d['packages']['$_pkg'].get('homepage', ''))")"
+    license="$(python3 -c "import json; d=json.load(open('$SHIP_REGISTRY_CACHE')); print(d['packages']['$_pkg'].get('license', ''))")"
+    vers="$(python3 -c "import json; d=json.load(open('$SHIP_REGISTRY_CACHE')); print(' '.join(d['packages']['$_pkg'].get('versions', {}).keys()))")"
+    inst_ver="$(python3 -c "import json; d=json.load(open('$SHIP_STATE_FILE')); print(d.get('installed', {}).get('$_pkg', {}).get('version', 'not installed'))" 2>/dev/null || echo "not installed")"
+  fi
+
+  printf "%b%s%b\n" "$C_BOLD" "$_pkg" "$C_RESET"
+  [ -z "$desc" ]     || ui_kv "Description:" "$desc"
+  [ -z "$author" ]   || ui_kv "Author:"      "$author"
+  [ -z "$repo" ]     || ui_kv "Repository:"  "$repo"
+  [ -z "$homepage" ] || ui_kv "Homepage:"    "$homepage"
+  [ -z "$license" ]  || ui_kv "License:"     "$license"
+  ui_kv "Versions:"    "$vers"
+  ui_kv "Installed:"   "$inst_ver"
+}
+
+# Direct GitHub Release Install Engine
+# Called by: ship install <owner/repo> [tag]
+cmd_install_github() {
+  _repo_input="$1"
+  _tag="${2:-}"
+
+  # Sanitize GitHub URL or owner/repo shorthand
+  _repo="$(echo "$_repo_input" | sed -E 's#^https?://github\.com/##; s#^git@github\.com:##; s#\.git$##; s#/$##')"
+  case "$_repo" in
+    */*) ;;
+    *) die "Invalid repository format: '$_repo_input'. Expected 'owner/repo' or 'https://github.com/owner/repo'." ;;
+  esac
+
+  _owner="${_repo%%/*}"
+  _name="${_repo##*/}"
+  _pkg_id="github:${_owner}/${_name}"
+
+  init_dirs
+
+  if [ -n "${SHIP_GITHUB_API_BASE:-}" ]; then
+    _api_url="${SHIP_GITHUB_API_BASE}/${_owner}/${_name}"
+    ui_status "Querying" "mock release endpoint for ${_owner}/${_name}..."
+  elif [ -n "$_tag" ] && [ "$_tag" != "latest" ]; then
+    _api_url="https://api.github.com/repos/${_owner}/${_name}/releases/tags/${_tag}"
+    ui_status "Querying" "GitHub release '${_tag}' for ${_owner}/${_name}..."
+  else
+    # Query releases list to support prerelease/alpha/beta releases as well
+    _api_url="https://api.github.com/repos/${_owner}/${_name}/releases"
+    ui_status "Querying" "GitHub releases for ${_owner}/${_name}..."
+  fi
+
+  _release_json="${SHIP_CACHE_DIR}/gh_${_owner}_${_name}.json"
+  _raw_resp="${SHIP_CACHE_DIR}/gh_raw_${_owner}_${_name}.json"
+  fetch_file "$_api_url" "$_raw_resp" || die "Failed to query GitHub API for ${_owner}/${_name}."
+
+  # If response is a list (from /releases), extract the first release object
+  python3 -c "
+import json
+with open('$_raw_resp') as f:
+    data = json.load(f)
+if isinstance(data, list):
+    if not data:
+        exit(1)
+    release = data[0]
+else:
+    release = data
+with open('$_release_json', 'w') as out_f:
+    json.dump(release, out_f)
+" || die "No releases found for ${_owner}/${_name}."
+  rm -f "$_raw_resp"
+
+  # Determine version tag
+  _rel_ver="$(python3 -c "
+import json
+with open('$_release_json') as f:
+    d = json.load(f)
+print(d.get('tag_name', 'latest').lstrip('v'))
+" 2>/dev/null || echo "latest")"
+
+  # Match best asset for host architecture and environment
+  _resolved_asset="${SHIP_CACHE_DIR}/gh_asset_${_owner}_${_name}.json"
+  python3 -c "
+import json, sys, re, os
+
+with open('$_release_json') as f:
+    rel = json.load(f)
+
+assets = rel.get('assets', [])
+if not assets:
+    sys.exit(1)
+
+raw_arch = '$(uname -m)'
+arch_map = {'x86_64': 'x86_64', 'amd64': 'x86_64', 'aarch64': 'aarch64', 'arm64': 'aarch64', 'armv7l': 'armv7', 'arm': 'armv7', 'riscv64': 'riscv64'}
+arch = arch_map.get(raw_arch, raw_arch)
+
+is_termux = bool(os.getenv('TERMUX_VERSION')) or os.path.isdir('/data/data/com.termux')
+
+# Keywords to match architecture
+arch_regexes = []
+if arch == 'aarch64':
+    arch_regexes = [r'aarch64', r'arm64']
+elif arch == 'x86_64':
+    arch_regexes = [r'x86_64', r'amd64', r'x64']
+elif arch == 'armv7':
+    arch_regexes = [r'armv7', r'armhf', r'arm32']
+elif arch == 'riscv64':
+    arch_regexes = [r'riscv64']
+
+# Rank assets by suitability
+best_asset = None
+best_score = -1
+checksum_assets = []
+
+for a in assets:
+    name = a.get('name', '').lower()
+    url = a.get('browser_download_url', '')
+
+    # Checksum candidate
+    if any(k in name for k in ['sha256', 'checksum', 'hashes', 'sha256sum']):
+        checksum_assets.append((name, url))
+        continue
+
+    # Skip windows/mac/deb/rpm packages for raw portable extraction
+    if any(name.endswith(ext) for ext in ['.deb', '.rpm', '.apk', '.exe', '.msi', '.dmg', '.pkg']):
+        continue
+
+    # Check architecture match
+    if not any(re.search(pat, name) for pat in arch_regexes):
+        continue
+
+    # Score calculation
+    score = 10
+    if 'linux' in name:
+        score += 20
+    if is_termux:
+        if 'android' in name or 'termux' in name:
+            score += 35
+        elif 'musl' in name:
+            score += 30
+        elif 'gnu' in name:
+            score += 15
+    else:
+        if 'musl' in name:
+            score += 25
+        elif 'gnu' in name:
+            score += 25
+
+    # Prioritize tarball / zip / binary formats
+    if any(name.endswith(ext) for ext in ['.tar.gz', '.tgz', '.tar.xz', '.txz', '.zip']):
+        score += 10
+
+    if score > best_score:
+        best_score = score
+        best_asset = a
+
+if not best_asset:
+    sys.exit(2)
+
+out = {
+    'asset_name': best_asset['name'],
+    'url': best_asset['browser_download_url'],
+    'checksum_urls': [u[1] for u in checksum_assets]
+}
+with open('$_resolved_asset', 'w') as f:
+    json.dump(out, f)
+" || die "Could not find compatible binary release asset for ${_owner}/${_name} on architecture ($(uname -m))."
+
+  _asset_name="$(python3 -c "import json; d=json.load(open('$_resolved_asset')); print(d['asset_name'])")"
+  _asset_url="$(python3 -c "import json; d=json.load(open('$_resolved_asset')); print(d['url'])")"
+  
+  ui_status "Matched" "asset: $_asset_name"
+  ui_status "Downloading" "$_asset_url..."
+  _dest_archive="${SHIP_CACHE_DIR}/${_owner}_${_name}_${_asset_name}"
+  fetch_file "$_asset_url" "$_dest_archive" || die "Failed to download $_asset_url"
+
+  # Attempt checksum extraction if checksum file is present
+  EXPECTED_SHA="$(python3 -c "
+import json, urllib.request, re
+d = json.load(open('$_resolved_asset'))
+c_urls = d.get('checksum_urls', [])
+target_name = d.get('asset_name', '')
+found_sha = ''
+for u in c_urls:
+    try:
+        req = urllib.request.Request(u, headers={'User-Agent': 'ship-orchestrator'})
+        with urllib.request.urlopen(req) as resp:
+            content = resp.read().decode('utf-8', errors='ignore')
+            for line in content.splitlines():
+                if target_name in line:
+                    match = re.search(r'[0-9a-fA-F]{64}', line)
+                    if match:
+                        found_sha = match.group(0).lower()
+                        break
+        if found_sha:
+            break
+    except Exception:
+        pass
+print(found_sha)
+" 2>/dev/null || true)"
+
+  if [ -n "$EXPECTED_SHA" ]; then
+    ui_status "Verifying" "SHA-256 checksum ($EXPECTED_SHA)..."
+    ACTUAL_SHA="$(calc_sha256 "$_dest_archive")"
+    if [ "$ACTUAL_SHA" != "$EXPECTED_SHA" ]; then
+      rm -f "$_dest_archive"
+      die "Checksum mismatch! Expected: $EXPECTED_SHA, Got: $ACTUAL_SHA. Aborting."
+    fi
+    ui_status "Verified" "SHA-256 checksum ($ACTUAL_SHA)"
+  else
+    ui_warn "No external checksum file found in GitHub release; proceeding with archive verification."
+  fi
+
+  # Extract into isolated versioned directory
+  INSTALL_DIR="${SHIP_STORE_DIR}/${_name}@${_rel_ver}"
+  rm -rf "$INSTALL_DIR"
+  mkdir -p "$INSTALL_DIR"
+
+  ui_status "Extracting" "$INSTALL_DIR..."
+  case "$_dest_archive" in
+    *.tar.gz|*.tgz) tar -xzf "$_dest_archive" -C "$INSTALL_DIR" ;;
+    *.tar.xz|*.txz) tar -xJf "$_dest_archive" -C "$INSTALL_DIR" ;;
+    *.tar.bz2|*.tbz2) tar -xjf "$_dest_archive" -C "$INSTALL_DIR" ;;
+    *.tar) tar -xf "$_dest_archive" -C "$INSTALL_DIR" ;;
+    *.zip)
+      if command -v unzip >/dev/null 2>&1; then
+        unzip -q -o "$_dest_archive" -d "$INSTALL_DIR"
+      elif command -v python3 >/dev/null 2>&1; then
+        python3 -c "import zipfile; zipfile.ZipFile('$_dest_archive').extractall('$INSTALL_DIR')"
+      fi
+      ;;
+    *)
+      if [ "$(head -c 4 "$_dest_archive" 2>/dev/null)" = $'\x7fELF' ] || [ "$(head -c 2 "$_dest_archive" 2>/dev/null)" = "#!" ]; then
+        cp "$_dest_archive" "$INSTALL_DIR/$_name"
+        chmod +x "$INSTALL_DIR/$_name"
+      else
+        tar -xf "$_dest_archive" -C "$INSTALL_DIR" 2>/dev/null || cp "$_dest_archive" "$INSTALL_DIR/"
+      fi
+      ;;
+  esac
+
+  # Termux / glibc smart auto-patching if needed
+  _is_termux=0
+  if [ -n "${TERMUX_VERSION:-}" ] || [ -d "/data/data/com.termux" ]; then
+    _is_termux=1
+  fi
+
+  if [ "$_is_termux" -eq 1 ]; then
+    _glibc_p="${PREFIX:-/data/data/com.termux/files/usr}/glibc"
+    _loader=""
+    case "$(uname -m)" in
+      aarch64|arm64) _loader="$_glibc_p/lib/ld-linux-aarch64.so.1" ;;
+      armv7*|armhf)   _loader="$_glibc_p/lib/ld-linux-armhf.so.3" ;;
+      x86_64|amd64)  _loader="$_glibc_p/lib/ld-linux-x86-64.so.2" ;;
+    esac
+
+    # Scan and auto-patch dynamic ELF binaries that request missing standard ld.so
+    if command -v patchelf >/dev/null 2>&1 && [ -n "$_loader" ] && [ -f "$_loader" ]; then
+      find "$INSTALL_DIR" -type f -perm -0100 2>/dev/null | while read -r bin_candidate; do
+        if [ "$(head -c 4 "$bin_candidate" 2>/dev/null)" = $'\x7fELF' ]; then
+          curr_interp="$(patchelf --print-interpreter "$bin_candidate" 2>/dev/null || true)"
+          if [ -n "$curr_interp" ] && [ ! -f "$curr_interp" ]; then
+            ui_status "Patching" "dynamic glibc binary: $(basename "$bin_candidate")"
+            patchelf --set-interpreter "$_loader" --set-rpath "$_glibc_p/lib" "$bin_candidate" 2>/dev/null || true
+          fi
+        fi
+      done
+    fi
+  fi
+
+  # Auto-discover binaries to link
+  clean_package_symlinks "$_name"
+  ui_status "Linking" "discovering and linking binaries..."
+  python3 -c "
+import os, json, sys
+
+install_dir = '$INSTALL_DIR'
+pm_bin = '$SHIP_INTERNAL_BIN'
+pub_bin = '$SHIP_BIN_DIR'
+pkg_name = '$_name'
+
+# Find executables
+execs = []
+for root, dirs, files in os.walk(install_dir):
+    for f in files:
+        full = os.path.join(root, f)
+        if os.path.islink(full):
+            continue
+        try:
+            with open(full, 'rb') as fp:
+                head = fp.read(4)
+                if head.startswith(b'\x7fELF') or head.startswith(b'#!'):
+                    os.chmod(full, 0o755)
+                    execs.append((f, full))
+        except Exception:
+            pass
+
+if not execs:
+    sys.exit(1)
+
+# Pick best binary name matching repo name or all unique executables
+linked = []
+for name, target in execs:
+    link1 = os.path.join(pm_bin, name)
+    if os.path.islink(link1) or os.path.exists(link1):
+        os.remove(link1)
+    os.symlink(target, link1)
+
+    link2 = os.path.join(pub_bin, name)
+    if os.path.islink(link2) or os.path.exists(link2):
+        os.remove(link2)
+    os.symlink(target, link2)
+    linked.append(link2)
+
+# Save to state.json
+with open('$SHIP_STATE_FILE', 'r') as f:
+    state = json.load(f)
+if 'installed' not in state:
+    state['installed'] = {}
+
+state['installed'][pkg_name] = {
+    'source': 'github:$_owner/$_name',
+    'version': '$_rel_ver',
+    'install_dir': install_dir,
+    'symlinks': linked,
+    'installed_at': '$(date -u +"%Y-%m-%dT%H:%M:%SZ")'
+}
+
+with open('$SHIP_STATE_FILE', 'w') as f:
+    json.dump(state, f, indent=2)
+
+print(json.dumps(linked))
+" || die "Could not find any executable binaries to link in release package."
+
+  rm -f "$_release_json" "$_resolved_asset"
+
+  ui_status "Installed" "${_owner}/${_name}@${_rel_ver} (direct GitHub release)"
+}
+
+# Package Publishing Engine
+# Submits a GitHub repository release to the central registry bridge.
+# Usage:
+#   ship publish <owner/repo> [tag]
+cmd_publish() {
+  _repo_input="$1"
+  _tag="${2:-latest}"
+
+  _repo="$(echo "$_repo_input" | sed -E 's#^https?://github\.com/##; s#^git@github\.com:##; s#\.git$##; s#/$##')"
+  case "$_repo" in
+    */*) ;;
+    *) die "Invalid repository format: '$_repo_input'. Expected 'owner/repo' or 'https://github.com/owner/repo'." ;;
+  esac
+
+  _owner="${_repo%%/*}"
+  _name="${_repo##*/}"
+  _bridge_url="${SHIP_REGISTRY_BRIDGE:-https://corrupted-lily-1011.callixjeira.workers.dev/}"
+
+  ui_status "Publishing" "${_owner}/${_name} (tag: ${_tag}) to central registry bridge..."
+
+  if command -v curl >/dev/null 2>&1; then
+    _resp="$(curl -s -w "\n%{http_code}" -X POST "$_bridge_url" \
+      -H "Content-Type: application/json" \
+      -d "{\"repo\":\"${_owner}/${_name}\",\"tag\":\"${_tag}\"}" 2>&1 || true)"
+    _status_code="$(printf "%s\n" "$_resp" | tail -n 1)"
+    _body="$(printf "%s\n" "$_resp" | head -n -1)"
+
+    case "$_status_code" in
+      2*|3*)
+        ui_status "Finished" "release queued for indexing in central registry"
+        [ -z "$_body" ] || ui_print "  $_body"
+        ;;
+      *)
+        ui_warn "Bridge returned HTTP $_status_code"
+        [ -z "$_body" ] || ui_print "  $_body"
+        ;;
+    esac
+  else
+    die "curl is required to publish packages."
+  fi
+}
+
+cmd_clean() {
+  init_dirs
+  ui_status "Cleaning" "download cache in $SHIP_CACHE_DIR..."
+  find "$SHIP_CACHE_DIR" -type f ! -name "registry.json" -delete 2>/dev/null || true
+
+  ui_status "Cleaning" "temporary backups in $SHIP_BACKUP_DIR..."
+  rm -rf "${SHIP_BACKUP_DIR:?}"/*
+
+  rm -f "$SHIP_UPDATE_NOTICE_FILE" "$SHIP_LAST_CHECK_FILE" 2>/dev/null || true
+
+  ui_status "Finished" "cache and backups cleaned"
+}
+
+# --- Rollback Engine ---
+cmd_rollback() {
+  _bin_name="$1"
+  init_dirs
+
+  # Locate most recent backup for this binary name
+  _latest_backup="$(find "$SHIP_BACKUP_DIR" -type f -name "${_bin_name}.backup.*" 2>/dev/null | sort -V | tail -n 1 || true)"
+  if [ -z "$_latest_backup" ] || [ ! -f "$_latest_backup" ]; then
+    die "No backup found for '$_bin_name' in $SHIP_BACKUP_DIR to rollback to."
+  fi
+
+  ui_status "Restoring" "$_bin_name from $_latest_backup"
+  pub_link="${SHIP_BIN_DIR}/${_bin_name}"
+  rm -f "$pub_link"
+  mv "$_latest_backup" "$pub_link"
+  chmod +x "$pub_link"
+  ui_status "Finished" "rolled back $_bin_name -> $pub_link"
+}
+
+# Self-Update Engine
+cmd_self_update() {
+  ui_status "Checking" "for ship updates..."
+  _self_path="$(readlink -f "$0" 2>/dev/null || echo "$0")"
+
+  # If running from a git repository clone, update via git
+  _self_dir="$(dirname "$_self_path")"
+  _git_root="$(git -C "$_self_dir" rev-parse --show-toplevel 2>/dev/null || true)"
+
+  if [ -n "$_git_root" ] && [ -d "$_git_root/.git" ]; then
+    ui_status "Updating" "git repository at $_git_root..."
+    if git -C "$_git_root" pull --ff-only; then
+      ui_status "Finished" "updated ship via git"
+      chmod +x "$_self_path"
+      return 0
+    else
+      ui_warn "Git pull failed or has local modifications. Falling back to remote raw script update..."
+    fi
+  fi
+
+  # Remote direct refetch
+  _remote_url="${SHIP_UPDATE_URL:-https://raw.githubusercontent.com/SSL-ACTX/ship-pm/main/bin/ship}"
+  ui_status "Fetching" "$_remote_url"
+  _tmp_self="${SHIP_CACHE_DIR}/ship_update.tmp"
+  mkdir -p "$SHIP_CACHE_DIR"
+
+  if fetch_file "$_remote_url" "$_tmp_self"; then
+    if [ ! -s "$_tmp_self" ] || [ "$(head -n 1 "$_tmp_self")" != "#!/bin/sh" ]; then
+      rm -f "$_tmp_self"
+      die "Downloaded file is corrupted or not a valid shell script."
+    fi
+
+    # Read remote version
+    _remote_ver="$(grep -E '^VERSION=' "$_tmp_self" | head -n 1 | cut -d'"' -f2 || echo "latest")"
+    if [ "$_remote_ver" = "$VERSION" ]; then
+      rm -f "$_tmp_self"
+      ui_status "Finished" "ship is already up to date (v$VERSION)"
+      return 0
+    fi
+
+    chmod +x "$_tmp_self"
+    mv "$_tmp_self" "$_self_path"
+    ui_status "Finished" "updated ship v$VERSION -> v$_remote_ver"
+  else
+    rm -f "$_tmp_self"
+    die "Failed to download update from $_remote_url."
+  fi
+}
+
+# Installer Bootstrap Script Generator
+generate_installer() {
+  cat << "EOF"
+#!/bin/sh
+# ship bootstrap installer
+set -eu
+
+SHIP_REPO_RAW="${SHIP_REPO_RAW:-https://raw.githubusercontent.com/SSL-ACTX/ship-pm/main/bin/ship}"
+
+find_smart_bin_target() {
+  if [ -n "${SHIP_BIN_TARGET:-}" ]; then
+    echo "$SHIP_BIN_TARGET"
+    return 0
+  fi
+
+  if [ -n "${TERMUX_VERSION:-}" ] || [ -d "/data/data/com.termux" ]; then
+    if [ -d "${HOME}/.local/bin" ] && [ -w "${HOME}/.local/bin" ]; then
+      echo "${HOME}/.local/bin"
+      return 0
+    fi
+    _pfx_bin="${PREFIX:-/data/data/com.termux/files/usr}/bin"
+    if [ -w "$_pfx_bin" ]; then
+      echo "$_pfx_bin"
+      return 0
+    fi
+    echo "${HOME}/.local/bin"
+    return 0
+  fi
+
+  if [ -w "/usr/local/bin" ]; then
+    echo "/usr/local/bin"
+    return 0
+  fi
+
+  echo "${HOME}/.local/bin"
+}
+
+SHIP_BIN_TARGET="$(find_smart_bin_target)"
+mkdir -p "$SHIP_BIN_TARGET"
+
+if { [ -t 1 ] || [ -t 2 ]; } && [ -z "${NO_COLOR:-}" ] && [ "${TERM:-dumb}" != "dumb" ]; then
+  _esc="$(printf '\033')"
+  C_RESET="${_esc}[0m"
+  C_BOLD="${_esc}[1m"
+  C_GREEN="${_esc}[1;32m"
+  C_YELLOW="${_esc}[1;33m"
+  C_RED="${_esc}[1;31m"
+else
+  C_RESET=""
+  C_BOLD=""
+  C_GREEN=""
+  C_YELLOW=""
+  C_RED=""
+fi
+
+ui_status() {
+  printf "%b%12s%b %s\n" "$C_GREEN" "$1" "$C_RESET" "$2" >&2
+}
+
+ui_warn() {
+  printf "%b%12s%b %s\n" "$C_YELLOW" "warning:" "$C_RESET" "$*" >&2
+}
+
+ui_err() {
+  printf "%b%12s%b %s\n" "$C_RED" "error:" "$C_RESET" "$*" >&2
+}
+
+ui_status "Installing" "ship to $SHIP_BIN_TARGET/ship"
+if command -v curl >/dev/null 2>&1; then
+  curl -fsSL "$SHIP_REPO_RAW" -o "$SHIP_BIN_TARGET/ship"
+elif command -v wget >/dev/null 2>&1; then
+  wget -q -O "$SHIP_BIN_TARGET/ship" "$SHIP_REPO_RAW"
+else
+  ui_err "curl or wget is required for installation."
+  exit 1
+fi
+
+chmod +x "$SHIP_BIN_TARGET/ship"
+
+case ":$PATH:" in
+  *":$SHIP_BIN_TARGET:"*)
+    ;;
+  *)
+    _export_line="export PATH=\"$SHIP_BIN_TARGET:\$PATH\""
+    _configured=0
+    for _rc in "${HOME}/.bashrc" "${HOME}/.zshrc" "${HOME}/.profile"; do
+      if [ -f "$_rc" ]; then
+        if ! grep -qF "$SHIP_BIN_TARGET" "$_rc" 2>/dev/null; then
+          printf "\n# Added by ship installer\n%s\n" "$_export_line" >> "$_rc"
+          ui_status "Configured" "$_rc (added $SHIP_BIN_TARGET)"
+        fi
+        _configured=1
+      fi
+    done
+    if [ "$_configured" -eq 0 ]; then
+      printf "\n# Added by ship installer\n%s\n" "$_export_line" >> "${HOME}/.profile"
+      ui_status "Configured" "${HOME}/.profile (added $SHIP_BIN_TARGET)"
+    fi
+    ui_warn "Restart your shell or run: export PATH=\"$SHIP_BIN_TARGET:\$PATH\""
+    ;;
+esac
+
+"$SHIP_BIN_TARGET/ship" update registry >/dev/null 2>&1 || true
+
+ui_status "Finished" "ship installed successfully"
+printf "\nRun '%bship --help%b' to get started.\n" "$C_BOLD" "$C_RESET"
+EOF
+}
+
+usage() {
+  cat << EOF
+Agnostic Shell Package Orchestrator
+
+${C_BOLD}Usage:${C_RESET} ${C_GREEN}ship${C_RESET} [OPTIONS] [COMMAND]
+
+${C_BOLD}Options:${C_RESET}
+  ${C_GREEN}-V, --version${C_RESET}
+          Print version info and exit
+  ${C_GREEN}-h, --help${C_RESET}
+          Print help
+      ${C_GREEN}--color${C_RESET} <WHEN>
+          Coloring [possible values: auto, always, never]
+
+${C_BOLD}Commands:${C_RESET}
+    ${C_GREEN}install, i${C_RESET}    Install package from registry or GitHub repository
+    ${C_GREEN}publish${C_RESET}       Publish/submit a GitHub release to central registry
+    ${C_GREEN}update, u${C_RESET}     Update packages, registry, or ship itself
+    ${C_GREEN}remove, rm${C_RESET}    Uninstall package and remove binary symlinks
+    ${C_GREEN}list, ls${C_RESET}      List installed packages
+    ${C_GREEN}search${C_RESET}        Search registry for packages
+    ${C_GREEN}info${C_RESET}          Display details about a package
+    ${C_GREEN}rollback${C_RESET}      Roll back binary to previous backup
+    ${C_GREEN}clean${C_RESET}         Purge download caches, temp files, and old backups
+    ${C_GREEN}bootstrap${C_RESET}     Generate standalone curl bootstrap installer script
+    ${C_GREEN}help${C_RESET}          Print this message or the help of the given subcommand(s)
+
+See '${C_GREEN}ship help <command>${C_RESET}' for more information on a specific command.
+EOF
+}
+
+# CLI Entry Point
+init_dirs
+
+# Register exit notice hook
+trap 'show_update_notice' EXIT
+
+# Parse global options
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --color)
+      shift
+      [ $# -ge 1 ] || die "--color requires an argument [auto, always, never]"
+      SHIP_TERM_COLOR="$1"
+      ui_init
+      shift
+      ;;
+    --color=*)
+      SHIP_TERM_COLOR="${1#*=}"
+      ui_init
+      shift
+      ;;
+    -V|--version)
+      echo "ship $VERSION"
+      exit 0
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+
+_cmd="${1:-}"
+case "$_cmd" in
+  version|-v|--version|help|-h|--help|clean|bootstrap|"")
+    # Quick utility commands don't trigger background check
+    ;;
+  *)
+    # Trigger background update check for active package management commands
+    trigger_background_update_check
+    ;;
+esac
+
+case "${1:-}" in
+  install|i)
+    shift
+    [ $# -ge 1 ] || die "Usage: ship install <package> [version] OR ship install <owner/repo> [tag]"
+    case "$1" in
+      *github.com/*|*/*)
+        # Sourced directly from GitHub repo / URL
+        cmd_install_github "$@"
+        ;;
+      *)
+        cmd_install "$@"
+        ;;
+    esac
+    ;;
+  publish)
+    shift
+    [ $# -ge 1 ] || die "Usage: ship publish <owner/repo> [tag]"
+    cmd_publish "$@"
+    ;;
+  update|u)
+    shift
+    cmd_update "$@"
+    ;;
+  remove|rm|uninstall)
+    shift
+    [ $# -ge 1 ] || die "Usage: ship remove <package>"
+    cmd_remove "$@"
+    ;;
+  list|ls)
+    cmd_list
+    ;;
+  search)
+    shift
+    cmd_search "$@"
+    ;;
+  info)
+    shift
+    [ $# -ge 1 ] || die "Usage: ship info <package>"
+    cmd_info "$@"
+    ;;
+  clean)
+    cmd_clean
+    ;;
+  rollback)
+    shift
+    [ $# -ge 1 ] || die "Usage: ship rollback <binary-name>"
+    cmd_rollback "$@"
+    ;;
+  registry)
+    shift
+    case "${1:-}" in
+      update|sync) cmd_update registry ;;
+      *) die "Usage: ship registry update" ;;
+    esac
+    ;;
+  bootstrap)
+    generate_installer
+    ;;
+  self-update|upgrade-self)
+    cmd_update self
+    ;;
+  version|-v|--version)
+    echo "ship version $VERSION"
+    ;;
+  help|-h|--help|"")
+    usage
+    ;;
+  *)
+    die "Unknown command: $1. Run 'ship help' for usage."
+    ;;
+esac

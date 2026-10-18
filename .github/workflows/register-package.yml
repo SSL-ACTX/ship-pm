@@ -1,0 +1,79 @@
+name: Automated Package Registration
+
+on:
+  repository_dispatch:
+    types: [register-release]
+  workflow_dispatch:
+    inputs:
+      repo:
+        description: "Target repository (e.g. owner/repo)"
+        required: true
+      tag:
+        description: "Release tag (e.g. v1.0.0 or latest)"
+        required: false
+        default: "latest"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  resolve-and-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout registry
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Process Release Metadata
+        id: process
+        env:
+          TARGET_REPO: ${{ github.event.client_payload.repo || inputs.repo }}
+          TARGET_TAG: ${{ github.event.client_payload.tag || inputs.tag }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          python3 .github/scripts/resolve_release.py
+
+      - name: Create Pull Request
+        if: steps.process.outputs.updated == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
+          commit-message: "feat(registry): add ${{ steps.process.outputs.pkg }}@${{ steps.process.outputs.version }}"
+          title: "feat(registry): add `${{ steps.process.outputs.pkg }}@${{ steps.process.outputs.version }}`"
+          branch: "auto-add/${{ steps.process.outputs.pkg }}-${{ steps.process.outputs.version }}"
+          delete-branch: true
+          title-prefix: ""
+          body: |
+            ## 📦 Package Submission: `${{ steps.process.outputs.pkg }}`
+
+            An automated package indexing request was triggered for [`${{ steps.process.outputs.repo }}`](${{ steps.process.outputs.repo_link }}).
+
+            ### 📋 Package Details
+            | Field | Details |
+            | :--- | :--- |
+            | **Package Name** | `${{ steps.process.outputs.pkg }}` |
+            | **Version** | [`${{ steps.process.outputs.version }}`](${{ steps.process.outputs.release_url }}) |
+            | **Repository** | [${{ steps.process.outputs.repo }}](${{ steps.process.outputs.repo_link }}) |
+            | **Author / Org** | [${{ steps.process.outputs.author }}](https://github.com/${{ steps.process.outputs.author }}) |
+            | **License** | `${{ steps.process.outputs.license }}` |
+            | **Description** | ${{ steps.process.outputs.description }} |
+            | **Targets Resolved** | ${{ steps.process.outputs.target_count }} architectures |
+
+            ### 🎯 Resolved Binary Targets
+            ${{ steps.process.outputs.targets_table }}
+
+            ---
+            ### 🔍 Verification Checklist for Maintainers
+            - [ ] Upstream repository and release are authentic: [Release Tag](${{ steps.process.outputs.release_url }})
+            - [ ] Executable name matches intended binary symlinks
+            - [ ] SHA-256 checksums match upstream distribution
+
+            *Triggered via `ship publish ${{ steps.process.outputs.repo }}`.*
+          labels: |
+            automated
+            package-submission
