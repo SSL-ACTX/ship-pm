@@ -43,6 +43,38 @@
           }
         }
       }
+    },
+    "fd": {
+      "description": "## Performance",
+      "versions": {
+        "9.0.0": {
+          "binaries": {
+            "fd": "bin/fd"
+          },
+          "targets": {
+            "x86_64-linux-gnu": {
+              "url": "https://github.com/sharkdp/fd/releases/download/v9.0.0/fd-v9.0.0-x86_64-unknown-linux-gnu.tar.gz",
+              "sha256": "a92f77c76bca0db49810ed2333332356a2b7c6f6f19e842373e6ecfd4c180a67"
+            },
+            "x86_64-linux-musl": {
+              "url": "https://github.com/sharkdp/fd/releases/download/v9.0.0/fd-v9.0.0-x86_64-unknown-linux-musl.tar.gz",
+              "sha256": "069e2d58127ddd944c03a2684ad79f72e3f9bd3e0d2642c36adc5b367c134592"
+            },
+            "aarch64-linux-gnu": {
+              "url": "https://github.com/sharkdp/fd/releases/download/v9.0.0/fd-v9.0.0-aarch64-unknown-linux-gnu.tar.gz",
+              "sha256": "94844b8bdb8e7d48d4aa48574a6ba8bc404a88b1043e5b857602b91f6dfb188a"
+            },
+            "i686-linux-gnu": {
+              "url": "https://github.com/sharkdp/fd/releases/download/v9.0.0/fd-v9.0.0-i686-unknown-linux-gnu.tar.gz",
+              "sha256": "6aafd1e60491a436cb0f0e70058d9bcb0bf1228f4ddb3ccc0708cd6a08013e1c"
+            },
+            "i686-linux-musl": {
+              "url": "https://github.com/sharkdp/fd/releases/download/v9.0.0/fd-v9.0.0-i686-unknown-linux-musl.tar.gz",
+              "sha256": "dfeaa3440b73b5e3e9db42e480ca6ae2401bdb9f2af7c6c1b58b1aa201a2fb33"
+            }
+          }
+        }
+      }
     }
   }
 }
