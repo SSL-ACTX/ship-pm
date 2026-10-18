@@ -1,0 +1,103 @@
+{
+  "description": "opam is a source-based package manager. It supports multiple simultaneous compiler installations, flexible package constraints, and a Git-friendly development workflow.",
+  "author": "ocaml",
+  "repository": "https://github.com/ocaml/opam",
+  "versions": {
+    "2.6.1": {
+      "targets": {
+        "aarch64-linux-gnu": {
+          "url": "https://github.com/ocaml/opam/releases/download/2.6.1/opam-2.6.1-arm64-linux",
+          "sha256": "8b24ef2f3f44a31763f54878454fb52afa1f2db7e00abed58b8d4e7ee7e290a6",
+          "binaries": {
+            "opam": "opam-2.6.1-arm64-linux"
+          }
+        },
+        "aarch64-apple-darwin": {
+          "url": "https://github.com/ocaml/opam/releases/download/2.6.1/opam-2.6.1-arm64-macos",
+          "sha256": "3e7f67bda3ba0bf72f597917b17dc337ed5a1bd48224df8b747bb35ce05c569e",
+          "binaries": {
+            "opam": "opam-2.6.1-arm64-macos"
+          }
+        },
+        "armv7-linux-gnu": {
+          "url": "https://github.com/ocaml/opam/releases/download/2.6.1/opam-2.6.1-armhf-linux",
+          "sha256": "c46d89cb1fff3968df4d6f0123741509104250d8911f59beffda361f72803a26",
+          "binaries": {
+            "opam": "opam-2.6.1-armhf-linux"
+          }
+        },
+        "i686-linux-gnu": {
+          "url": "https://github.com/ocaml/opam/releases/download/2.6.1/opam-2.6.1-i686-linux",
+          "sha256": "8741f1ea1593e0f1623c32af57be741931741765fec77c2d710bca6c2b8b572d",
+          "binaries": {
+            "opam": "opam-2.6.1-i686-linux"
+          }
+        },
+        "powerpc64le-linux-gnu": {
+          "url": "https://github.com/ocaml/opam/releases/download/2.6.1/opam-2.6.1-ppc64le-linux",
+          "sha256": "c9320355783f40a1fbdc8934426713a2d55a1f706dcf11c962d31b1e4f2f819d",
+          "binaries": {
+            "opam": "opam-2.6.1-ppc64le-linux"
+          }
+        },
+        "riscv64-linux-gnu": {
+          "url": "https://github.com/ocaml/opam/releases/download/2.6.1/opam-2.6.1-riscv64-linux",
+          "sha256": "38ea16b9387037c337235a8eff6b88e62c85d49bfff798fc2774e7cb5e9c65e3",
+          "binaries": {
+            "opam": "opam-2.6.1-riscv64-linux"
+          }
+        },
+        "s390x-linux-gnu": {
+          "url": "https://github.com/ocaml/opam/releases/download/2.6.1/opam-2.6.1-s390x-linux",
+          "sha256": "9c2942abbcd887b0e64df317dd078fd19f47b14048d83bcfab306ad1614cc3cc",
+          "binaries": {
+            "opam": "opam-2.6.1-s390x-linux"
+          }
+        },
+        "x86_64-freebsd": {
+          "url": "https://github.com/ocaml/opam/releases/download/2.6.1/opam-2.6.1-x86_64-freebsd",
+          "sha256": "9c7822d1c7a865a35d6740992ed76513c01efe3cbd66aef43873b763134d2af8",
+          "binaries": {
+            "opam": "opam-2.6.1-x86_64-freebsd"
+          }
+        },
+        "x86_64-linux-gnu": {
+          "url": "https://github.com/ocaml/opam/releases/download/2.6.1/opam-2.6.1-x86_64-linux",
+          "sha256": "b533d393a6967150d6ef41cb3d71e147e93ecbabeb59e921aa412c0ae79ebe3d",
+          "binaries": {
+            "opam": "opam-2.6.1-x86_64-linux"
+          }
+        },
+        "x86_64-apple-darwin": {
+          "url": "https://github.com/ocaml/opam/releases/download/2.6.1/opam-2.6.1-x86_64-macos",
+          "sha256": "c5bb19c813ae9a4317b5ff2845ba52a51c96648c08faa0ecc14900fb61b198c7",
+          "binaries": {
+            "opam": "opam-2.6.1-x86_64-macos"
+          }
+        },
+        "x86_64-netbsd": {
+          "url": "https://github.com/ocaml/opam/releases/download/2.6.1/opam-2.6.1-x86_64-netbsd",
+          "sha256": "2638ac590717df140f9cd7657b7b18230a5ab3a8d0b7e9166e746e69b8addcd3",
+          "binaries": {
+            "opam": "opam-2.6.1-x86_64-netbsd"
+          }
+        },
+        "x86_64-openbsd": {
+          "url": "https://github.com/ocaml/opam/releases/download/2.6.1/opam-2.6.1-x86_64-openbsd",
+          "sha256": "4f740df950c6537a62c2acf7f54300569026061f1735f16fa21dbb10e36e0fd3",
+          "binaries": {
+            "opam": "opam-2.6.1-x86_64-openbsd"
+          }
+        },
+        "x86_64-pc-windows-gnu": {
+          "url": "https://github.com/ocaml/opam/releases/download/2.6.1/opam-2.6.1-x86_64-windows.exe",
+          "sha256": "2548f0592abfa728432c85ef6d08bf97c295c1859ddca61876e33884336c130c",
+          "binaries": {
+            "opam": "opam-2.6.1-x86_64-windows.exe"
+          }
+        }
+      }
+    }
+  },
+  "homepage": "https://opam.ocaml.org"
+}
