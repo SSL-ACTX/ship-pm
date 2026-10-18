@@ -78,6 +78,50 @@
         }
       },
       "license": "AGPL-3.0"
+    },
+    "ruff": {
+      "description": "An extremely fast Python linter and code formatter, written in Rust.",
+      "author": "astral-sh",
+      "repository": "https://github.com/astral-sh/ruff",
+      "versions": {
+        "0.17.1": {
+          "binaries": {
+            "ruff": "bin/ruff"
+          },
+          "targets": {
+            "x86_64-linux-gnu": {
+              "url": "https://github.com/astral-sh/ruff/releases/download/0.17.1/ruff-x86_64-unknown-linux-gnu.tar.gz",
+              "sha256": "a293ac937715ae6fb6b64da86761598379e6149f40fbc00fde9ba8a2a562ac65"
+            },
+            "x86_64-linux-musl": {
+              "url": "https://github.com/astral-sh/ruff/releases/download/0.17.1/ruff-x86_64-unknown-linux-musl.tar.gz",
+              "sha256": "2d9878b5e6a3d0dedadbfc01a64bfe54e72f560adbfd235937cd29e1fc9238e3"
+            },
+            "aarch64-linux-gnu": {
+              "url": "https://github.com/astral-sh/ruff/releases/download/0.17.1/ruff-aarch64-unknown-linux-gnu.tar.gz",
+              "sha256": "d3ead1f0ed779e777a034ccd9286be6bd9bd3cdaba732ff9797f8288a283e9e2"
+            },
+            "aarch64-linux-musl": {
+              "url": "https://github.com/astral-sh/ruff/releases/download/0.17.1/ruff-aarch64-unknown-linux-musl.tar.gz",
+              "sha256": "255404ccf2f7950ff6aad8858321a6f416fe2a840ae4e37dfb4c21cb8774f325"
+            },
+            "armv7-linux-gnu": {
+              "url": "https://github.com/astral-sh/ruff/releases/download/0.17.1/ruff-armv7-unknown-linux-gnueabihf.tar.gz",
+              "sha256": "e12e4540cc5b9ba68a0d5077c8f3278b5365dfe88cc5eaa1f0dd1c46fec1d13d"
+            },
+            "i686-linux-gnu": {
+              "url": "https://github.com/astral-sh/ruff/releases/download/0.17.1/ruff-i686-unknown-linux-gnu.tar.gz",
+              "sha256": "11bf24a1dcf3ede1e66f959d635abc964b9fd0d8331eefd08f2270d2ec087c87"
+            },
+            "i686-linux-musl": {
+              "url": "https://github.com/astral-sh/ruff/releases/download/0.17.1/ruff-i686-unknown-linux-musl.tar.gz",
+              "sha256": "bf010a1a289e815315fc98fef3ee6a12662c22950288c593c65ee2481f5e0704"
+            }
+          }
+        }
+      },
+      "homepage": "https://docs.astral.sh/ruff",
+      "license": "MIT"
     }
   }
 }
