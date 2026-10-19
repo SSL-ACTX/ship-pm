@@ -308,6 +308,54 @@
         }
       },
       "license": "AGPL-3.0"
+    },
+    "fstar": {
+      "description": "A Proof-oriented Programming Language",
+      "author": "FStarLang",
+      "repository": "https://github.com/FStarLang/FStar",
+      "versions": {
+        "2026.10.18": {
+          "targets": {
+            "aarch64-apple-darwin": {
+              "url": "https://github.com/FStarLang/FStar/releases/download/v2026.10.18/fstar-v2026.10.18-Darwin-arm64.tar.gz",
+              "sha256": "2e4ae521c17cb83c6a2b186b8a119cc2062de140e7178a366e82febde5ec907d",
+              "binaries": {
+                "fstar": "bin/fstar"
+              }
+            },
+            "x86_64-apple-darwin": {
+              "url": "https://github.com/FStarLang/FStar/releases/download/v2026.10.18/fstar-v2026.10.18-Darwin-x86_64.tar.gz",
+              "sha256": "eed6bbfcbdc96d6c5d18430b0f5af9890e77453f15bc194482fe32bf5cf0ca6f",
+              "binaries": {
+                "fstar": "bin/fstar"
+              }
+            },
+            "aarch64-linux-gnu": {
+              "url": "https://github.com/FStarLang/FStar/releases/download/v2026.10.18/fstar-v2026.10.18-Linux-aarch64.tar.gz",
+              "sha256": "c49799e14749839acf007797ea25d08f9b573fbfa55516a9177ab08ee992c8c2",
+              "binaries": {
+                "fstar": "bin/fstar"
+              }
+            },
+            "x86_64-linux-gnu": {
+              "url": "https://github.com/FStarLang/FStar/releases/download/v2026.10.18/fstar-v2026.10.18-Linux-x86_64.tar.gz",
+              "sha256": "07c14d95c2ef0e94e524448ee144574ff0527feead79907234f9e166aba6ce18",
+              "binaries": {
+                "fstar": "bin/fstar"
+              }
+            },
+            "x86_64-pc-windows-gnu": {
+              "url": "https://github.com/FStarLang/FStar/releases/download/v2026.10.18/fstar-v2026.10.18-Windows_NT-x86_64.zip",
+              "sha256": "b5e74834d51ffc62c89012ca41aa823dff91f46f6f328cb0f68fbe8b924e314d",
+              "binaries": {
+                "fstar": "bin/fstar.exe"
+              }
+            }
+          }
+        }
+      },
+      "homepage": "https://fstar-lang.org",
+      "license": "Apache-2.0"
     }
   }
 }
