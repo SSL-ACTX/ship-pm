@@ -1,0 +1,46 @@
+{
+  "description": "The Z3 Theorem Prover",
+  "author": "Z3Prover",
+  "repository": "https://github.com/Z3Prover/z3",
+  "versions": {
+    "Nightly": {
+      "targets": {
+        "aarch64-apple-darwin": {
+          "url": "https://github.com/Z3Prover/z3/releases/download/Nightly/z3-5.3.1-arm64-osx-13.3.zip",
+          "sha256": "c831dea77246779d15adaef17818b777730f342927f9ed9a829438184f1a4cce",
+          "binaries": {
+            "z3": "bin/z3"
+          }
+        },
+        "x86_64-apple-darwin": {
+          "url": "https://github.com/Z3Prover/z3/releases/download/Nightly/z3-5.3.1-x64-osx-13.3.zip",
+          "sha256": "67a4cdeb99c1d3ad2de0d12a2e3454a9f3204ce877367a1e1cf345d9073734b4",
+          "binaries": {
+            "z3": "bin/z3"
+          }
+        },
+        "x86_64-linux-gnu": {
+          "url": "https://github.com/Z3Prover/z3/releases/download/Nightly/z3_solver-5.3.1.0-py3-none-manylinux_2_27_x86_64.whl",
+          "sha256": "042325ec8e9e7db227bb7e3da8eff804be0f36831509b8a00a097efba6d99e5a",
+          "binaries": {
+            "z3": "z3_solver-5.3.1.0-py3-none-manylinux_2_27_x86_64.whl"
+          }
+        },
+        "aarch64-linux-gnu": {
+          "url": "https://github.com/Z3Prover/z3/releases/download/Nightly/z3_solver-5.3.1.0-py3-none-manylinux_2_38_aarch64.whl",
+          "sha256": "05210bfe8d6a7d8bbe85f06b6cb043e1dc71e970fb94d530aac4a600973d3ead",
+          "binaries": {
+            "z3": "z3_solver-5.3.1.0-py3-none-manylinux_2_38_aarch64.whl"
+          }
+        },
+        "riscv64-linux-gnu": {
+          "url": "https://github.com/Z3Prover/z3/releases/download/Nightly/z3_solver-5.3.1.0-py3-none-manylinux_2_38_riscv64.whl",
+          "sha256": "94eb6d8c39580367138b047215e86dc609cda589369b8240fe54137d001ed04d",
+          "binaries": {
+            "z3": "z3_solver-5.3.1.0-py3-none-manylinux_2_38_riscv64.whl"
+          }
+        }
+      }
+    }
+  }
+}
