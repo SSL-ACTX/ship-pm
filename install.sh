@@ -3,7 +3,7 @@ set -eu
 
 # install.sh - Official standalone installer for ship (Agnostic Shell Package Orchestrator)
 
-DEFAULT_REPO_RAW="https://raw.githubusercontent.com/SSL-ACTX/ship-pm/main/bin/ship"
+DEFAULT_REPO_RAW="https://github.com/SSL-ACTX/ship-pm/raw/refs/heads/main/bin/ship"
 VERSION="0.0.1"
 
 # Target installation directory detection:

@@ -109,7 +109,11 @@ if os.path.exists(registry_path):
         registry = json.load(f)
 
 packages = registry.setdefault("packages", {})
-if not dry_run and pkg_name in packages and version in packages[pkg_name].get("versions", {}):
+if (
+    not dry_run
+    and pkg_name in packages
+    and version in packages[pkg_name].get("versions", {})
+):
     print(f"Package {pkg_name}@{version} already exists in registry.json. Skipping PR.")
     gh_out = os.environ.get("GITHUB_OUTPUT")
     if gh_out:
@@ -148,11 +152,17 @@ for asset in assets:
 # Robust, deterministic asset parser
 def parse_asset_target(filename):
     fn = filename.lower()
-    
+
     # Skip non-archive package managers and system installers
-    if any(fn.endswith(ext) for ext in [".deb", ".rpm", ".apk", ".msi", ".dmg", ".pkg", ".zst"]):
+    if any(
+        fn.endswith(ext)
+        for ext in [".deb", ".rpm", ".apk", ".msi", ".dmg", ".pkg", ".zst"]
+    ):
         return None
-    if not any(fn.endswith(ext) for ext in [".tar.gz", ".tgz", ".tar.xz", ".txz", ".tar.bz2", ".zip"]):
+    if not any(
+        fn.endswith(ext)
+        for ext in [".tar.gz", ".tgz", ".tar.xz", ".txz", ".tar.bz2", ".zip"]
+    ):
         return None
 
     # 1. Detect Operating System
@@ -160,7 +170,9 @@ def parse_asset_target(filename):
         os_name = "linux"
     elif any(k in fn for k in ["apple", "darwin", "macos"]):
         os_name = "darwin"
-    elif any(k in fn for k in ["windows", "pc-windows", "win64", "win32"]) or ("-win-" in fn):
+    elif any(k in fn for k in ["windows", "pc-windows", "win64", "win32"]) or (
+        "-win-" in fn
+    ):
         os_name = "windows"
     elif "openbsd" in fn:
         os_name = "openbsd"
@@ -253,10 +265,13 @@ for a in assets:
             targets_found[target_key] = {
                 "url": url,
                 "sha256": sha,
-                "binaries": {pkg_name: f"bin/{bin_filename}"}
+                "binaries": {pkg_name: f"bin/{bin_filename}"},
             }
     else:
-        if any(asset_name.lower().endswith(ext) for ext in [".deb", ".rpm", ".apk", ".msi", ".dmg", ".pkg", ".zst"]):
+        if any(
+            asset_name.lower().endswith(ext)
+            for ext in [".deb", ".rpm", ".apk", ".msi", ".dmg", ".pkg", ".zst"]
+        ):
             asset_match_results[asset_name] = "INSTALLER"
         else:
             asset_match_results[asset_name] = "IGNORED"
@@ -298,7 +313,9 @@ homepage = repo_data.get("homepage") or ""
 author = repo_data.get("owner", {}).get("login") or repo.split("/")[0]
 repo_link = repo_data.get("html_url") or f"https://github.com/{repo}"
 license_info = (repo_data.get("license") or {}).get("spdx_id") or ""
-release_url = release.get("html_url") or f"https://github.com/{repo}/releases/tag/{raw_tag}"
+release_url = (
+    release.get("html_url") or f"https://github.com/{repo}/releases/tag/{raw_tag}"
+)
 
 pkg_entry = {
     "description": description,
@@ -308,7 +325,7 @@ pkg_entry = {
         version: {
             "targets": targets_found,
         }
-    }
+    },
 }
 if homepage:
     pkg_entry["homepage"] = homepage

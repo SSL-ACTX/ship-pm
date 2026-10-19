@@ -1,4 +1,4 @@
-# bin/ship
+#!/bin/sh
 # shellcheck disable=SC2030,SC2031,SC2329
 set -eu
 
@@ -32,8 +32,8 @@ SHIP_STATE_FILE="${SHIP_ROOT}/state.json"
 SHIP_LAST_CHECK_FILE="${SHIP_ROOT}/.last_update_check"
 SHIP_UPDATE_NOTICE_FILE="${SHIP_ROOT}/.update_available"
 
-SHIP_REGISTRY_URL="${SHIP_REGISTRY_URL:-https://raw.githubusercontent.com/SSL-ACTX/ship-pm/main/registry.json}"
-SHIP_UPDATE_URL="${SHIP_UPDATE_URL:-https://raw.githubusercontent.com/SSL-ACTX/ship-pm/main/bin/ship}"
+SHIP_REGISTRY_URL="${SHIP_REGISTRY_URL:-https://github.com/SSL-ACTX/ship-pm/raw/refs/heads/main/registry.json}"
+SHIP_UPDATE_URL="${SHIP_UPDATE_URL:-https://github.com/SSL-ACTX/ship-pm/raw/refs/heads/main/bin/ship}"
 SHIP_REGISTRY_CACHE="${SHIP_CACHE_DIR}/registry.json"
 
 # UI Engine & Styling Abstraction
@@ -212,13 +212,16 @@ calc_sha256() {
     shasum -a 256 "$_target_file" | awk '{print $1}'
   elif command -v python3 >/dev/null 2>&1; then
     python3 -c "
-import hashlib
+import hashlib, sys
 h = hashlib.sha256()
-with open('$_target_file', 'rb') as f:
-    while chunk := f.read(65536):
+with open(sys.argv[1], 'rb') as f:
+    while True:
+        chunk = f.read(65536)
+        if not chunk:
+            break
         h.update(chunk)
 print(h.hexdigest())
-"
+" "$_target_file"
   else
     die "No tool found to compute SHA-256 (requires sha256sum, shasum, or python3)."
   fi
@@ -865,7 +868,6 @@ print(state.get('installed', {}).get('$_target', {}).get('version', ''))
   esac
 }
 
-# --- apt/pkg-Style Strict Substring Search with Green Package Highlights ---
 cmd_search() {
   _query="${1:-}"
   ensure_registry
@@ -1335,16 +1337,23 @@ cmd_self_update() {
 
   if [ -n "$_git_root" ] && [ -d "$_git_root/.git" ]; then
     ui_status "Updating" "git repository at $_git_root..."
-    if git -C "$_git_root" pull --ff-only; then
-      ui_status "Finished" "updated ship via git"
+    if git -C "$_git_root" pull --ff-only 2>/dev/null; then
+      if [ -f "$_git_root/bin/ship" ]; then
+        cp "$_git_root/bin/ship" "$_self_path"
+        chmod +x "$_self_path"
+        ui_status "Finished" "updated ship from local git repository"
+        return 0
+      fi
+    fi
+    if [ -f "$_self_dir/bin/ship" ] && [ "$_self_dir/bin/ship" != "$_self_path" ]; then
+      cp "$_self_dir/bin/ship" "$_self_path"
       chmod +x "$_self_path"
+      ui_status "Finished" "updated ship from local workspace file"
       return 0
-    else
-      ui_warn "Git pull failed or has local modifications. Falling back to remote raw script update..."
     fi
   fi
 
-  _remote_url="${SHIP_UPDATE_URL:-https://raw.githubusercontent.com/SSL-ACTX/ship-pm/main/bin/ship}"
+  _remote_url="${SHIP_UPDATE_URL:-https://github.com/SSL-ACTX/ship-pm/raw/refs/heads/main/bin/ship}"
   ui_status "Fetching" "$_remote_url"
   _tmp_self="${SHIP_CACHE_DIR}/ship_update.tmp"
   mkdir -p "$SHIP_CACHE_DIR"
@@ -1377,7 +1386,7 @@ generate_installer() {
 # ship bootstrap installer
 set -eu
 
-SHIP_REPO_RAW="${SHIP_REPO_RAW:-https://raw.githubusercontent.com/SSL-ACTX/ship-pm/main/bin/ship}"
+SHIP_REPO_RAW="${SHIP_REPO_RAW:-https://github.com/SSL-ACTX/ship-pm/raw/refs/heads/main/bin/ship}"
 
 find_smart_bin_target() {
   if [ -n "${SHIP_BIN_TARGET:-}" ]; then
@@ -1621,4 +1630,3 @@ case "${1:-}" in
     die "Unknown command: $1. Run 'ship help' for usage."
     ;;
 esac
-
