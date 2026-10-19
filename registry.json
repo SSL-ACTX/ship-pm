@@ -308,6 +308,171 @@
         }
       },
       "license": "AGPL-3.0"
+    },
+    "crush": {
+      "description": "Glamourous agentic coding for all \ud83d\udc98",
+      "author": "charmbracelet",
+      "repository": "https://github.com/charmbracelet/crush",
+      "versions": {
+        "nightly": {
+          "targets": {
+            "aarch64-android": {
+              "url": "https://github.com/charmbracelet/crush/releases/download/nightly/crush_0.99.0-nightly_Android_arm64.tar.gz",
+              "sha256": "f130cfdaf6e9ebe17b499181a5cd87c6a498b1939938932c4ce2c609554f9725",
+              "binaries": {
+                "crush": "bin/crush"
+              }
+            },
+            "aarch64-apple-darwin": {
+              "url": "https://github.com/charmbracelet/crush/releases/download/nightly/crush_0.99.0-nightly_Darwin_arm64.tar.gz",
+              "sha256": "3d760757d2c789a2a27af270f25b09d1b5342efc0994118b0c71182e67f2b02e",
+              "binaries": {
+                "crush": "bin/crush"
+              }
+            },
+            "x86_64-apple-darwin": {
+              "url": "https://github.com/charmbracelet/crush/releases/download/nightly/crush_0.99.0-nightly_Darwin_x86_64.tar.gz",
+              "sha256": "90fd780c592e7e04001442864ab00005b5bd1aab00c7c22b7916a2b339f2159d",
+              "binaries": {
+                "crush": "bin/crush"
+              }
+            },
+            "aarch64-freebsd": {
+              "url": "https://github.com/charmbracelet/crush/releases/download/nightly/crush_0.99.0-nightly_Freebsd_arm64.tar.gz",
+              "sha256": "b18a7643daaf997a1a7e64a4200fbd089d35361356181118fee367470ddf13ee",
+              "binaries": {
+                "crush": "bin/crush"
+              }
+            },
+            "armv7-freebsd": {
+              "url": "https://github.com/charmbracelet/crush/releases/download/nightly/crush_0.99.0-nightly_Freebsd_armv7.tar.gz",
+              "sha256": "949485b3cbbdc43e1488f6dbf822adebe78c4dfd299f003fd5af9ed3c3b57181",
+              "binaries": {
+                "crush": "bin/crush"
+              }
+            },
+            "i686-freebsd": {
+              "url": "https://github.com/charmbracelet/crush/releases/download/nightly/crush_0.99.0-nightly_Freebsd_i386.tar.gz",
+              "sha256": "40e6920d9e9a13481272c7de39c9f99fa198d6460880b4743ff07503ef0a10ed",
+              "binaries": {
+                "crush": "bin/crush"
+              }
+            },
+            "x86_64-freebsd": {
+              "url": "https://github.com/charmbracelet/crush/releases/download/nightly/crush_0.99.0-nightly_Freebsd_x86_64.tar.gz",
+              "sha256": "4c7bc7ee15e3a4872eda83c5c2a5383e4e5b1a1a9f70142452a2b37fb0efeba8",
+              "binaries": {
+                "crush": "bin/crush"
+              }
+            },
+            "aarch64-linux-gnu": {
+              "url": "https://github.com/charmbracelet/crush/releases/download/nightly/crush_0.99.0-nightly_Linux_arm64.tar.gz",
+              "sha256": "4f702ca5ea47c5199a95235277681a777923246d718891a449286685cf84ffbc",
+              "binaries": {
+                "crush": "bin/crush"
+              }
+            },
+            "armv7-linux-gnu": {
+              "url": "https://github.com/charmbracelet/crush/releases/download/nightly/crush_0.99.0-nightly_Linux_armv7.tar.gz",
+              "sha256": "007187d1c5f6cb2cec2633be2ad0350933d96dbfc71c84d3448429a46bc403ab",
+              "binaries": {
+                "crush": "bin/crush"
+              }
+            },
+            "i686-linux-gnu": {
+              "url": "https://github.com/charmbracelet/crush/releases/download/nightly/crush_0.99.0-nightly_Linux_i386.tar.gz",
+              "sha256": "845400b5b049b9a8eaf30100ebb16a0002e424606f3b709e921a9ebfe1eac0d3",
+              "binaries": {
+                "crush": "bin/crush"
+              }
+            },
+            "x86_64-linux-gnu": {
+              "url": "https://github.com/charmbracelet/crush/releases/download/nightly/crush_0.99.0-nightly_Linux_x86_64.tar.gz",
+              "sha256": "0c14cbdc17a2b6a782bd35d7d041bbb6ab8cc03aed7654561dcefa67d3faaa4a",
+              "binaries": {
+                "crush": "bin/crush"
+              }
+            },
+            "aarch64-netbsd": {
+              "url": "https://github.com/charmbracelet/crush/releases/download/nightly/crush_0.99.0-nightly_Netbsd_arm64.tar.gz",
+              "sha256": "d51f6942d7ceea47bba6d121df9efaadf5b57c693e632ecbec6b17c63f4a743c",
+              "binaries": {
+                "crush": "bin/crush"
+              }
+            },
+            "armv7-netbsd": {
+              "url": "https://github.com/charmbracelet/crush/releases/download/nightly/crush_0.99.0-nightly_Netbsd_armv7.tar.gz",
+              "sha256": "772d2c6193896b2da6def723b406bf3397a2bfa736769211317e31f700176b52",
+              "binaries": {
+                "crush": "bin/crush"
+              }
+            },
+            "i686-netbsd": {
+              "url": "https://github.com/charmbracelet/crush/releases/download/nightly/crush_0.99.0-nightly_Netbsd_i386.tar.gz",
+              "sha256": "ac381c1f9b7aefae2328485a3cbee29affd4c66507e72f422121e9c684f6f5c7",
+              "binaries": {
+                "crush": "bin/crush"
+              }
+            },
+            "x86_64-netbsd": {
+              "url": "https://github.com/charmbracelet/crush/releases/download/nightly/crush_0.99.0-nightly_Netbsd_x86_64.tar.gz",
+              "sha256": "568bed22ab7b9adb13535a32d4568c6e4678c356a0474cc71da2b4b9787c4b22",
+              "binaries": {
+                "crush": "bin/crush"
+              }
+            },
+            "aarch64-openbsd": {
+              "url": "https://github.com/charmbracelet/crush/releases/download/nightly/crush_0.99.0-nightly_Openbsd_arm64.tar.gz",
+              "sha256": "cc3b8c0526787179d9ceb5648c2d886f365d305ce54083425b17fa9a99eb4d12",
+              "binaries": {
+                "crush": "bin/crush"
+              }
+            },
+            "armv7-openbsd": {
+              "url": "https://github.com/charmbracelet/crush/releases/download/nightly/crush_0.99.0-nightly_Openbsd_armv7.tar.gz",
+              "sha256": "7a45e94ef4a24b2c77274bef04e282c53782d37dca7154e90bf43bf316fd17d3",
+              "binaries": {
+                "crush": "bin/crush"
+              }
+            },
+            "i686-openbsd": {
+              "url": "https://github.com/charmbracelet/crush/releases/download/nightly/crush_0.99.0-nightly_Openbsd_i386.tar.gz",
+              "sha256": "c0ba635a7bd43390d6b6db7b5e284e440e4e4d81a238b60930e77942a089517b",
+              "binaries": {
+                "crush": "bin/crush"
+              }
+            },
+            "x86_64-openbsd": {
+              "url": "https://github.com/charmbracelet/crush/releases/download/nightly/crush_0.99.0-nightly_Openbsd_x86_64.tar.gz",
+              "sha256": "e31f974158edf89fa35dcaf5eb60d35e58f8158615e289ddddad57cc9a4920b7",
+              "binaries": {
+                "crush": "bin/crush"
+              }
+            },
+            "aarch64-pc-windows-gnu": {
+              "url": "https://github.com/charmbracelet/crush/releases/download/nightly/crush_0.99.0-nightly_Windows_arm64.zip",
+              "sha256": "6cb186a72c0e56401e5c8c5f3d77a0d372201a5378fa1d39e108ebd87ac12b9e",
+              "binaries": {
+                "crush": "bin/crush.exe"
+              }
+            },
+            "i686-pc-windows-gnu": {
+              "url": "https://github.com/charmbracelet/crush/releases/download/nightly/crush_0.99.0-nightly_Windows_i386.zip",
+              "sha256": "27f7c7a2dae83ef9f2fad88e9eab351611141e87adef112f3575951a73b85d9d",
+              "binaries": {
+                "crush": "bin/crush.exe"
+              }
+            },
+            "x86_64-pc-windows-gnu": {
+              "url": "https://github.com/charmbracelet/crush/releases/download/nightly/crush_0.99.0-nightly_Windows_x86_64.zip",
+              "sha256": "60820582a3282eaabd83afd852f032af2423623d6d83f64022a911194c40ce7f",
+              "binaries": {
+                "crush": "bin/crush.exe"
+              }
+            }
+          }
+        }
+      }
     }
   }
 }
