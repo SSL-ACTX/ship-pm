@@ -1,0 +1,61 @@
+{
+  "description": "The Z3 Theorem Prover",
+  "author": "Z3Prover",
+  "repository": "https://github.com/Z3Prover/z3",
+  "versions": {
+    "5.3.1": {
+      "channel": "stable",
+      "targets": {
+        "aarch64-linux-gnu": {
+          "url": "https://github.com/Z3Prover/z3/releases/download/z3-5.3.1/z3-5.3.1-arm64-glibc-2.38.zip",
+          "sha256": "73195cee08f4a1a53a605b65845268e0ac999666cb8f4e604d2260e0c9c60b5a",
+          "binaries": {
+            "z3": "bin/z3"
+          }
+        },
+        "aarch64-apple-darwin": {
+          "url": "https://github.com/Z3Prover/z3/releases/download/z3-5.3.1/z3-5.3.1-arm64-osx-13.3.zip",
+          "sha256": "0de02438052952153aab5d1361be4d61b6d226337440356c054d403c959da86b",
+          "binaries": {
+            "z3": "bin/z3"
+          }
+        },
+        "aarch64-pc-windows-gnu": {
+          "url": "https://github.com/Z3Prover/z3/releases/download/z3-5.3.1/z3-5.3.1-arm64-win.zip",
+          "sha256": "985661b9407fda5a4d805402493d1177e8564b0e589e5fb78d3de205695e3ca0",
+          "binaries": {
+            "z3": "bin/z3.exe"
+          }
+        },
+        "x86_64-linux-gnu": {
+          "url": "https://github.com/Z3Prover/z3/releases/download/z3-5.3.1/z3-5.3.1-x64-glibc-2.39.zip",
+          "sha256": "acca9625e8cc8edeb9647b653a1bd696544ddeb5d1c2970a4576734a0c175b40",
+          "binaries": {
+            "z3": "bin/z3"
+          }
+        },
+        "x86_64-apple-darwin": {
+          "url": "https://github.com/Z3Prover/z3/releases/download/z3-5.3.1/z3-5.3.1-x64-osx-13.3.zip",
+          "sha256": "221a03688d6b08814a90c78b42d16d38aa6355dacd0a5253665d42c4d4361230",
+          "binaries": {
+            "z3": "bin/z3"
+          }
+        },
+        "x86_64-pc-windows-gnu": {
+          "url": "https://github.com/Z3Prover/z3/releases/download/z3-5.3.1/z3-5.3.1-x64-win.zip",
+          "sha256": "014e2705e53609bcf46718d7c29426e7d0b98512ed00b8f794e3304869a5fd8b",
+          "binaries": {
+            "z3": "bin/z3.exe"
+          }
+        },
+        "i686-pc-windows-gnu": {
+          "url": "https://github.com/Z3Prover/z3/releases/download/z3-5.3.1/z3-5.3.1-x86-win.zip",
+          "sha256": "6df7343e798ad39c3ed6fbefe662bafaeabca448b742509d4db7ca2f2f5a479f",
+          "binaries": {
+            "z3": "bin/z3.exe"
+          }
+        }
+      }
+    }
+  }
+}
