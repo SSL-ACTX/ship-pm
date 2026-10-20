@@ -36,9 +36,7 @@ class TermuxGlibcPatcher(BinaryPatcher):
                     f.seek(e_phoff)
                     ph_data = f.read(e_phentsize * e_phnum)
                     for i in range(e_phnum):
-                        p_type = struct.unpack_from(
-                            "<I", ph_data, i * e_phentsize
-                        )[0]
+                        p_type = struct.unpack_from("<I", ph_data, i * e_phentsize)[0]
                         if p_type == 3:  # PT_INTERP
                             return True
                 # 32-bit ELF
@@ -49,9 +47,7 @@ class TermuxGlibcPatcher(BinaryPatcher):
                     f.seek(e_phoff)
                     ph_data = f.read(e_phentsize * e_phnum)
                     for i in range(e_phnum):
-                        p_type = struct.unpack_from(
-                            "<I", ph_data, i * e_phentsize
-                        )[0]
+                        p_type = struct.unpack_from("<I", ph_data, i * e_phentsize)[0]
                         if p_type == 3:  # PT_INTERP
                             return True
         except (OSError, struct.error):

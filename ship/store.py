@@ -30,20 +30,83 @@ from ship.registry import calc_sha256, fetch_file, get_pkg_manifest
 from ship.ui import c, die, status, warn
 from ship.version import classify_channel, select_default_version
 
+NON_EXEC_EXTENSIONS = (
+    ".so",
+    ".dylib",
+    ".dll",
+    ".a",
+    ".lib",
+    ".rlib",
+    ".o",
+    ".obj",
+    ".export",
+    ".h",
+    ".hpp",
+    ".c",
+    ".cpp",
+    ".rs",
+    ".py",
+    ".pyc",
+    ".pyo",
+    ".lean",
+    ".olean",
+    ".ilean",
+    ".json",
+    ".yaml",
+    ".yml",
+    ".toml",
+    ".xml",
+    ".txt",
+    ".md",
+    ".lock",
+    ".log",
+)
 
-def is_executable_binary(file_path: Path) -> bool:
+
+def is_cli_executable(file_path: Path) -> bool:
+    """Strictly checks if a file is a standalone executable CLI binary (not a library or object file)."""
+    name = file_path.name.lower()
+
+    if any(name.endswith(ext) or f"{ext}." in name for ext in NON_EXEC_EXTENSIONS):
+        return False
+
+    if name.startswith("lib") and (".so" in name or ".dylib" in name):
+        return False
+
     try:
         with open(file_path, "rb") as f:
-            magic = f.read(4)
-            return magic.startswith((b"\x7fELF", b"#!", b"MZ")) or magic in (
+            magic = f.read(18)
+            if not magic:
+                return False
+
+            if magic.startswith(b"#!"):
+                return True
+
+            if magic.startswith(b"MZ"):
+                return True
+
+            if magic[:4] in (
                 b"\xfe\xed\xfa\xce",
                 b"\xfe\xed\xfa\xcf",
                 b"\xce\xfa\xed\xfe",
                 b"\xcf\xfa\xed\xfe",
                 b"\xca\xfe\xba\xbe",
-            )
+            ):
+                return True
+
+            if magic.startswith(b"\x7fELF"):
+                # Byte 16: e_type (2 bytes, little-endian)
+                # ET_REL = 1 (Relocatable object / export file) -> NOT an executable binary
+                if len(magic) >= 18:
+                    e_type = magic[16] | (magic[17] << 8)
+                    if e_type == 1:
+                        return False
+                return True
+
     except OSError:
         return False
+
+    return False
 
 
 def extract_archive(
@@ -155,7 +218,6 @@ def install_package(
     if not versions:
         die(f"No versions found for '{pkg_name}'")
 
-    # Channel-aware default version resolution
     if not version:
         version = select_default_version(versions)
         if not version:
@@ -263,16 +325,18 @@ def install_package(
             else:
                 for root, _, files in os.walk(install_dir):
                     if symlink_name in files:
-                        target = Path(root) / symlink_name
-                        break
+                        p = Path(root) / symlink_name
+                        if is_cli_executable(p):
+                            target = p
+                            break
 
-        # Fallback: single executable binary in install_dir
+        # Fallback: find any single CLI executable in install_dir
         if not target.is_file():
             execs = [
                 Path(root) / f
                 for root, _, files in os.walk(install_dir)
                 for f in files
-                if is_executable_binary(Path(root) / f)
+                if is_cli_executable(Path(root) / f)
             ]
             if len(execs) == 1:
                 target = execs[0]
@@ -283,15 +347,13 @@ def install_package(
 
         target.chmod(0o755)
 
-        # Apply extensible patchers & runners (Termux Glibc, QEMU runner, etc.)
+        # Apply extensible patchers & runners
         patched_target = apply_patchers(target, matched_key)
 
-        # Internal PM link
         internal_link = SHIP_INTERNAL_BIN / symlink_name
         internal_link.unlink(missing_ok=True)
         internal_link.symlink_to(patched_target)
 
-        # Public bin link
         pub_link = SHIP_BIN_DIR / symlink_name
         if pub_link.is_symlink() or pub_link.exists():
             if not (

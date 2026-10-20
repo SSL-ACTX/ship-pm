@@ -24,7 +24,7 @@ from ship.config import (
 from ship.patchers import apply_patchers
 from ship.platform import detect_target_keys
 from ship.registry import calc_sha256, fetch_file
-from ship.store import clean_symlinks, extract_archive, is_executable_binary
+from ship.store import clean_symlinks, extract_archive, is_cli_executable
 from ship.ui import c, die, status, warn
 
 SIG_EXTENSIONS = (
@@ -51,6 +51,16 @@ SKIP_EXTENSIONS = (
     ".pkg",
     ".zst",
     ".appimage",
+)
+BUILD_ARTIFACT_PATTERNS = (
+    "lean-build-",
+    "-debug.",
+    "-dbg.",
+    "-symbols.",
+    "-sdk.",
+    "-source.",
+    "-src.",
+    "-sources.",
 )
 
 
@@ -132,6 +142,8 @@ def install_from_github(
     for a in assets:
         name = a.get("name", "").lower()
         if any(name.endswith(ext) for ext in SIG_EXTENSIONS) or any(name.endswith(ext) for ext in SKIP_EXTENSIONS):
+            continue
+        if any(k in name for k in BUILD_ARTIFACT_PATTERNS):
             continue
         if any(k in name for k in ("sha256", "checksum", "hashes", "sha256sum")):
             checksum_assets.append(a)
@@ -233,22 +245,27 @@ def install_from_github(
     clean_symlinks(repo_name)
     status("Linking", "discovering and linking binaries...")
 
+    # Strict discovery: search bin/ first; if not present, filter root strictly
     execs: list[Path] = []
     for root, _, files in os.walk(install_dir):
-        if os.path.basename(root) == "bin":
+        if os.path.basename(root) in ("bin", "usr/bin"):
             for f in files:
                 p = Path(root) / f
-                if is_executable_binary(p):
-                    execs.append(p)
-    if not execs:
-        for root, _, files in os.walk(install_dir):
-            for f in files:
-                p = Path(root) / f
-                if is_executable_binary(p):
+                if is_cli_executable(p):
                     execs.append(p)
 
     if not execs:
-        die(f"Could not find any executable binaries in {asset_name}.")
+        # Search shallow directory structure, strictly rejecting libraries and build artifacts
+        for root, dirs, files in os.walk(install_dir):
+            # Do not traverse into lib directories or internal build caches
+            dirs[:] = [d for d in dirs if d not in ("lib", "lib64", "share", "include", "build")]
+            for f in files:
+                p = Path(root) / f
+                if is_cli_executable(p):
+                    execs.append(p)
+
+    if not execs:
+        die(f"Could not find any executable CLI binaries in {asset_name}.")
 
     linked = []
     for exe in execs:

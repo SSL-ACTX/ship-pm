@@ -39,8 +39,7 @@ from ship.version import (
 def clean_repo_slug(raw_input: str) -> str:
     cleaned = re.sub(r"^https?://github\.com/", "", raw_input).strip()
     cleaned = cleaned.rstrip("/")
-    if cleaned.endswith(".git"):
-        cleaned = cleaned[:-4]
+    cleaned = cleaned.removesuffix(".git")
     return cleaned.rstrip("/")
 
 
@@ -67,7 +66,11 @@ def cmd_list() -> None:
     for name, data in sorted(installed.items()):
         ver = "v" + data.get("version", "unknown")
         channel = data.get("channel") or classify_channel(data.get("version", ""))
-        ver_color = "1;32" if channel == "stable" else ("1;33" if channel == "prerelease" else "1;35")
+        ver_color = (
+            "1;32"
+            if channel == "stable"
+            else ("1;33" if channel == "prerelease" else "1;35")
+        )
 
         tgt = data.get("target_key", "universal")
         inst_at = data.get("installed_at", "")[:10]
@@ -78,9 +81,7 @@ def cmd_list() -> None:
         col_dat = pad_visible(inst_at, 12)
         print(f"  {col_pkg} {col_ver} {col_tgt} {col_dat}")
 
-    print(
-        f"\n{c('Finished', '1;32')} {len(installed)} package(s) tracked in store.\n"
-    )
+    print(f"\n{c('Finished', '1;32')} {len(installed)} package(s) tracked in store.\n")
 
 
 def cmd_update(target: str = "") -> None:
@@ -116,7 +117,9 @@ def cmd_update(target: str = "") -> None:
         versions = manifest.get("versions", {})
         if curr_channel == "nightly":
             nightlies = [v for v in versions if classify_channel(v) == "nightly"]
-            latest_ver = nightlies[-1] if nightlies else select_default_version(versions)
+            latest_ver = (
+                nightlies[-1] if nightlies else select_default_version(versions)
+            )
         else:
             latest_ver = select_default_version(versions)
 
@@ -334,9 +337,7 @@ def cmd_info(pkg_name: str) -> None:
 
     default_ver = select_default_version(all_versions)
     if default_ver:
-        targets = (
-            manifest.get("versions", {}).get(default_ver, {}).get("targets", {})
-        )
+        targets = manifest.get("versions", {}).get(default_ver, {}).get("targets", {})
         if targets:
             print(f"\n  {c(f'Targets for default (v{default_ver}):', '1')}")
             for t in targets:
@@ -350,9 +351,7 @@ def cmd_publish(repo: str, tag: str = "latest") -> None:
     if "/" not in repo:
         die("Invalid repository format. Expected 'owner/repo'.")
 
-    status(
-        "Publishing", f"{repo} (tag: {tag}) to central registry bridge..."
-    )
+    status("Publishing", f"{repo} (tag: {tag}) to central registry bridge...")
     payload = json.dumps({"repo": repo, "tag": tag}).encode("utf-8")
     req = urllib.request.Request(
         SHIP_BRIDGE_URL,
@@ -386,31 +385,31 @@ def cmd_clean() -> None:
 
 
 def print_custom_help() -> None:
-    print(f"""{c('ship', '1;32')} {__version__}
+    print(f"""{c("ship", "1;32")} {__version__}
 Agnostic shell package orchestrator for pre-built binaries.
 
-{c('USAGE:', '1')}
-    {c('ship', '1;32')} [OPTIONS] <COMMAND>
+{c("USAGE:", "1")}
+    {c("ship", "1;32")} [OPTIONS] <COMMAND>
 
-{c('COMMANDS:', '1')}
-    {c('install, i', '1;32')}         Install from registry or GitHub repository
-    {c('remove, rm', '1;32')}         Uninstall a package and remove binary symlinks
-    {c('update, u', '1;32')}          Update packages or registry index
-    {c('check-upstream', '1;32')}     Check if upstream releases are newer than registry
-    {c('search', '1;32')}             Search registry for packages
-    {c('info', '1;32')}               Display details and targets for a package
-    {c('list, ls', '1;32')}           List installed packages in store
-    {c('publish', '1;32')}            Submit a release to the central registry
-    {c('self-update', '1;32')}        Upgrade ship to the latest version
-    {c('clean', '1;32')}              Purge download caches and backups
+{c("COMMANDS:", "1")}
+    {c("install, i", "1;32")}         Install from registry or GitHub repository
+    {c("remove, rm", "1;32")}         Uninstall a package and remove binary symlinks
+    {c("update, u", "1;32")}          Update packages or registry index
+    {c("check-upstream", "1;32")}     Check if upstream releases are newer than registry
+    {c("search", "1;32")}             Search registry for packages
+    {c("info", "1;32")}               Display details and targets for a package
+    {c("list, ls", "1;32")}           List installed packages in store
+    {c("publish", "1;32")}            Submit a release to the central registry
+    {c("self-update", "1;32")}        Upgrade ship to the latest version
+    {c("clean", "1;32")}              Purge download caches and backups
 
-{c('OPTIONS:', '1')}
-    {c('-t, --target', '1;32')} <TRIPLE>       Override target platform architecture
-    {c('--select-target', '1;32')}             Interactively choose target platform
-    {c('-V, --version', '1;32')}               Print version info and exit
-    {c('-h, --help', '1;32')}                  Print help information
+{c("OPTIONS:", "1")}
+    {c("-t, --target", "1;32")} <TRIPLE>       Override target platform architecture
+    {c("--select-target", "1;32")}             Interactively choose target platform
+    {c("-V, --version", "1;32")}               Print version info and exit
+    {c("-h, --help", "1;32")}                  Print help information
 
-Run '{c('ship <COMMAND> --help', '1')}' for more information on a specific command.
+Run '{c("ship <COMMAND> --help", "1")}' for more information on a specific command.
 """)
 
 
@@ -453,7 +452,9 @@ def main() -> None:
 
     if cmd in ("install", "i"):
         if not sub_args:
-            die("Usage: ship install <package> [version] OR ship install <owner/repo> [tag]")
+            die(
+                "Usage: ship install <package> [version] OR ship install <owner/repo> [tag]"
+            )
         pkg_spec = sub_args[0]
         ver = sub_args[1] if len(sub_args) > 1 else None
 

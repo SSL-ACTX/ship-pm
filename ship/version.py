@@ -10,7 +10,20 @@ def classify_channel(version_str: str) -> str:
     v = version_str.lower().strip()
     if "nightly" in v or "master" in v or "main" in v or "latest-build" in v:
         return "nightly"
-    if any(pre in v for pre in ("-alpha", "-beta", "-rc", "-dev", "-preview", "-pre", "alpha.", "beta.", "rc.")):
+    if any(
+        pre in v
+        for pre in (
+            "-alpha",
+            "-beta",
+            "-rc",
+            "-dev",
+            "-preview",
+            "-pre",
+            "alpha.",
+            "beta.",
+            "rc.",
+        )
+    ):
         return "prerelease"
     return "stable"
 

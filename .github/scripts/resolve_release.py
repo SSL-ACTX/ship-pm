@@ -39,7 +39,7 @@ def fetch_json(url):
 release = None
 is_explicit_tag = bool(tag and tag not in ("latest", "stable"))
 
-# 1. If an explicit tag was requested (e.g. 'v4.13.0', 'nightly', 'v0.1.0-alpha.1')
+# 1. Explicit tag requested
 if is_explicit_tag:
     clean_t = tag.lstrip("v")
     candidate_urls = [
@@ -65,7 +65,7 @@ if is_explicit_tag:
             print(f"Skipping candidate {url}: {e}")
             continue
 
-# 2. If 'latest' or 'stable' requested, prioritize official stable /releases/latest endpoint
+# 2. Stable / latest release requested
 if not release and not is_explicit_tag:
     try:
         print(f"Querying official latest release for {repo}...")
@@ -82,7 +82,7 @@ if not release and not is_explicit_tag:
     ) as e:
         print(f"Notice: /releases/latest not available ({e}), falling back to releases list...")
 
-# 3. Fallback to /releases list with channel precedence (Stable > Pre-release > Nightly)
+# 3. Fallback to /releases with channel precedence (Stable > Pre-release > Nightly)
 if not release:
     try:
         print(f"Querying releases list for {repo}...")
@@ -225,6 +225,16 @@ SKIP_EXTENSIONS = (
     ".zst",
     ".appimage",
 )
+BUILD_ARTIFACT_PATTERNS = (
+    "lean-build-",
+    "-debug.",
+    "-dbg.",
+    "-symbols.",
+    "-sdk.",
+    "-source.",
+    "-src.",
+    "-sources.",
+)
 
 for asset in assets:
     name = asset.get("name", "").lower()
@@ -263,6 +273,8 @@ def parse_asset_target(filename):
     if any(fn.endswith(ext) for ext in SIG_EXTENSIONS):
         return None
     if any(fn.endswith(ext) for ext in SKIP_EXTENSIONS):
+        return None
+    if any(k in fn for k in BUILD_ARTIFACT_PATTERNS):
         return None
     if any(k in fn for k in ["doc.zip", "docs.zip", "-doc.", "-docs."]):
         return None
@@ -419,7 +431,9 @@ for a in assets:
                 "binaries": {pkg_name: rel_binary_path},
             }
     else:
-        if any(asset_name.lower().endswith(ext) for ext in SKIP_EXTENSIONS):
+        if any(asset_name.lower().endswith(ext) for ext in SKIP_EXTENSIONS) or any(
+            k in asset_name.lower() for k in BUILD_ARTIFACT_PATTERNS
+        ):
             asset_match_results[asset_name] = "LANGUAGE/INSTALLER"
         else:
             asset_match_results[asset_name] = "IGNORED"
