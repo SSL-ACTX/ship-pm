@@ -20,7 +20,25 @@ if not repo:
     print("Usage: python3 resolve_release.py <owner/repo> [tag] [--dry-run]")
     sys.exit(1)
 
-pkg_name = repo.split("/")[-1].lower()
+# Smart generic repository naming resolution
+owner = repo.split("/")[0].lower()
+raw_repo_name = repo.split("/")[-1].lower()
+GENERIC_NAMES = {
+    "compiler",
+    "cli",
+    "v1",
+    "v2",
+    "v3",
+    "core",
+    "tooling",
+    "app",
+    "bin",
+    "binary",
+    "binaries",
+    "releases",
+    "cmd",
+}
+pkg_name = owner if raw_repo_name in GENERIC_NAMES else raw_repo_name
 
 headers = {
     "Accept": "application/vnd.github+json",
@@ -39,7 +57,6 @@ def fetch_json(url):
 release = None
 is_explicit_tag = bool(tag and tag not in ("latest", "stable"))
 
-# 1. Explicit tag requested
 if is_explicit_tag:
     clean_t = tag.lstrip("v")
     candidate_urls = [
@@ -65,30 +82,21 @@ if is_explicit_tag:
             print(f"Skipping candidate {url}: {e}")
             continue
 
-# 2. Stable / latest release requested
 if not release and not is_explicit_tag:
     try:
         print(f"Querying official latest release for {repo}...")
-        latest_cand = fetch_json(
-            f"https://api.github.com/repos/{repo}/releases/latest"
-        )
+        latest_cand = fetch_json(f"https://api.github.com/repos/{repo}/releases/latest")
         if latest_cand and "assets" in latest_cand:
             release = latest_cand
-    except (
-        urllib.error.URLError,
-        TimeoutError,
-        json.JSONDecodeError,
-        OSError,
-    ) as e:
-        print(f"Notice: /releases/latest not available ({e}), falling back to releases list...")
+    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError) as e:
+        print(
+            f"Notice: /releases/latest not available ({e}), falling back to releases list..."
+        )
 
-# 3. Fallback to /releases with channel precedence (Stable > Pre-release > Nightly)
 if not release:
     try:
         print(f"Querying releases list for {repo}...")
-        releases_list = fetch_json(
-            f"https://api.github.com/repos/{repo}/releases"
-        )
+        releases_list = fetch_json(f"https://api.github.com/repos/{repo}/releases")
         if isinstance(releases_list, list) and releases_list:
             if is_explicit_tag:
                 clean_target = tag.lower().lstrip("v")
@@ -99,12 +107,16 @@ if not release:
                         break
             else:
                 stables = [
-                    r for r in releases_list
-                    if not r.get("prerelease", False) and "nightly" not in str(r.get("tag_name", "")).lower()
+                    r
+                    for r in releases_list
+                    if not r.get("prerelease", False)
+                    and "nightly" not in str(r.get("tag_name", "")).lower()
                 ]
                 prereleases = [
-                    r for r in releases_list
-                    if r.get("prerelease", False) and "nightly" not in str(r.get("tag_name", "")).lower()
+                    r
+                    for r in releases_list
+                    if r.get("prerelease", False)
+                    and "nightly" not in str(r.get("tag_name", "")).lower()
                 ]
 
                 if stables:
@@ -113,12 +125,7 @@ if not release:
                     release = prereleases[0]
                 else:
                     release = releases_list[0]
-    except (
-        urllib.error.URLError,
-        TimeoutError,
-        json.JSONDecodeError,
-        OSError,
-    ) as e:
+    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError) as e:
         print(f"Warning: Failed to fetch releases list: {e}")
 
 if not release:
@@ -144,20 +151,18 @@ version = raw_tag
 
 for prefix in (f"{pkg_name}-", f"{pkg_name}_", f"{pkg_name}v"):
     if version.lower().startswith(prefix):
-        version = version[len(prefix):]
+        version = version[len(prefix) :]
         break
 
 version = version.lstrip("v")
 assets = release.get("assets", [])
 
-# Determine release channel
 is_prerelease = release.get("prerelease", False)
 tag_lower = raw_tag.lower()
 if "nightly" in tag_lower:
     channel = "nightly"
 elif is_prerelease or any(
-    pre in tag_lower
-    for pre in ("-alpha", "-beta", "-rc", "-dev", "-preview", "-pre")
+    pre in tag_lower for pre in ("-alpha", "-beta", "-rc", "-dev", "-preview", "-pre")
 ):
     channel = "prerelease"
 else:
@@ -177,9 +182,7 @@ if os.path.exists(pkg_file):
         existing_pkg_data = json.load(f)
 
 if not dry_run and version in existing_pkg_data.get("versions", {}):
-    print(
-        f"Package {pkg_name}@{version} already exists in {pkg_file}. Skipping PR."
-    )
+    print(f"Package {pkg_name}@{version} already exists in {pkg_file}. Skipping PR.")
     gh_out = os.environ.get("GITHUB_OUTPUT")
     if gh_out:
         with open(gh_out, "a") as f:
@@ -190,15 +193,7 @@ checksum_map = {}
 checksum_asset_names = set()
 signature_asset_names = set()
 
-SIG_EXTENSIONS = (
-    ".sig",
-    ".asc",
-    ".minisig",
-    ".pem",
-    ".cert",
-    ".crt",
-    ".sbom",
-)
+SIG_EXTENSIONS = (".sig", ".asc", ".minisig", ".pem", ".cert", ".crt", ".sbom")
 ARCHIVE_EXTENSIONS = (
     ".tar.gz",
     ".tgz",
@@ -208,6 +203,9 @@ ARCHIVE_EXTENSIONS = (
     ".tbz2",
     ".zip",
     ".tar",
+    ".gz",
+    ".bz2",
+    ".xz",
 )
 SKIP_EXTENSIONS = (
     ".whl",
@@ -234,6 +232,8 @@ BUILD_ARTIFACT_PATTERNS = (
     "-source.",
     "-src.",
     "-sources.",
+    "installer",
+    "setup",
 )
 
 for asset in assets:
@@ -260,9 +260,7 @@ for asset in assets:
                         ):
                             checksum_map[os.path.basename(fn)] = h.lower()
         except (urllib.error.URLError, TimeoutError, OSError) as e:
-            print(
-                f"Warning: Failed to parse checksum file {asset['name']}: {e}"
-            )
+            print(f"Warning: Failed to parse checksum file {asset['name']}: {e}")
     elif any(name.endswith(ext) for ext in SIG_EXTENSIONS):
         signature_asset_names.add(asset["name"])
 
@@ -287,16 +285,14 @@ def parse_asset_target(filename):
             is_archive = True
             break
 
-    if clean_name.endswith(".exe"):
-        clean_name = clean_name[:-4]
+    clean_name = clean_name.removesuffix(".exe")
 
     # 1. Detect Operating System
-    if any(
-        k in clean_name
-        for k in ["linux", "glibc", "manylinux", "musl", "alpine"]
-    ):
+    if any(k in clean_name for k in ["linux", "glibc", "manylinux", "musl", "alpine"]):
         os_name = "linux"
-    elif any(k in clean_name for k in ["apple", "darwin", "macos", "osx"]):
+    elif any(
+        k in clean_name for k in ["apple", "darwin", "macos", "osx", "mac-", "-mac"]
+    ):
         os_name = "darwin"
     elif (
         any(
@@ -312,7 +308,7 @@ def parse_asset_target(filename):
                 "_win.",
             ]
         )
-        or clean_name.endswith(("-win", "_win"))
+        or clean_name.endswith(("-win", "_win", "windows"))
         or fn.endswith(".exe")
     ):
         os_name = "windows"
@@ -330,9 +326,12 @@ def parse_asset_target(filename):
     # 2. Detect Architecture
     if any(k in clean_name for k in ["x86_64", "amd64", "x64"]):
         arch = "x86_64"
-    elif any(k in clean_name for k in ["aarch64", "arm64"]):
+    elif any(k in clean_name for k in ["aarch64", "arm64", "mac-arm", "-mac-arm"]):
         arch = "aarch64"
-    elif any(k in clean_name for k in ["armv7", "armhf", "arm32", "arm-unknown"]):
+    elif any(
+        k in clean_name
+        for k in ["armv7", "armhf", "arm32", "arm-unknown", "linux-arm", "-linux-arm"]
+    ):
         arch = "armv7"
     elif any(k in clean_name for k in ["armv6", "armel"]):
         arch = "armv6"
@@ -343,8 +342,7 @@ def parse_asset_target(filename):
     elif "s390x" in clean_name:
         arch = "s390x"
     elif any(
-        k in clean_name
-        for k in ["i686", "i386", "386", "-x86-", "-x86.", "-x86"]
+        k in clean_name for k in ["i686", "i386", "386", "-x86-", "-x86.", "-x86"]
     ):
         arch = "i686"
     else:
@@ -366,9 +364,7 @@ def parse_asset_target(filename):
     elif os_name == "darwin":
         target_triple = f"{arch}-apple-darwin"
     elif os_name == "windows":
-        target_triple = (
-            f"{arch}-pc-windows-{abi if abi in ('msvc', 'gnu') else 'msvc'}"
-        )
+        target_triple = f"{arch}-pc-windows-{abi if abi in ('msvc', 'gnu') else 'msvc'}"
     elif os_name == "openbsd":
         target_triple = f"{arch}-openbsd"
     elif os_name == "freebsd":
@@ -438,7 +434,6 @@ for a in assets:
         else:
             asset_match_results[asset_name] = "IGNORED"
 
-# Detailed Asset Inspection Report
 if dry_run:
     print("\n================ ASSET INSPECTION REPORT ================")
     print(f"Total Assets in Release: {len(assets)}")
@@ -470,11 +465,7 @@ if not targets_found:
 
 description = (
     repo_data.get("description")
-    or (
-        release.get("body", "").splitlines()[0][:120]
-        if release.get("body")
-        else None
-    )
+    or (release.get("body", "").splitlines()[0][:120] if release.get("body") else None)
     or f"Pre-built binaries for {repo}"
 )
 homepage = repo_data.get("homepage") or ""
@@ -482,8 +473,7 @@ author = repo_data.get("owner", {}).get("login") or repo.split("/")[0]
 repo_link = repo_data.get("html_url") or f"https://github.com/{repo}"
 license_info = (repo_data.get("license") or {}).get("spdx_id") or ""
 release_url = (
-    release.get("html_url")
-    or f"https://github.com/{repo}/releases/tag/{raw_tag}"
+    release.get("html_url") or f"https://github.com/{repo}/releases/tag/{raw_tag}"
 )
 
 version_entry = {
@@ -511,11 +501,7 @@ else:
     pkg_entry.setdefault("repository", repo_link)
     if homepage and "homepage" not in pkg_entry:
         pkg_entry["homepage"] = homepage
-    if (
-        license_info
-        and license_info != "NOASSERTION"
-        and "license" not in pkg_entry
-    ):
+    if license_info and license_info != "NOASSERTION" and "license" not in pkg_entry:
         pkg_entry["license"] = license_info
     pkg_entry.setdefault("versions", {})[version] = version_entry
 

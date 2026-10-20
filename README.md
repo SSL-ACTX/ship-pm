@@ -28,6 +28,14 @@ ship rollback <binary>
 ship clean
 ```
 
+## Architecture
+
+Ship core resolves versions and targets, downloads and verifies archives,
+extracts package files, tracks installed versions, and links declared commands.
+Shared operating environment compatibility lives in `ship/patchers/`.
+Exceptional package-specific install or runtime behavior lives in
+`ship/patches/<package>.py`; see [Package patches](docs/package-patches.md).
+
 ## Environment Variables
 
 | Variable | Description | Default |

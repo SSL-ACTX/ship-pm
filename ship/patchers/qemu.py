@@ -45,6 +45,15 @@ class QemuRunnerPatcher(BinaryPatcher):
         return target_arch != host_arch
 
     def should_patch(self, binary_path: Path, target_key: str) -> bool:
+        # Another platform patcher may already have replaced the ELF with a
+        # shell launcher. Never wrap that launcher in a second QEMU process.
+        try:
+            with open(binary_path, "rb") as binary:
+                if binary.read(4) != b"\x7fELF":
+                    return False
+        except OSError:
+            return False
+
         if not self.is_foreign_target(target_key):
             return False
 

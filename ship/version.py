@@ -64,10 +64,10 @@ def select_default_version(versions: dict | list) -> str | None:
 
     stables = [v for v in v_list if classify_channel(v) == "stable"]
     if stables:
-        return sorted(stables, key=semver_sort_key)[-1]
+        return max(stables, key=semver_sort_key)
 
     prereleases = [v for v in v_list if classify_channel(v) == "prerelease"]
     if prereleases:
-        return sorted(prereleases, key=semver_sort_key)[-1]
+        return max(prereleases, key=semver_sort_key)
 
-    return sorted(v_list, key=semver_sort_key)[-1]
+    return max(v_list, key=semver_sort_key)
