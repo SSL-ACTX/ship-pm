@@ -67,8 +67,7 @@ BUILD_ARTIFACT_PATTERNS = (
 def parse_repo_slug(raw_input: str) -> tuple[str, str]:
     slug = re.sub(r"^https?://github\.com/", "", raw_input).strip()
     slug = slug.rstrip("/")
-    if slug.endswith(".git"):
-        slug = slug[:-4]
+    slug = slug.removesuffix(".git")
     slug = slug.rstrip("/")
     if "/" not in slug:
         die(f"Invalid repository format: '{raw_input}'. Expected 'owner/repo'.")
@@ -133,7 +132,9 @@ def install_from_github(
     assets = release.get("assets", [])
 
     if not assets:
-        die(f"No downloadable assets found in release {raw_version} of {owner}/{repo_name}.")
+        die(
+            f"No downloadable assets found in release {raw_version} of {owner}/{repo_name}."
+        )
 
     target_keys = detect_target_keys(target_override)
     candidate_assets: list[tuple[dict, str, int]] = []
@@ -141,7 +142,9 @@ def install_from_github(
 
     for a in assets:
         name = a.get("name", "").lower()
-        if any(name.endswith(ext) for ext in SIG_EXTENSIONS) or any(name.endswith(ext) for ext in SKIP_EXTENSIONS):
+        if any(name.endswith(ext) for ext in SIG_EXTENSIONS) or any(
+            name.endswith(ext) for ext in SKIP_EXTENSIONS
+        ):
             continue
         if any(k in name for k in BUILD_ARTIFACT_PATTERNS):
             continue
@@ -154,29 +157,76 @@ def install_from_github(
         for idx, target in enumerate(target_keys):
             t_arch, t_os, *t_abi = target.split("-")
             matches_arch = (
-                (t_arch in ("aarch64", "arm64") and any(x in name for x in ("aarch64", "arm64")))
-                or (t_arch in ("x86_64", "amd64") and any(x in name for x in ("x86_64", "amd64", "x64")))
-                or (t_arch in ("armv7", "armhf") and any(x in name for x in ("armv7", "armhf", "arm32")))
+                (
+                    t_arch in ("aarch64", "arm64")
+                    and any(x in name for x in ("aarch64", "arm64"))
+                )
+                or (
+                    t_arch in ("x86_64", "amd64")
+                    and any(x in name for x in ("x86_64", "amd64", "x64"))
+                )
+                or (
+                    t_arch in ("armv7", "armhf")
+                    and any(x in name for x in ("armv7", "armhf", "arm32"))
+                )
                 or (t_arch == "riscv64" and "riscv64" in name)
-                or (t_arch in ("i686", "i386") and any(x in name for x in ("i686", "i386", "386", "x86")))
+                or (
+                    t_arch in ("i686", "i386")
+                    and any(x in name for x in ("i686", "i386", "386", "x86"))
+                )
             )
             matches_os = (
-                (t_os in ("darwin", "apple") and any(x in name for x in ("darwin", "apple", "macos", "osx")))
-                or (t_os in ("linux", "android", "termux") and any(x in name for x in ("linux", "glibc", "manylinux", "musl", "android", "termux")))
+                (
+                    t_os in ("darwin", "apple")
+                    and any(x in name for x in ("darwin", "apple", "macos", "osx"))
+                )
+                or (
+                    t_os in ("linux", "android", "termux")
+                    and any(
+                        x in name
+                        for x in (
+                            "linux",
+                            "glibc",
+                            "manylinux",
+                            "musl",
+                            "android",
+                            "termux",
+                        )
+                    )
+                )
                 or (t_os in ("freebsd", "openbsd", "netbsd") and t_os in name)
-                or (t_os == "windows" and any(x in name for x in ("windows", "-win-", "-win.", "_win_", "_win.", "win64", "win32", ".exe")))
+                or (
+                    t_os == "windows"
+                    and any(
+                        x in name
+                        for x in (
+                            "windows",
+                            "-win-",
+                            "-win.",
+                            "_win_",
+                            "_win.",
+                            "win64",
+                            "win32",
+                            ".exe",
+                        )
+                    )
+                )
             )
 
             if matches_arch and matches_os:
                 score = 100 - idx * 10
                 if t_abi and t_abi[0] in name:
                     score += 15
-                if any(name.endswith(ext) for ext in (".tar.gz", ".tgz", ".tar.xz", ".zip")):
+                if any(
+                    name.endswith(ext) for ext in (".tar.gz", ".tgz", ".tar.xz", ".zip")
+                ):
                     score += 5
                 candidate_assets.append((a, target, score))
 
     if not candidate_assets:
-        die(f"No compatible binary assets found for system in {owner}/{repo_name}@{raw_version}.")
+        die(
+            f"No compatible binary assets found for system in {owner}/{repo_name}@{raw_version}."
+        )
 
     if interactive and sys.stdin.isatty():
         print(f"\n{c('Available release assets:', '1')}")
@@ -216,7 +266,9 @@ def install_from_github(
         if not ca_url:
             continue
         try:
-            req = urllib.request.Request(ca_url, headers={"User-Agent": f"ship/{__version__}"})
+            req = urllib.request.Request(
+                ca_url, headers={"User-Agent": f"ship/{__version__}"}
+            )
             with urllib.request.urlopen(req) as resp:
                 content = resp.read().decode("utf-8", errors="ignore")
                 for line in content.splitlines():
@@ -235,7 +287,9 @@ def install_from_github(
         actual_sha = calc_sha256(dest_archive)
         if actual_sha.lower() != expected_sha:
             dest_archive.unlink(missing_ok=True)
-            die(f"Checksum mismatch for {asset_name}!\n  Expected: {expected_sha}\n  Got:      {actual_sha}")
+            die(
+                f"Checksum mismatch for {asset_name}!\n  Expected: {expected_sha}\n  Got:      {actual_sha}"
+            )
 
     install_dir = SHIP_STORE_DIR / f"{repo_name}@{version}"
     shutil.rmtree(install_dir, ignore_errors=True)
@@ -258,7 +312,11 @@ def install_from_github(
         # Search shallow directory structure, strictly rejecting libraries and build artifacts
         for root, dirs, files in os.walk(install_dir):
             # Do not traverse into lib directories or internal build caches
-            dirs[:] = [d for d in dirs if d not in ("lib", "lib64", "share", "include", "build")]
+            dirs[:] = [
+                d
+                for d in dirs
+                if d not in ("lib", "lib64", "share", "include", "build")
+            ]
             for f in files:
                 p = Path(root) / f
                 if is_cli_executable(p):
@@ -279,8 +337,12 @@ def install_from_github(
 
         pub_link = SHIP_BIN_DIR / symlink_name
         if pub_link.is_symlink() or pub_link.exists():
-            if not (pub_link.is_symlink() and str(SHIP_ROOT) in str(pub_link.resolve())):
-                backup_file = SHIP_BACKUP_DIR / f"{symlink_name}.backup.{int(time.time())}"
+            if not (
+                pub_link.is_symlink() and str(SHIP_ROOT) in str(pub_link.resolve())
+            ):
+                backup_file = (
+                    SHIP_BACKUP_DIR / f"{symlink_name}.backup.{int(time.time())}"
+                )
                 pub_link.rename(backup_file)
                 warn(f"Backed up external binary to {backup_file}")
             else:
@@ -297,7 +359,7 @@ def install_from_github(
         "target_key": best_target,
         "install_dir": str(install_dir),
         "symlinks": linked,
-        "installed_at": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d"),
+        "installed_at": datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%d"),
     }
     save_state(state)
     status("Installed", f"{owner}/{repo_name}@{version} (GitHub release)")
