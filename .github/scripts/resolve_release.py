@@ -37,7 +37,7 @@ def fetch_json(url):
 
 
 release = None
-is_explicit_tag = bool(tag and tag != "latest")
+is_explicit_tag = bool(tag and tag not in ("latest", "stable"))
 
 # 1. If an explicit tag was requested (e.g. 'v4.13.0', 'nightly', 'v0.1.0-alpha.1')
 if is_explicit_tag:
@@ -65,7 +65,7 @@ if is_explicit_tag:
             print(f"Skipping candidate {url}: {e}")
             continue
 
-# 2. If 'latest' requested, ALWAYS prioritize the official stable /releases/latest endpoint first!
+# 2. If 'latest' or 'stable' requested, prioritize official stable /releases/latest endpoint
 if not release and not is_explicit_tag:
     try:
         print(f"Querying official latest release for {repo}...")
@@ -98,7 +98,6 @@ if not release:
                         release = r
                         break
             else:
-                # Precedence: 1. Stable, 2. Pre-release, 3. Nightly
                 stables = [
                     r for r in releases_list
                     if not r.get("prerelease", False) and "nightly" not in str(r.get("tag_name", "")).lower()
@@ -143,7 +142,6 @@ except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError) as e
 raw_tag = str(release.get("tag_name", ""))
 version = raw_tag
 
-# Normalize version string: strip project prefix e.g. 'z3-4.13.3' -> '4.13.3'
 for prefix in (f"{pkg_name}-", f"{pkg_name}_", f"{pkg_name}v"):
     if version.lower().startswith(prefix):
         version = version[len(prefix):]
@@ -425,6 +423,27 @@ for a in assets:
             asset_match_results[asset_name] = "LANGUAGE/INSTALLER"
         else:
             asset_match_results[asset_name] = "IGNORED"
+
+# Detailed Asset Inspection Report
+if dry_run:
+    print("\n================ ASSET INSPECTION REPORT ================")
+    print(f"Total Assets in Release: {len(assets)}")
+    print("-" * 55)
+    for a in assets:
+        fname = a.get("name")
+        res = asset_match_results.get(fname, "IGNORED")
+        if res == "CHECKSUM":
+            status_text = "🔒 CHECKSUM FILE"
+        elif res == "SIGNATURE":
+            status_text = "🔏 SIGNATURE FILE"
+        elif res == "LANGUAGE/INSTALLER":
+            status_text = "📦 SKIPPED BINDING/INSTALLER"
+        elif res == "IGNORED":
+            status_text = "⚠️ UNMATCHED / IGNORED"
+        else:
+            status_text = f"✅ MATCHED ({res})"
+        print(f"[{status_text}] {fname}")
+    print("=========================================================\n")
 
 if not targets_found:
     print("Could not match any supported targets. No package generated.")
