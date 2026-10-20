@@ -64,7 +64,6 @@ NON_EXEC_EXTENSIONS = (
 
 
 def is_cli_executable(file_path: Path) -> bool:
-    """Strictly checks if a file is a standalone executable CLI binary (not a library or object file)."""
     name = file_path.name.lower()
 
     if any(name.endswith(ext) or f"{ext}." in name for ext in NON_EXEC_EXTENSIONS):
@@ -95,8 +94,6 @@ def is_cli_executable(file_path: Path) -> bool:
                 return True
 
             if magic.startswith(b"\x7fELF"):
-                # Byte 16: e_type (2 bytes, little-endian)
-                # ET_REL = 1 (Relocatable object / export file) -> NOT an executable binary
                 if len(magic) >= 18:
                     e_type = magic[16] | (magic[17] << 8)
                     if e_type == 1:
@@ -109,9 +106,7 @@ def is_cli_executable(file_path: Path) -> bool:
     return False
 
 
-def extract_archive(
-    archive_path: Path, extract_dir: Path, pkg_name: str
-) -> None:
+def extract_archive(archive_path: Path, extract_dir: Path, pkg_name: str) -> None:
     extract_dir.mkdir(parents=True, exist_ok=True)
     bin_dir = extract_dir / "bin"
     bin_dir.mkdir(exist_ok=True)
@@ -168,15 +163,12 @@ def run_post_install_hook(target_data: dict, install_dir: Path) -> None:
                 break
 
     try:
-        subprocess.run(
-            post_hook, shell=True, cwd=install_dir, env=env, check=True
-        )
+        subprocess.run(post_hook, shell=True, cwd=install_dir, env=env, check=True)
     except subprocess.SubprocessError as e:
         die(f"post_install hook failed: {e}")
 
 
 def clean_symlinks(pkg_name: str) -> None:
-    """Removes all recorded and historical symlinks pointing to this package."""
     state = load_state()
     pkg = state.get("installed", {}).get(pkg_name)
     if pkg:
@@ -276,15 +268,13 @@ def install_package(
     target_data = targets[matched_key]
     url = target_data.get("url")
     expected_sha = target_data.get("sha256", "")
-    binaries = (
+    declared_binaries = (
         target_data.get("binaries")
         or ver_data.get("binaries")
         or {pkg_name: f"bin/{pkg_name}"}
     )
 
-    channel_badge = (
-        f" [{channel}]" if channel in ("nightly", "prerelease") else ""
-    )
+    channel_badge = f" [{channel}]" if channel in ("nightly", "prerelease") else ""
     status(
         "Resolving",
         f"{pkg_name}@{version}{channel_badge} for {matched_key}",
@@ -315,39 +305,35 @@ def install_package(
     clean_symlinks(pkg_name)
     linked = []
 
-    for symlink_name, rel_path in binaries.items():
-        target = install_dir / rel_path
+    # 1. Discover all candidate CLI binaries in package
+    found_binaries: dict[str, Path] = {}
 
-        if not target.is_file():
+    for symlink_name, rel_path in declared_binaries.items():
+        cand = install_dir / rel_path
+        if not cand.is_file():
             cand = install_dir / "bin" / symlink_name
-            if cand.is_file():
-                target = cand
-            else:
-                for root, _, files in os.walk(install_dir):
-                    if symlink_name in files:
-                        p = Path(root) / symlink_name
-                        if is_cli_executable(p):
-                            target = p
-                            break
+        if not cand.is_file():
+            for root, _, files in os.walk(install_dir):
+                if symlink_name in files:
+                    p = Path(root) / symlink_name
+                    if is_cli_executable(p):
+                        cand = p
+                        break
+        if cand.is_file() and is_cli_executable(cand):
+            found_binaries[symlink_name] = cand
 
-        # Fallback: find any single CLI executable in install_dir
-        if not target.is_file():
-            execs = [
-                Path(root) / f
-                for root, _, files in os.walk(install_dir)
-                for f in files
-                if is_cli_executable(Path(root) / f)
-            ]
-            if len(execs) == 1:
-                target = execs[0]
+    for root, dirs, files in os.walk(install_dir):
+        dirs[:] = [
+            d for d in dirs if d not in ("lib", "lib64", "share", "include", "build")
+        ]
+        for f in files:
+            p = Path(root) / f
+            if is_cli_executable(p) and not p.name.endswith("-real"):
+                if p.name not in found_binaries:
+                    found_binaries[p.name] = p
 
-        if not target.is_file():
-            warn(f"Binary target does not exist: {target}")
-            continue
-
+    for symlink_name, target in found_binaries.items():
         target.chmod(0o755)
-
-        # Apply extensible patchers & runners
         patched_target = apply_patchers(target, matched_key)
 
         internal_link = SHIP_INTERNAL_BIN / symlink_name
@@ -357,12 +343,10 @@ def install_package(
         pub_link = SHIP_BIN_DIR / symlink_name
         if pub_link.is_symlink() or pub_link.exists():
             if not (
-                pub_link.is_symlink()
-                and str(SHIP_ROOT) in str(pub_link.resolve())
+                pub_link.is_symlink() and str(SHIP_ROOT) in str(pub_link.resolve())
             ):
                 backup_file = (
-                    SHIP_BACKUP_DIR
-                    / f"{symlink_name}.backup.{int(time.time())}"
+                    SHIP_BACKUP_DIR / f"{symlink_name}.backup.{int(time.time())}"
                 )
                 pub_link.rename(backup_file)
                 warn(f"Backed up external binary to {backup_file}")
@@ -383,7 +367,7 @@ def install_package(
         "target_key": matched_key,
         "install_dir": str(install_dir),
         "symlinks": linked,
-        "installed_at": datetime.datetime.now(datetime.timezone.utc).strftime(
+        "installed_at": datetime.datetime.now(datetime.UTC).strftime(
             "%Y-%m-%d"
         ),
     }

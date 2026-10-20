@@ -69,9 +69,7 @@ if is_explicit_tag:
 if not release and not is_explicit_tag:
     try:
         print(f"Querying official latest release for {repo}...")
-        latest_cand = fetch_json(
-            f"https://api.github.com/repos/{repo}/releases/latest"
-        )
+        latest_cand = fetch_json(f"https://api.github.com/repos/{repo}/releases/latest")
         if latest_cand and "assets" in latest_cand:
             release = latest_cand
     except (
@@ -80,15 +78,15 @@ if not release and not is_explicit_tag:
         json.JSONDecodeError,
         OSError,
     ) as e:
-        print(f"Notice: /releases/latest not available ({e}), falling back to releases list...")
+        print(
+            f"Notice: /releases/latest not available ({e}), falling back to releases list..."
+        )
 
 # 3. Fallback to /releases with channel precedence (Stable > Pre-release > Nightly)
 if not release:
     try:
         print(f"Querying releases list for {repo}...")
-        releases_list = fetch_json(
-            f"https://api.github.com/repos/{repo}/releases"
-        )
+        releases_list = fetch_json(f"https://api.github.com/repos/{repo}/releases")
         if isinstance(releases_list, list) and releases_list:
             if is_explicit_tag:
                 clean_target = tag.lower().lstrip("v")
@@ -99,12 +97,16 @@ if not release:
                         break
             else:
                 stables = [
-                    r for r in releases_list
-                    if not r.get("prerelease", False) and "nightly" not in str(r.get("tag_name", "")).lower()
+                    r
+                    for r in releases_list
+                    if not r.get("prerelease", False)
+                    and "nightly" not in str(r.get("tag_name", "")).lower()
                 ]
                 prereleases = [
-                    r for r in releases_list
-                    if r.get("prerelease", False) and "nightly" not in str(r.get("tag_name", "")).lower()
+                    r
+                    for r in releases_list
+                    if r.get("prerelease", False)
+                    and "nightly" not in str(r.get("tag_name", "")).lower()
                 ]
 
                 if stables:
@@ -144,7 +146,7 @@ version = raw_tag
 
 for prefix in (f"{pkg_name}-", f"{pkg_name}_", f"{pkg_name}v"):
     if version.lower().startswith(prefix):
-        version = version[len(prefix):]
+        version = version[len(prefix) :]
         break
 
 version = version.lstrip("v")
@@ -156,8 +158,7 @@ tag_lower = raw_tag.lower()
 if "nightly" in tag_lower:
     channel = "nightly"
 elif is_prerelease or any(
-    pre in tag_lower
-    for pre in ("-alpha", "-beta", "-rc", "-dev", "-preview", "-pre")
+    pre in tag_lower for pre in ("-alpha", "-beta", "-rc", "-dev", "-preview", "-pre")
 ):
     channel = "prerelease"
 else:
@@ -177,9 +178,7 @@ if os.path.exists(pkg_file):
         existing_pkg_data = json.load(f)
 
 if not dry_run and version in existing_pkg_data.get("versions", {}):
-    print(
-        f"Package {pkg_name}@{version} already exists in {pkg_file}. Skipping PR."
-    )
+    print(f"Package {pkg_name}@{version} already exists in {pkg_file}. Skipping PR.")
     gh_out = os.environ.get("GITHUB_OUTPUT")
     if gh_out:
         with open(gh_out, "a") as f:
@@ -260,9 +259,7 @@ for asset in assets:
                         ):
                             checksum_map[os.path.basename(fn)] = h.lower()
         except (urllib.error.URLError, TimeoutError, OSError) as e:
-            print(
-                f"Warning: Failed to parse checksum file {asset['name']}: {e}"
-            )
+            print(f"Warning: Failed to parse checksum file {asset['name']}: {e}")
     elif any(name.endswith(ext) for ext in SIG_EXTENSIONS):
         signature_asset_names.add(asset["name"])
 
@@ -287,14 +284,10 @@ def parse_asset_target(filename):
             is_archive = True
             break
 
-    if clean_name.endswith(".exe"):
-        clean_name = clean_name[:-4]
+    clean_name = clean_name.removesuffix(".exe")
 
     # 1. Detect Operating System
-    if any(
-        k in clean_name
-        for k in ["linux", "glibc", "manylinux", "musl", "alpine"]
-    ):
+    if any(k in clean_name for k in ["linux", "glibc", "manylinux", "musl", "alpine"]):
         os_name = "linux"
     elif any(k in clean_name for k in ["apple", "darwin", "macos", "osx"]):
         os_name = "darwin"
@@ -343,8 +336,7 @@ def parse_asset_target(filename):
     elif "s390x" in clean_name:
         arch = "s390x"
     elif any(
-        k in clean_name
-        for k in ["i686", "i386", "386", "-x86-", "-x86.", "-x86"]
+        k in clean_name for k in ["i686", "i386", "386", "-x86-", "-x86.", "-x86"]
     ):
         arch = "i686"
     else:
@@ -366,9 +358,7 @@ def parse_asset_target(filename):
     elif os_name == "darwin":
         target_triple = f"{arch}-apple-darwin"
     elif os_name == "windows":
-        target_triple = (
-            f"{arch}-pc-windows-{abi if abi in ('msvc', 'gnu') else 'msvc'}"
-        )
+        target_triple = f"{arch}-pc-windows-{abi if abi in ('msvc', 'gnu') else 'msvc'}"
     elif os_name == "openbsd":
         target_triple = f"{arch}-openbsd"
     elif os_name == "freebsd":
@@ -470,11 +460,7 @@ if not targets_found:
 
 description = (
     repo_data.get("description")
-    or (
-        release.get("body", "").splitlines()[0][:120]
-        if release.get("body")
-        else None
-    )
+    or (release.get("body", "").splitlines()[0][:120] if release.get("body") else None)
     or f"Pre-built binaries for {repo}"
 )
 homepage = repo_data.get("homepage") or ""
@@ -482,8 +468,7 @@ author = repo_data.get("owner", {}).get("login") or repo.split("/")[0]
 repo_link = repo_data.get("html_url") or f"https://github.com/{repo}"
 license_info = (repo_data.get("license") or {}).get("spdx_id") or ""
 release_url = (
-    release.get("html_url")
-    or f"https://github.com/{repo}/releases/tag/{raw_tag}"
+    release.get("html_url") or f"https://github.com/{repo}/releases/tag/{raw_tag}"
 )
 
 version_entry = {
@@ -511,11 +496,7 @@ else:
     pkg_entry.setdefault("repository", repo_link)
     if homepage and "homepage" not in pkg_entry:
         pkg_entry["homepage"] = homepage
-    if (
-        license_info
-        and license_info != "NOASSERTION"
-        and "license" not in pkg_entry
-    ):
+    if license_info and license_info != "NOASSERTION" and "license" not in pkg_entry:
         pkg_entry["license"] = license_info
     pkg_entry.setdefault("versions", {})[version] = version_entry
 
