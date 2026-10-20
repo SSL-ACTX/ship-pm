@@ -61,14 +61,15 @@ BUILD_ARTIFACT_PATTERNS = (
     "-source.",
     "-src.",
     "-sources.",
+    "installer",
+    "setup",
 )
 
 
 def parse_repo_slug(raw_input: str) -> tuple[str, str]:
     slug = re.sub(r"^https?://github\.com/", "", raw_input).strip()
     slug = slug.rstrip("/")
-    if slug.endswith(".git"):
-        slug = slug[:-4]
+    slug = slug.removesuffix(".git")
     slug = slug.rstrip("/")
     if "/" not in slug:
         die(f"Invalid repository format: '{raw_input}'. Expected 'owner/repo'.")
@@ -99,20 +100,23 @@ def install_from_github(
     target_override: str | None = None,
     interactive: bool = False,
 ) -> None:
-    owner, repo_name = parse_repo_slug(repo_input)
+    owner, raw_repo_name = parse_repo_slug(repo_input)
+    GENERIC_NAMES = {"compiler", "cli", "v1", "v2", "v3", "core", "tooling", "app", "bin", "binary", "binaries", "releases", "cmd"}
+    pkg_name = owner.lower() if raw_repo_name.lower() in GENERIC_NAMES else raw_repo_name.lower()
+
     target_tag = tag if (tag and tag != "latest") else None
 
-    status("Querying", f"GitHub releases for {owner}/{repo_name}...")
+    status("Querying", f"GitHub releases for {owner}/{raw_repo_name}...")
     release: dict | None = None
 
     if target_tag:
-        tag_url = f"https://api.github.com/repos/{owner}/{repo_name}/releases/tags/{target_tag}"
+        tag_url = f"https://api.github.com/repos/{owner}/{raw_repo_name}/releases/tags/{target_tag}"
         res = fetch_github_json(tag_url)
         if isinstance(res, dict):
             release = res
 
     if not release:
-        list_url = f"https://api.github.com/repos/{owner}/{repo_name}/releases"
+        list_url = f"https://api.github.com/repos/{owner}/{raw_repo_name}/releases"
         releases = fetch_github_json(list_url)
         if isinstance(releases, list) and releases:
             if target_tag:
@@ -126,14 +130,14 @@ def install_from_github(
                 release = releases[0]
 
     if not release:
-        die(f"Could not find any releases for {owner}/{repo_name}.")
+        die(f"Could not find any releases for {owner}/{raw_repo_name}.")
 
     raw_version = str(release.get("tag_name", "latest"))
     version = raw_version.lstrip("v")
     assets = release.get("assets", [])
 
     if not assets:
-        die(f"No downloadable assets found in release {raw_version} of {owner}/{repo_name}.")
+        die(f"No downloadable assets found in release {raw_version} of {owner}/{raw_repo_name}.")
 
     target_keys = detect_target_keys(target_override)
     candidate_assets: list[tuple[dict, str, int]] = []
@@ -154,17 +158,17 @@ def install_from_github(
         for idx, target in enumerate(target_keys):
             t_arch, t_os, *t_abi = target.split("-")
             matches_arch = (
-                (t_arch in ("aarch64", "arm64") and any(x in name for x in ("aarch64", "arm64")))
+                (t_arch in ("aarch64", "arm64") and any(x in name for x in ("aarch64", "arm64", "mac-arm", "-mac-arm")))
                 or (t_arch in ("x86_64", "amd64") and any(x in name for x in ("x86_64", "amd64", "x64")))
-                or (t_arch in ("armv7", "armhf") and any(x in name for x in ("armv7", "armhf", "arm32")))
+                or (t_arch in ("armv7", "armhf") and any(x in name for x in ("armv7", "armhf", "arm32", "arm-unknown", "linux-arm", "-linux-arm")))
                 or (t_arch == "riscv64" and "riscv64" in name)
-                or (t_arch in ("i686", "i386") and any(x in name for x in ("i686", "i386", "386", "x86")))
+                or (t_arch in ("i686", "i386") and any(x in name for x in ("i686", "i386", "386", "-x86-", "-x86.", "-x86")))
             )
             matches_os = (
-                (t_os in ("darwin", "apple") and any(x in name for x in ("darwin", "apple", "macos", "osx")))
-                or (t_os in ("linux", "android", "termux") and any(x in name for x in ("linux", "glibc", "manylinux", "musl", "android", "termux")))
+                (t_os in ("darwin", "apple") and any(x in name for x in ("darwin", "apple", "macos", "osx", "mac-", "-mac")))
+                or (t_os in ("linux", "android", "termux") and any(x in name for x in ("linux", "glibc", "manylinux", "musl", "alpine", "android", "termux")))
                 or (t_os in ("freebsd", "openbsd", "netbsd") and t_os in name)
-                or (t_os == "windows" and any(x in name for x in ("windows", "-win-", "-win.", "_win_", "_win.", "win64", "win32", ".exe")))
+                or (t_os == "windows" and any(x in name for x in ("windows", "-win-", "-win.", "_win_", "_win.", "win64", "win32", ".exe")) or name.endswith(("-win", "_win")))
             )
 
             if matches_arch and matches_os:
@@ -176,7 +180,7 @@ def install_from_github(
                 candidate_assets.append((a, target, score))
 
     if not candidate_assets:
-        die(f"No compatible binary assets found for system in {owner}/{repo_name}@{raw_version}.")
+        die(f"No compatible binary assets found for system in {owner}/{raw_repo_name}@{raw_version}.")
 
     if interactive and sys.stdin.isatty():
         print(f"\n{c('Available release assets:', '1')}")
@@ -207,7 +211,7 @@ def install_from_github(
     status("Matched", f"asset {asset_name} ({best_target})")
     status("Downloading", download_url)
 
-    dest_archive = SHIP_CACHE_DIR / f"{owner}_{repo_name}_{asset_name}"
+    dest_archive = SHIP_CACHE_DIR / f"{owner}_{raw_repo_name}_{asset_name}"
     fetch_file(download_url, dest_archive)
 
     expected_sha = ""
@@ -237,15 +241,14 @@ def install_from_github(
             dest_archive.unlink(missing_ok=True)
             die(f"Checksum mismatch for {asset_name}!\n  Expected: {expected_sha}\n  Got:      {actual_sha}")
 
-    install_dir = SHIP_STORE_DIR / f"{repo_name}@{version}"
+    install_dir = SHIP_STORE_DIR / f"{pkg_name}@{version}"
     shutil.rmtree(install_dir, ignore_errors=True)
     status("Extracting", str(install_dir))
-    extract_archive(dest_archive, install_dir, repo_name)
+    extract_archive(dest_archive, install_dir, pkg_name)
 
-    clean_symlinks(repo_name)
+    clean_symlinks(pkg_name)
     status("Linking", "discovering and linking binaries...")
 
-    # Strict discovery: search bin/ first; if not present, filter root strictly
     execs: list[Path] = []
     for root, _, files in os.walk(install_dir):
         if os.path.basename(root) in ("bin", "usr/bin"):
@@ -255,9 +258,7 @@ def install_from_github(
                     execs.append(p)
 
     if not execs:
-        # Search shallow directory structure, strictly rejecting libraries and build artifacts
         for root, dirs, files in os.walk(install_dir):
-            # Do not traverse into lib directories or internal build caches
             dirs[:] = [d for d in dirs if d not in ("lib", "lib64", "share", "include", "build")]
             for f in files:
                 p = Path(root) / f
@@ -290,14 +291,22 @@ def install_from_github(
         linked.append(str(pub_link))
         print(f"  {c('Linked', '1;32')} {symlink_name} -> {pub_link}")
 
+    if pkg_name not in [Path(l_path).name for l_path in linked]:
+        primary = execs[0]
+        pkg_alias = SHIP_BIN_DIR / pkg_name
+        pkg_alias.unlink(missing_ok=True)
+        pkg_alias.symlink_to(apply_patchers(primary, best_target))
+        linked.append(str(pkg_alias))
+        print(f"  {c('Linked', '1;32')} {pkg_name} -> {pkg_alias}")
+
     state = load_state()
-    state.setdefault("installed", {})[repo_name] = {
-        "source": f"github:{owner}/{repo_name}",
+    state.setdefault("installed", {})[pkg_name] = {
+        "source": f"github:{owner}/{raw_repo_name}",
         "version": version,
         "target_key": best_target,
         "install_dir": str(install_dir),
         "symlinks": linked,
-        "installed_at": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d"),
+        "installed_at": datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%d"),
     }
     save_state(state)
-    status("Installed", f"{owner}/{repo_name}@{version} (GitHub release)")
+    status("Installed", f"{owner}/{raw_repo_name}@{version} (GitHub release)")

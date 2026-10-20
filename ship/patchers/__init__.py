@@ -4,11 +4,11 @@ from pathlib import Path
 
 from ship.patchers.base import BinaryPatcher
 from ship.patchers.qemu import QemuRunnerPatcher
-from ship.patchers.termux import TermuxGlibcPatcher
+from ship.patchers.termux import TermuxPatcher
 
-# Execution order: native platform patches (glibc/patchelf) first, then emulation wrappers
+# Execution order: native platform patches (glibc/patchelf/SSL) first, then emulation wrappers
 PATCHERS: list[BinaryPatcher] = [
-    TermuxGlibcPatcher(),
+    TermuxPatcher(),
     QemuRunnerPatcher(),
 ]
 

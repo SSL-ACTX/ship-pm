@@ -1,6 +1,9 @@
 """Package installation, extraction, symlinking, and removal."""
 
+import bz2
 import datetime
+import gzip
+import lzma
 import os
 import platform
 import shutil
@@ -64,7 +67,6 @@ NON_EXEC_EXTENSIONS = (
 
 
 def is_cli_executable(file_path: Path) -> bool:
-    """Strictly checks if a file is a standalone executable CLI binary (not a library or object file)."""
     name = file_path.name.lower()
 
     if any(name.endswith(ext) or f"{ext}." in name for ext in NON_EXEC_EXTENSIONS):
@@ -95,8 +97,6 @@ def is_cli_executable(file_path: Path) -> bool:
                 return True
 
             if magic.startswith(b"\x7fELF"):
-                # Byte 16: e_type (2 bytes, little-endian)
-                # ET_REL = 1 (Relocatable object / export file) -> NOT an executable binary
                 if len(magic) >= 18:
                     e_type = magic[16] | (magic[17] << 8)
                     if e_type == 1:
@@ -132,6 +132,18 @@ def extract_archive(
     elif name.endswith(".zip"):
         with zipfile.ZipFile(archive_path, "r") as z:
             z.extractall(extract_dir)
+    elif name.endswith(".gz") and not name.endswith(".tar.gz"):
+        dest_file = bin_dir / (f"{pkg_name}.exe" if ".exe" in name else pkg_name)
+        with gzip.open(archive_path, "rb") as f_in, open(dest_file, "wb") as f_out:
+            shutil.copyfileobj(f_in, f_out)
+    elif name.endswith(".xz") and not name.endswith(".tar.xz"):
+        dest_file = bin_dir / (f"{pkg_name}.exe" if ".exe" in name else pkg_name)
+        with lzma.open(archive_path, "rb") as f_in, open(dest_file, "wb") as f_out:
+            shutil.copyfileobj(f_in, f_out)
+    elif name.endswith(".bz2") and not name.endswith(".tar.bz2"):
+        dest_file = bin_dir / (f"{pkg_name}.exe" if ".exe" in name else pkg_name)
+        with bz2.open(archive_path, "rb") as f_in, open(dest_file, "wb") as f_out:
+            shutil.copyfileobj(f_in, f_out)
     else:
         dest1 = extract_dir / archive_path.name
         dest2 = extract_dir / pkg_name
@@ -176,7 +188,6 @@ def run_post_install_hook(target_data: dict, install_dir: Path) -> None:
 
 
 def clean_symlinks(pkg_name: str) -> None:
-    """Removes all recorded and historical symlinks pointing to this package."""
     state = load_state()
     pkg = state.get("installed", {}).get(pkg_name)
     if pkg:
@@ -276,7 +287,7 @@ def install_package(
     target_data = targets[matched_key]
     url = target_data.get("url")
     expected_sha = target_data.get("sha256", "")
-    binaries = (
+    declared_binaries = (
         target_data.get("binaries")
         or ver_data.get("binaries")
         or {pkg_name: f"bin/{pkg_name}"}
@@ -315,39 +326,32 @@ def install_package(
     clean_symlinks(pkg_name)
     linked = []
 
-    for symlink_name, rel_path in binaries.items():
-        target = install_dir / rel_path
+    found_binaries: dict[str, Path] = {}
 
-        if not target.is_file():
+    for symlink_name, rel_path in declared_binaries.items():
+        cand = install_dir / rel_path
+        if not cand.is_file():
             cand = install_dir / "bin" / symlink_name
-            if cand.is_file():
-                target = cand
-            else:
-                for root, _, files in os.walk(install_dir):
-                    if symlink_name in files:
-                        p = Path(root) / symlink_name
-                        if is_cli_executable(p):
-                            target = p
-                            break
+        if not cand.is_file():
+            for root, _, files in os.walk(install_dir):
+                if symlink_name in files:
+                    p = Path(root) / symlink_name
+                    if is_cli_executable(p):
+                        cand = p
+                        break
+        if cand.is_file() and is_cli_executable(cand):
+            found_binaries[symlink_name] = cand
 
-        # Fallback: find any single CLI executable in install_dir
-        if not target.is_file():
-            execs = [
-                Path(root) / f
-                for root, _, files in os.walk(install_dir)
-                for f in files
-                if is_cli_executable(Path(root) / f)
-            ]
-            if len(execs) == 1:
-                target = execs[0]
+    for root, dirs, files in os.walk(install_dir):
+        dirs[:] = [d for d in dirs if d not in ("lib", "lib64", "share", "include", "build")]
+        for f in files:
+            p = Path(root) / f
+            if is_cli_executable(p) and not p.name.endswith("-real"):
+                if p.name not in found_binaries:
+                    found_binaries[p.name] = p
 
-        if not target.is_file():
-            warn(f"Binary target does not exist: {target}")
-            continue
-
+    for symlink_name, target in found_binaries.items():
         target.chmod(0o755)
-
-        # Apply extensible patchers & runners
         patched_target = apply_patchers(target, matched_key)
 
         internal_link = SHIP_INTERNAL_BIN / symlink_name
