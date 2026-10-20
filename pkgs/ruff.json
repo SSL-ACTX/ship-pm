@@ -1,0 +1,119 @@
+{
+  "description": "An extremely fast Python linter and code formatter, written in Rust.",
+  "author": "astral-sh",
+  "repository": "https://github.com/astral-sh/ruff",
+  "versions": {
+    "0.17.1": {
+      "channel": "stable",
+      "targets": {
+        "aarch64-apple-darwin": {
+          "url": "https://github.com/astral-sh/ruff/releases/download/0.17.1/ruff-aarch64-apple-darwin.tar.gz",
+          "sha256": "1c8e6e36538eaa0b996378a20c226403c4ca6369ac24884751b024d3a9530b86",
+          "binaries": {
+            "ruff": "bin/ruff"
+          }
+        },
+        "aarch64-pc-windows-msvc": {
+          "url": "https://github.com/astral-sh/ruff/releases/download/0.17.1/ruff-aarch64-pc-windows-msvc.zip",
+          "sha256": "2f8ba07c7b2b8d1f011056968360e99e9ac7f0815e2d02eaab958255e110b1df",
+          "binaries": {
+            "ruff": "bin/ruff.exe"
+          }
+        },
+        "aarch64-linux-gnu": {
+          "url": "https://github.com/astral-sh/ruff/releases/download/0.17.1/ruff-aarch64-unknown-linux-gnu.tar.gz",
+          "sha256": "d3ead1f0ed779e777a034ccd9286be6bd9bd3cdaba732ff9797f8288a283e9e2",
+          "binaries": {
+            "ruff": "bin/ruff"
+          }
+        },
+        "aarch64-linux-musl": {
+          "url": "https://github.com/astral-sh/ruff/releases/download/0.17.1/ruff-aarch64-unknown-linux-musl.tar.gz",
+          "sha256": "255404ccf2f7950ff6aad8858321a6f416fe2a840ae4e37dfb4c21cb8774f325",
+          "binaries": {
+            "ruff": "bin/ruff"
+          }
+        },
+        "armv7-linux-musl": {
+          "url": "https://github.com/astral-sh/ruff/releases/download/0.17.1/ruff-arm-unknown-linux-musleabihf.tar.gz",
+          "sha256": "ce2a361349e9a0e5316cbc1ed476a008fe9ce8b0f3c3a3efefa31a6fb32612e7",
+          "binaries": {
+            "ruff": "bin/ruff"
+          }
+        },
+        "armv7-linux-gnu": {
+          "url": "https://github.com/astral-sh/ruff/releases/download/0.17.1/ruff-armv7-unknown-linux-gnueabihf.tar.gz",
+          "sha256": "e12e4540cc5b9ba68a0d5077c8f3278b5365dfe88cc5eaa1f0dd1c46fec1d13d",
+          "binaries": {
+            "ruff": "bin/ruff"
+          }
+        },
+        "i686-pc-windows-msvc": {
+          "url": "https://github.com/astral-sh/ruff/releases/download/0.17.1/ruff-i686-pc-windows-msvc.zip",
+          "sha256": "a772eda3bd3194252c9842b9907edf0863fcf7fef6d7720ae347244f194a2e22",
+          "binaries": {
+            "ruff": "bin/ruff.exe"
+          }
+        },
+        "i686-linux-gnu": {
+          "url": "https://github.com/astral-sh/ruff/releases/download/0.17.1/ruff-i686-unknown-linux-gnu.tar.gz",
+          "sha256": "11bf24a1dcf3ede1e66f959d635abc964b9fd0d8331eefd08f2270d2ec087c87",
+          "binaries": {
+            "ruff": "bin/ruff"
+          }
+        },
+        "i686-linux-musl": {
+          "url": "https://github.com/astral-sh/ruff/releases/download/0.17.1/ruff-i686-unknown-linux-musl.tar.gz",
+          "sha256": "bf010a1a289e815315fc98fef3ee6a12662c22950288c593c65ee2481f5e0704",
+          "binaries": {
+            "ruff": "bin/ruff"
+          }
+        },
+        "riscv64-linux-gnu": {
+          "url": "https://github.com/astral-sh/ruff/releases/download/0.17.1/ruff-riscv64gc-unknown-linux-gnu.tar.gz",
+          "sha256": "f071dd1d534eaa4e245b9365b13ae8842d3ddd12a4617365a599aba98cbe9fb8",
+          "binaries": {
+            "ruff": "bin/ruff"
+          }
+        },
+        "s390x-linux-gnu": {
+          "url": "https://github.com/astral-sh/ruff/releases/download/0.17.1/ruff-s390x-unknown-linux-gnu.tar.gz",
+          "sha256": "3eb6e3f696586c76e6c16a7ee60869bb6b82cd41eeb3327d73aefbe23db91434",
+          "binaries": {
+            "ruff": "bin/ruff"
+          }
+        },
+        "x86_64-apple-darwin": {
+          "url": "https://github.com/astral-sh/ruff/releases/download/0.17.1/ruff-x86_64-apple-darwin.tar.gz",
+          "sha256": "88ee16f88dba9d440e06375f46898ec85baf578042ad086764d5a33558bb6e17",
+          "binaries": {
+            "ruff": "bin/ruff"
+          }
+        },
+        "x86_64-pc-windows-msvc": {
+          "url": "https://github.com/astral-sh/ruff/releases/download/0.17.1/ruff-x86_64-pc-windows-msvc.zip",
+          "sha256": "a841fb7e59680508b9394bfea32e369b3907cc6620a491c65d8d1f479498db82",
+          "binaries": {
+            "ruff": "bin/ruff.exe"
+          }
+        },
+        "x86_64-linux-gnu": {
+          "url": "https://github.com/astral-sh/ruff/releases/download/0.17.1/ruff-x86_64-unknown-linux-gnu.tar.gz",
+          "sha256": "a293ac937715ae6fb6b64da86761598379e6149f40fbc00fde9ba8a2a562ac65",
+          "binaries": {
+            "ruff": "bin/ruff"
+          }
+        },
+        "x86_64-linux-musl": {
+          "url": "https://github.com/astral-sh/ruff/releases/download/0.17.1/ruff-x86_64-unknown-linux-musl.tar.gz",
+          "sha256": "2d9878b5e6a3d0dedadbfc01a64bfe54e72f560adbfd235937cd29e1fc9238e3",
+          "binaries": {
+            "ruff": "bin/ruff"
+          }
+        }
+      }
+    }
+  },
+  "homepage": "https://docs.astral.sh/ruff",
+  "license": "MIT"
+}
