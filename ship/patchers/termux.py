@@ -1,122 +1,302 @@
-"""Termux-specific Glibc binary patcher and LD_PRELOAD wrapper."""
+"""Termux platform compatibility helpers and runtime launcher patcher."""
 
 import os
 import platform
-import re
+import shlex
 import shutil
-import struct
+import socket
 import subprocess
 from pathlib import Path
 
 from ship.config import IS_TERMUX, PREFIX
-from ship.patchers.base import BinaryPatcher
-from ship.ui import status
+from ship.patchers.base import BinaryPatcher, LauncherTemplate, install_launcher
+from ship.patches.api import (
+    PatchReport,
+    inspect_elf,
+    read_elf_rpath,
+    set_elf_interpreter,
+    set_elf_rpath,
+)
+from ship.ui import status, warn
 
 
-class TermuxGlibcPatcher(BinaryPatcher):
-    """Patches dynamic glibc ELF binaries and wraps them for native execution under Termux."""
+def termux_glibc_prefix() -> Path:
+    """Return the active Termux glibc prefix."""
+    return Path(os.environ.get("GLIBC_PREFIX", f"{PREFIX}/glibc"))
 
-    name = "termux-glibc"
 
-    @staticmethod
-    def has_dynamic_interpreter(file_path: Path) -> bool:
-        """Parses the ELF Program Header Table to check for PT_INTERP (segment type 0x03)."""
-        try:
-            with open(file_path, "rb") as f:
-                header = f.read(64)
-                if not header.startswith(b"\x7fELF"):
-                    return False
+def termux_glibc_loader_path(architecture: str | None = None) -> Path | None:
+    """Return the Termux glibc loader for an architecture, if supported."""
+    arch = (architecture or platform.machine()).lower()
+    arch = {"arm64": "aarch64", "amd64": "x86_64", "x64": "x86_64"}.get(arch, arch)
+    loaders = {
+        "aarch64": "ld-linux-aarch64.so.1",
+        "x86_64": "ld-linux-x86-64.so.2",
+        "arm": "ld-linux-armhf.so.3",
+        "armv7l": "ld-linux-armhf.so.3",
+        "armv8l": "ld-linux-armhf.so.3",
+        "i386": "ld-linux.so.2",
+        "i486": "ld-linux.so.2",
+        "i586": "ld-linux.so.2",
+        "i686": "ld-linux.so.2",
+        "riscv64": "ld-linux-riscv64-lp64d.so.1",
+    }
+    name = loaders.get(arch)
+    if name is None and arch.startswith("arm"):
+        name = "ld-linux-armhf.so.3"
+    return termux_glibc_prefix() / "lib" / name if name else None
 
-                ei_class = header[4]
-                # 64-bit ELF
-                if ei_class == 2:
-                    e_phoff = struct.unpack_from("<Q", header, 32)[0]
-                    e_phentsize = struct.unpack_from("<H", header, 54)[0]
-                    e_phnum = struct.unpack_from("<H", header, 56)[0]
-                    f.seek(e_phoff)
-                    ph_data = f.read(e_phentsize * e_phnum)
-                    for i in range(e_phnum):
-                        p_type = struct.unpack_from("<I", ph_data, i * e_phentsize)[0]
-                        if p_type == 3:  # PT_INTERP
-                            return True
-                # 32-bit ELF
-                elif ei_class == 1:
-                    e_phoff = struct.unpack_from("<I", header, 28)[0]
-                    e_phentsize = struct.unpack_from("<H", header, 42)[0]
-                    e_phnum = struct.unpack_from("<H", header, 44)[0]
-                    f.seek(e_phoff)
-                    ph_data = f.read(e_phentsize * e_phnum)
-                    for i in range(e_phnum):
-                        p_type = struct.unpack_from("<I", ph_data, i * e_phentsize)[0]
-                        if p_type == 3:  # PT_INTERP
-                            return True
-        except (OSError, struct.error):
-            return False
 
+def get_termux_ssl_cert_file() -> str:
+    """Finds the active CA certificate bundle in Termux."""
+    candidates = (
+        PREFIX / "etc" / "tls" / "cert.pem",
+        PREFIX / "etc" / "ssl" / "certs" / "ca-certificates.crt",
+        PREFIX / "glibc" / "etc" / "ssl" / "certs" / "ca-certificates.crt",
+    )
+    for c in candidates:
+        if c.is_file():
+            return str(c)
+    return ""
+
+
+def is_dns_server_reachable(ip: str, port: int = 53, timeout: float = 0.3) -> bool:
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.settimeout(timeout)
+        s.connect((ip, port))
+        s.close()
+        return True
+    except OSError:
         return False
 
-    def should_patch(self, binary_path: Path, target_key: str) -> bool:
-        if not IS_TERMUX:
+
+def ensure_termux_resolv_conf(report: PatchReport | None = None) -> None:
+    resolv_file = PREFIX / "etc" / "resolv.conf"
+    raw_candidates: list[str] = []
+    anycast_defaults = ["1.1.1.1", "8.8.8.8", "1.0.0.1", "8.8.4.4"]
+
+    for prop in ("net.dns1", "net.dns2"):
+        try:
+            val = subprocess.run(
+                ["getprop", prop],
+                capture_output=True,
+                text=True,
+                check=False,
+            ).stdout.strip()
+            if val and not val.startswith("127.") and val not in raw_candidates:
+                raw_candidates.append(val)
+        except OSError:
+            pass
+
+    for ac in anycast_defaults:
+        if ac not in raw_candidates:
+            raw_candidates.append(ac)
+
+    active_servers: list[str] = []
+    for ip in raw_candidates:
+        if is_dns_server_reachable(ip):
+            active_servers.append(ip)
+        if len(active_servers) >= 3:
+            break
+
+    if not active_servers:
+        active_servers = ["1.1.1.1", "8.8.8.8"]
+
+    content = "# Generated by ship for Termux DNS stability\noptions timeout:1 attempts:2 rotate\n"
+    for s in active_servers:
+        content += f"nameserver {s}\n"
+
+    try:
+        resolv_file.parent.mkdir(parents=True, exist_ok=True)
+        if (
+            not resolv_file.is_file()
+            or resolv_file.read_text(encoding="utf-8") != content
+        ):
+            resolv_file.write_text(content, encoding="utf-8")
+            if report is not None:
+                report.add(resolv_file, "write", "Termux resolver configuration")
+    except OSError:
+        pass
+
+    glibc_resolv = PREFIX / "glibc" / "etc" / "resolv.conf"
+    if glibc_resolv.parent.is_dir():
+        try:
+            if (
+                not glibc_resolv.is_file()
+                or glibc_resolv.read_bytes() != resolv_file.read_bytes()
+            ):
+                shutil.copy2(resolv_file, glibc_resolv)
+                if report is not None:
+                    report.add(glibc_resolv, "write", "glibc resolver configuration")
+        except OSError:
+            pass
+
+
+class TermuxPatcher(BinaryPatcher):
+    """
+    Termux runtime compatibility patcher:
+    - Patches glibc dynamic interpreters and RPATH.
+    - Resolves DNS for Musl static binaries via QEMU target sysroot (-L $PREFIX).
+    - Injects SSL_CERT_FILE and SSL_CERT_DIR for all Linux tools.
+    - Unsets LD_PRELOAD to prevent libtermux-exec.so collisions.
+    """
+
+    name = "termux-runtime"
+
+    @staticmethod
+    def is_elf(file_path: Path) -> bool:
+        try:
+            return inspect_elf(file_path) is not None
+        except OSError:
             return False
 
-        if "linux-gnu" in target_key or binary_path.name == "odin":
-            return True
+    @staticmethod
+    def is_dynamic_glibc_elf(file_path: Path) -> bool:
+        try:
+            info = inspect_elf(file_path)
+            return bool(info and info.abi == "glibc")
+        except OSError:
+            return False
 
-        return self.has_dynamic_interpreter(binary_path)
+    def should_patch(self, binary_path: Path, target_key: str) -> bool:
+        return IS_TERMUX and self.is_elf(binary_path)
 
-    def patch(self, binary_path: Path, target_key: str) -> Path:
-        glibc_pfx = Path(os.environ.get("GLIBC_PREFIX", f"{PREFIX}/glibc"))
-        arch = platform.machine().lower()
+    def patch(
+        self,
+        binary_path: Path,
+        target_key: str,
+        report: PatchReport | None = None,
+    ) -> Path:
+        glibc_pfx = termux_glibc_prefix()
+        host_arch = platform.machine().lower()
+        host_arch = {"arm64": "aarch64", "amd64": "x86_64", "x64": "x86_64"}.get(
+            host_arch, host_arch
+        )
 
-        if arch in ("aarch64", "arm64"):
-            loader_name = "ld-linux-aarch64.so.1"
-        elif arch in ("x86_64", "amd64"):
-            loader_name = "ld-linux-x86-64.so.2"
-        elif arch.startswith("arm"):
-            loader_name = "ld-linux-armhf.so.3"
-        elif re.match(r"^i\d86$", arch):
-            loader_name = "ld-linux.so.2"
-        elif arch == "riscv64":
-            loader_name = "ld-linux-riscv64-lp64d.so.1"
-        else:
-            loader_name = ""
+        # QEMU is for a foreign CPU architecture. Musl versus Bionic is an ABI
+        # distinction and does not by itself justify emulating a native binary.
+        target_arch = target_key.split("-", 1)[0].lower()
+        target_arch = {
+            "arm64": "aarch64",
+            "amd64": "x86_64",
+            "i686": "i386",
+            "armv7": "arm",
+            "armv6": "arm",
+        }.get(target_arch, target_arch)
 
-        loader_path = glibc_pfx / "lib" / loader_name
+        is_glibc = self.is_dynamic_glibc_elf(binary_path)
+
+        loader_path = termux_glibc_loader_path(host_arch)
+
+        qemu_map = {
+            "x86_64": "qemu-x86_64",
+            "i386": "qemu-i386",
+            "arm": "qemu-arm",
+            "aarch64": "qemu-aarch64",
+            "riscv64": "qemu-riscv64",
+            "powerpc64le": "qemu-ppc64le",
+            "s390x": "qemu-s390x",
+        }
+        qemu_runner = (
+            qemu_map.get(target_arch)
+            if target_arch and target_arch != host_arch
+            else None
+        )
+
         rpath = str(glibc_pfx / "lib")
 
-        if loader_path.is_file():
-            patchelf_bin = shutil.which("patchelf")
-            if patchelf_bin:
-                status("Patching", f"glibc interpreter for {binary_path.name}")
-                subprocess.run(
-                    [
-                        patchelf_bin,
-                        "--set-interpreter",
-                        str(loader_path),
-                        "--set-rpath",
-                        rpath,
-                        str(binary_path),
-                    ],
-                    check=False,
-                    capture_output=True,
+        # 1. Glibc ELF binary patching
+        if is_glibc:
+            if loader_path is not None and loader_path.is_file():
+                patchelf_bin = shutil.which("patchelf")
+                if patchelf_bin:
+                    try:
+                        existing_rpath = (
+                            read_elf_rpath(binary_path, patchelf=patchelf_bin) or ""
+                        )
+                        rpath_parts = [rpath]
+                        for part in existing_rpath.split(":"):
+                            if part and part not in rpath_parts:
+                                rpath_parts.append(part)
+                        effective_rpath = ":".join(rpath_parts)
+                        changed = set_elf_interpreter(
+                            binary_path, loader_path, patchelf=patchelf_bin
+                        )
+                        rpath_changed = set_elf_rpath(
+                            binary_path, effective_rpath, patchelf=patchelf_bin
+                        )
+                        changed |= rpath_changed
+                        if changed:
+                            if report is not None:
+                                report.add(
+                                    binary_path,
+                                    "configure glibc runtime",
+                                    "interpreter and RPATH",
+                                )
+                            else:
+                                status(
+                                    "Patching",
+                                    f"glibc runtime configured for {binary_path.name}",
+                                )
+                    except subprocess.SubprocessError as e:
+                        warn(f"patchelf failed for {binary_path.name}: {e}")
+                else:
+                    warn(
+                        f"{binary_path.name} is a glibc ELF. Run 'pkg install patchelf-glibc' for full glibc support."
+                    )
+            else:
+                warn(
+                    f"{binary_path.name} was built for glibc. Run 'pkg install glibc' or use 'musl' targets on Termux."
                 )
 
+        ensure_termux_resolv_conf(report)
+
+        # 2. Universal Termux runtime launcher wrapper
+        cert_file = get_termux_ssl_cert_file()
         real_binary = binary_path.parent / f"{binary_path.name}-real"
         if not real_binary.exists():
-            shutil.move(binary_path, real_binary)
+            environment: list[str] = []
+            if cert_file:
+                cert_dir = str(Path(cert_file).parent)
+                environment = [
+                    f"export SSL_CERT_FILE={shlex.quote(cert_file)}",
+                    f"export SSL_CERT_DIR={shlex.quote(cert_dir)}",
+                ]
 
-        extra_env = ""
-        if binary_path.name == "odin":
-            extra_env = f'export ODIN_ROOT="{binary_path.parent}"'
+            bash_bin = (
+                f"{PREFIX}/bin/bash" if (PREFIX / "bin/bash").is_file() else "/bin/sh"
+            )
 
-        wrapper_content = f"""#!/data/data/com.termux/files/usr/bin/bash
-# ship runtime wrapper - isolates environment and sets loader paths
-unset LD_PRELOAD
-export SSL_CERT_FILE="{glibc_pfx}/etc/ssl/certs/ca-certificates.crt"
-{extra_env}
-exec "{real_binary}" "$@"
-"""
-        binary_path.write_text(wrapper_content, encoding="utf-8")
-        binary_path.chmod(0o755)
-        real_binary.chmod(0o755)
+            # Optional package-specific behavior is supplied by ship/patches.
+            from ship.patches import get_runtime_patch
+
+            pre_exec_hook, post_exec_hook, package_exec_cmd = get_runtime_patch(
+                binary_path.name, real_binary, target_key
+            )
+
+            if is_glibc:
+                exec_cmd = f'{shlex.quote(str(real_binary))} "$@"'
+            elif qemu_runner and shutil.which(qemu_runner):
+                environment.append(f"export QEMU_LD_PREFIX={shlex.quote(str(PREFIX))}")
+                exec_cmd = f'{shlex.quote(qemu_runner)} -L {shlex.quote(str(PREFIX))} {shlex.quote(str(real_binary))} "$@"'
+            else:
+                exec_cmd = f'{shlex.quote(str(real_binary))} "$@"'
+
+            if package_exec_cmd:
+                exec_cmd = package_exec_cmd
+
+            install_launcher(
+                binary_path,
+                LauncherTemplate(
+                    interpreter=bash_bin,
+                    comment="Termux",
+                    command=exec_cmd,
+                    environment=environment,
+                    before=pre_exec_hook,
+                    after=post_exec_hook,
+                ),
+                report=report,
+            )
+
         return binary_path

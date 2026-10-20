@@ -3,6 +3,17 @@
 import re
 
 
+def format_version(version: str | None) -> str:
+    """Format a version for display without prefixing development labels."""
+    value = str(version or "unknown").strip()
+    if not value or value == "unknown":
+        return "unknown"
+    if value[0].lower() == "v":
+        unprefixed = value[1:]
+        return f"v{unprefixed}" if unprefixed[:1].isdigit() else unprefixed
+    return f"v{value}" if value[0].isdigit() else value
+
+
 def classify_channel(version_str: str) -> str:
     """
     Classify a version string into 'nightly', 'prerelease', or 'stable'.
@@ -64,10 +75,10 @@ def select_default_version(versions: dict | list) -> str | None:
 
     stables = [v for v in v_list if classify_channel(v) == "stable"]
     if stables:
-        return sorted(stables, key=semver_sort_key)[-1]
+        return max(stables, key=semver_sort_key)
 
     prereleases = [v for v in v_list if classify_channel(v) == "prerelease"]
     if prereleases:
-        return sorted(prereleases, key=semver_sort_key)[-1]
+        return max(prereleases, key=semver_sort_key)
 
-    return sorted(v_list, key=semver_sort_key)[-1]
+    return max(v_list, key=semver_sort_key)

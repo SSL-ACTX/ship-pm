@@ -11,14 +11,16 @@
           "sha256": "1df2a6cacd4a166fbcbd11bb468f836d0078f001628b95ab809e98d7b28935e7",
           "binaries": {
             "aeneas": "bin/aeneas"
-          }
+          },
+          "download_size_bytes": 162398326
         },
         "x86_64-linux-gnu": {
           "url": "https://github.com/AeneasVerif/aeneas/releases/download/nightly-2026.10.20-fc321a2/aeneas-linux-x86_64.tar.gz",
           "sha256": "4b444e72e1e0bc475e952821bc081eb15665c984fd8032636c0346e766675794",
           "binaries": {
             "aeneas": "bin/aeneas"
-          }
+          },
+          "download_size_bytes": 160979763
         }
       }
     }
