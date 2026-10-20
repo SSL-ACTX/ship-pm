@@ -11,28 +11,32 @@
           "sha256": "c3c8b095621fd0c75f7f73e3a0829f1b4d45324225f20ba11ed8dc4da310a8ab",
           "binaries": {
             "odin": "bin/odin"
-          }
+          },
+          "download_size_bytes": 70282622
         },
         "aarch64-linux-gnu": {
           "url": "https://github.com/odin-lang/Odin/releases/download/dev-2026-10/odin-linux-arm64-dev-2026-10.tar.gz",
           "sha256": "99c43e9670a285901d6cfee5f56197b74c7d6f7c537b35ecba0c1b44ac2e4df8",
           "binaries": {
             "odin": "bin/odin"
-          }
+          },
+          "download_size_bytes": 68334230
         },
         "aarch64-apple-darwin": {
           "url": "https://github.com/odin-lang/Odin/releases/download/dev-2026-10/odin-macos-arm64-dev-2026-10.tar.gz",
           "sha256": "b276c6ac87c3eea17446a6ca9080089b6e9f492057fb773591775ee49d92a1cf",
           "binaries": {
             "odin": "bin/odin"
-          }
+          },
+          "download_size_bytes": 62005298
         },
         "x86_64-pc-windows-gnu": {
           "url": "https://github.com/odin-lang/Odin/releases/download/dev-2026-10/odin-windows-amd64-dev-2026-10.zip",
           "sha256": "b6b2e426a8b6f147b74ec7e18bef8df27cf40fe16193159df7ca09a0cc0c2011",
           "binaries": {
             "odin": "bin/odin.exe"
-          }
+          },
+          "download_size_bytes": 149444439
         }
       }
     }

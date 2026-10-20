@@ -37,6 +37,11 @@
                     "properties": {
                       "url": { "type": "string" },
                       "sha256": { "type": "string" },
+                      "download_size_bytes": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "description": "Compressed release asset size in bytes."
+                      },
                       "hooks": {
                         "type": "object",
                         "properties": {

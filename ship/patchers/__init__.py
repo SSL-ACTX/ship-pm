@@ -4,18 +4,23 @@ from pathlib import Path
 
 from ship.patchers.base import BinaryPatcher
 from ship.patchers.qemu import QemuRunnerPatcher
-from ship.patchers.termux import TermuxGlibcPatcher
+from ship.patchers.termux import TermuxPatcher
+from ship.patches.api import PatchReport
 
-# Execution order: native platform patches (glibc/patchelf) first, then emulation wrappers
+# Execution order: native platform patches (glibc/patchelf/SSL) first, then emulation wrappers
 PATCHERS: list[BinaryPatcher] = [
-    TermuxGlibcPatcher(),
+    TermuxPatcher(),
     QemuRunnerPatcher(),
 ]
 
 
-def apply_patchers(binary_path: Path, target_key: str) -> Path:
+def apply_patchers(
+    binary_path: Path,
+    target_key: str,
+    report: PatchReport | None = None,
+) -> Path:
     current = binary_path
     for patcher in PATCHERS:
         if patcher.should_patch(current, target_key):
-            current = patcher.patch(current, target_key)
+            current = patcher.patch(current, target_key, report)
     return current
