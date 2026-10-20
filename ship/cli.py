@@ -36,6 +36,14 @@ from ship.version import (
 )
 
 
+def clean_repo_slug(raw_input: str) -> str:
+    cleaned = re.sub(r"^https?://github\.com/", "", raw_input).strip()
+    cleaned = cleaned.rstrip("/")
+    if cleaned.endswith(".git"):
+        cleaned = cleaned[:-4]
+    return cleaned.rstrip("/")
+
+
 def cmd_list() -> None:
     state = load_state()
     installed = state.get("installed", {})
@@ -106,7 +114,6 @@ def cmd_update(target: str = "") -> None:
             die(f"Manifest for '{target}' not found in registry.")
 
         versions = manifest.get("versions", {})
-        # If user is on nightly, track latest nightly; otherwise track highest stable/channel
         if curr_channel == "nightly":
             nightlies = [v for v in versions if classify_channel(v) == "nightly"]
             latest_ver = nightlies[-1] if nightlies else select_default_version(versions)
@@ -145,59 +152,6 @@ def cmd_update(target: str = "") -> None:
         status("Finished", f"updated {updated_count} package(s)")
 
 
-def cmd_info(pkg_name: str) -> None:
-    manifest = get_pkg_manifest(pkg_name)
-    if not manifest:
-        die(f"Package '{pkg_name}' not found in registry.")
-
-    state = load_state()
-    inst = state.get("installed", {}).get(pkg_name)
-    host_targets = detect_target_keys()
-
-    print(f"\n{c(pkg_name, '1;32')}")
-    if "description" in manifest:
-        print(f"  {'Description:':<14} {manifest['description']}")
-    if "author" in manifest:
-        print(f"  {'Author:':<14} {manifest['author']}")
-    if "repository" in manifest:
-        print(f"  {'Repository:':<14} {manifest['repository']}")
-    if "license" in manifest:
-        print(f"  {'License:':<14} {manifest['license']}")
-
-    # Channel-segregated version breakdown
-    all_versions = sorted(manifest.get("versions", {}).keys(), key=semver_sort_key)
-    stables = [v for v in all_versions if classify_channel(v) == "stable"]
-    prereleases = [v for v in all_versions if classify_channel(v) == "prerelease"]
-    nightlies = [v for v in all_versions if classify_channel(v) == "nightly"]
-
-    if stables:
-        print(f"  {'Stable:':<14} {c(', '.join(stables), '1;32')}")
-    if prereleases:
-        print(f"  {'Pre-release:':<14} {c(', '.join(prereleases), '1;33')}")
-    if nightlies:
-        print(f"  {'Nightly:':<14} {c(', '.join(nightlies), '1;35')}")
-
-    if inst:
-        inst_ch = inst.get("channel", classify_channel(inst.get("version", "")))
-        print(
-            f"  {'Status:':<14} {c('Installed', '1;32')} (v{inst.get('version')} [{inst_ch}] via {inst.get('target_key')})"
-        )
-    else:
-        print(f"  {'Status:':<14} {c('Not installed', '2')}")
-
-    default_ver = select_default_version(all_versions)
-    if default_ver:
-        targets = (
-            manifest.get("versions", {}).get(default_ver, {}).get("targets", {})
-        )
-        if targets:
-            print(f"\n  {c(f'Targets for default (v{default_ver}):', '1')}")
-            for t in targets:
-                marker = c(" [host match]", "1;32") if t in host_targets else ""
-                print(f"    • {t}{marker}")
-    print()
-
-
 def cmd_check_upstream(pkg_name: str) -> None:
     manifest = get_pkg_manifest(pkg_name)
     if not manifest:
@@ -210,7 +164,7 @@ def cmd_check_upstream(pkg_name: str) -> None:
     if not match:
         die(f"Could not determine upstream GitHub repository for '{pkg_name}'.")
 
-    upstream_repo = match.group(1).rstrip(".git").rstrip("/")
+    upstream_repo = clean_repo_slug(match.group(1))
     status("Checking", f"upstream GitHub releases for {upstream_repo}...")
 
     versions = list(manifest.get("versions", {}).keys())
@@ -339,8 +293,60 @@ def cmd_search(query: str = "") -> None:
             print("  No packages available in registry.\n")
 
 
+def cmd_info(pkg_name: str) -> None:
+    manifest = get_pkg_manifest(pkg_name)
+    if not manifest:
+        die(f"Package '{pkg_name}' not found in registry.")
+
+    state = load_state()
+    inst = state.get("installed", {}).get(pkg_name)
+    host_targets = detect_target_keys()
+
+    print(f"\n{c(pkg_name, '1;32')}")
+    if "description" in manifest:
+        print(f"  {'Description:':<14} {manifest['description']}")
+    if "author" in manifest:
+        print(f"  {'Author:':<14} {manifest['author']}")
+    if "repository" in manifest:
+        print(f"  {'Repository:':<14} {manifest['repository']}")
+    if "license" in manifest:
+        print(f"  {'License:':<14} {manifest['license']}")
+
+    all_versions = sorted(manifest.get("versions", {}).keys(), key=semver_sort_key)
+    stables = [v for v in all_versions if classify_channel(v) == "stable"]
+    prereleases = [v for v in all_versions if classify_channel(v) == "prerelease"]
+    nightlies = [v for v in all_versions if classify_channel(v) == "nightly"]
+
+    if stables:
+        print(f"  {'Stable:':<14} {c(', '.join(stables), '1;32')}")
+    if prereleases:
+        print(f"  {'Pre-release:':<14} {c(', '.join(prereleases), '1;33')}")
+    if nightlies:
+        print(f"  {'Nightly:':<14} {c(', '.join(nightlies), '1;35')}")
+
+    if inst:
+        inst_ch = inst.get("channel", classify_channel(inst.get("version", "")))
+        print(
+            f"  {'Status:':<14} {c('Installed', '1;32')} (v{inst.get('version')} [{inst_ch}] via {inst.get('target_key')})"
+        )
+    else:
+        print(f"  {'Status:':<14} {c('Not installed', '2')}")
+
+    default_ver = select_default_version(all_versions)
+    if default_ver:
+        targets = (
+            manifest.get("versions", {}).get(default_ver, {}).get("targets", {})
+        )
+        if targets:
+            print(f"\n  {c(f'Targets for default (v{default_ver}):', '1')}")
+            for t in targets:
+                marker = c(" [host match]", "1;32") if t in host_targets else ""
+                print(f"    • {t}{marker}")
+    print()
+
+
 def cmd_publish(repo: str, tag: str = "latest") -> None:
-    repo = re.sub(r"^https?://github\.com/", "", repo).rstrip(".git").rstrip("/")
+    repo = clean_repo_slug(repo)
     if "/" not in repo:
         die("Invalid repository format. Expected 'owner/repo'.")
 
@@ -451,7 +457,6 @@ def main() -> None:
         pkg_spec = sub_args[0]
         ver = sub_args[1] if len(sub_args) > 1 else None
 
-        # Allow @version syntax: ship install crush@nightly
         if "@" in pkg_spec and not pkg_spec.startswith("git@"):
             pkg_name, explicit_ver = pkg_spec.split("@", 1)
             pkg = pkg_name
