@@ -37,19 +37,24 @@ def fetch_json(url):
 
 
 release = None
+is_explicit_tag = bool(tag and tag != "latest")
 
-if tag and tag != "latest":
+# 1. If an explicit tag was requested (e.g. 'v4.13.0', 'nightly', 'v0.1.0-alpha.1')
+if is_explicit_tag:
+    clean_t = tag.lstrip("v")
     candidate_urls = [
         f"https://api.github.com/repos/{repo}/releases/tags/{tag}",
-        f"https://api.github.com/repos/{repo}/releases/tags/v{tag}"
-        if not tag.startswith("v")
-        else f"https://api.github.com/repos/{repo}/releases/tags/{tag.lstrip('v')}",
+        f"https://api.github.com/repos/{repo}/releases/tags/v{clean_t}",
+        f"https://api.github.com/repos/{repo}/releases/tags/{clean_t}",
+        f"https://api.github.com/repos/{repo}/releases/tags/{pkg_name}-{clean_t}",
+        f"https://api.github.com/repos/{repo}/releases/tags/{pkg_name}-v{clean_t}",
     ]
     for url in candidate_urls:
         try:
             print(f"Checking {url}...")
-            release = fetch_json(url)
-            if release and "assets" in release:
+            cand = fetch_json(url)
+            if cand and "assets" in cand:
+                release = cand
                 break
         except (
             urllib.error.URLError,
@@ -60,6 +65,24 @@ if tag and tag != "latest":
             print(f"Skipping candidate {url}: {e}")
             continue
 
+# 2. If 'latest' requested, ALWAYS prioritize the official stable /releases/latest endpoint first!
+if not release and not is_explicit_tag:
+    try:
+        print(f"Querying official latest release for {repo}...")
+        latest_cand = fetch_json(
+            f"https://api.github.com/repos/{repo}/releases/latest"
+        )
+        if latest_cand and "assets" in latest_cand:
+            release = latest_cand
+    except (
+        urllib.error.URLError,
+        TimeoutError,
+        json.JSONDecodeError,
+        OSError,
+    ) as e:
+        print(f"Notice: /releases/latest not available ({e}), falling back to releases list...")
+
+# 3. Fallback to /releases list with channel precedence (Stable > Pre-release > Nightly)
 if not release:
     try:
         print(f"Querying releases list for {repo}...")
@@ -67,15 +90,30 @@ if not release:
             f"https://api.github.com/repos/{repo}/releases"
         )
         if isinstance(releases_list, list) and releases_list:
-            if tag and tag != "latest":
-                clean_target = tag.lstrip("v")
+            if is_explicit_tag:
+                clean_target = tag.lower().lstrip("v")
                 for r in releases_list:
-                    r_tag = r.get("tag_name", "").lstrip("v")
-                    if r_tag == clean_target:
+                    r_tag = str(r.get("tag_name", "")).lower().lstrip("v")
+                    if r_tag == clean_target or r_tag == f"{pkg_name}-{clean_target}":
                         release = r
                         break
-            if not release:
-                release = releases_list[0]
+            else:
+                # Precedence: 1. Stable, 2. Pre-release, 3. Nightly
+                stables = [
+                    r for r in releases_list
+                    if not r.get("prerelease", False) and "nightly" not in str(r.get("tag_name", "")).lower()
+                ]
+                prereleases = [
+                    r for r in releases_list
+                    if r.get("prerelease", False) and "nightly" not in str(r.get("tag_name", "")).lower()
+                ]
+
+                if stables:
+                    release = stables[0]
+                elif prereleases:
+                    release = prereleases[0]
+                else:
+                    release = releases_list[0]
     except (
         urllib.error.URLError,
         TimeoutError,
@@ -85,26 +123,13 @@ if not release:
         print(f"Warning: Failed to fetch releases list: {e}")
 
 if not release:
-    try:
-        print(f"Querying /releases/latest for {repo}...")
-        release = fetch_json(
-            f"https://api.github.com/repos/{repo}/releases/latest"
-        )
-    except (
-        urllib.error.URLError,
-        TimeoutError,
-        json.JSONDecodeError,
-        OSError,
-    ) as e:
-        print(
-            f"Error: Could not find any valid release for {repo} (tag: {tag}): {e}"
-        )
-        if not dry_run:
-            gh_out = os.environ.get("GITHUB_OUTPUT")
-            if gh_out:
-                with open(gh_out, "a") as f:
-                    f.write("updated=false\n")
-        sys.exit(1)
+    print(f"Error: Could not find any valid release for {repo} (tag: {tag})")
+    if not dry_run:
+        gh_out = os.environ.get("GITHUB_OUTPUT")
+        if gh_out:
+            with open(gh_out, "a") as f:
+                f.write("updated=false\n")
+    sys.exit(1)
 
 repo_url = f"https://api.github.com/repos/{repo}"
 repo_data = {}
@@ -115,11 +140,19 @@ try:
 except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError) as e:
     print(f"Warning: Could not fetch repo metadata: {e}")
 
-raw_tag = release.get("tag_name", "")
-version = raw_tag.lstrip("v")
+raw_tag = str(release.get("tag_name", ""))
+version = raw_tag
+
+# Normalize version string: strip project prefix e.g. 'z3-4.13.3' -> '4.13.3'
+for prefix in (f"{pkg_name}-", f"{pkg_name}_", f"{pkg_name}v"):
+    if version.lower().startswith(prefix):
+        version = version[len(prefix):]
+        break
+
+version = version.lstrip("v")
 assets = release.get("assets", [])
 
-# Classify release channel
+# Determine release channel
 is_prerelease = release.get("prerelease", False)
 tag_lower = raw_tag.lower()
 if "nightly" in tag_lower:
