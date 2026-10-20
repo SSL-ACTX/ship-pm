@@ -160,6 +160,164 @@
           }
         }
       }
+    },
+    "0.98.1": {
+      "targets": {
+        "aarch64-android": {
+          "url": "https://github.com/charmbracelet/crush/releases/download/v0.98.1/crush_0.98.1_Android_arm64.tar.gz",
+          "sha256": "88f42f9302cbf72cd268d05b52395266acecd9b44afa4a1c4dec8c6cf0879ab3",
+          "binaries": {
+            "crush": "bin/crush"
+          }
+        },
+        "aarch64-apple-darwin": {
+          "url": "https://github.com/charmbracelet/crush/releases/download/v0.98.1/crush_0.98.1_Darwin_arm64.tar.gz",
+          "sha256": "178710f9e43abd3f1df29756309950f42ed229737e4f2fb9bc5f36aeff07a3c3",
+          "binaries": {
+            "crush": "bin/crush"
+          }
+        },
+        "x86_64-apple-darwin": {
+          "url": "https://github.com/charmbracelet/crush/releases/download/v0.98.1/crush_0.98.1_Darwin_x86_64.tar.gz",
+          "sha256": "23e9f344d3dad67c5ec774f991e63a0f5eb566fc6b22a06a09ef84dc33114cd1",
+          "binaries": {
+            "crush": "bin/crush"
+          }
+        },
+        "aarch64-freebsd": {
+          "url": "https://github.com/charmbracelet/crush/releases/download/v0.98.1/crush_0.98.1_Freebsd_arm64.tar.gz",
+          "sha256": "6fa23f33115a00064ba25536a1f48e83136f4f7060f157de5bbe03a197813a56",
+          "binaries": {
+            "crush": "bin/crush"
+          }
+        },
+        "armv7-freebsd": {
+          "url": "https://github.com/charmbracelet/crush/releases/download/v0.98.1/crush_0.98.1_Freebsd_armv7.tar.gz",
+          "sha256": "991e90998ec9b7c666edeb8e5bd3797988e02e8dfa075a50742a2c15de558192",
+          "binaries": {
+            "crush": "bin/crush"
+          }
+        },
+        "i686-freebsd": {
+          "url": "https://github.com/charmbracelet/crush/releases/download/v0.98.1/crush_0.98.1_Freebsd_i386.tar.gz",
+          "sha256": "96fe4d741e4c3cb7e080e2760b5f5060b6a06d239243639fe02fcb1a7038c7da",
+          "binaries": {
+            "crush": "bin/crush"
+          }
+        },
+        "x86_64-freebsd": {
+          "url": "https://github.com/charmbracelet/crush/releases/download/v0.98.1/crush_0.98.1_Freebsd_x86_64.tar.gz",
+          "sha256": "7c64684ed87366a776abea02c9e565d0dba0bac54f5e05c0d361d63c67e88b13",
+          "binaries": {
+            "crush": "bin/crush"
+          }
+        },
+        "aarch64-linux-gnu": {
+          "url": "https://github.com/charmbracelet/crush/releases/download/v0.98.1/crush_0.98.1_Linux_arm64.tar.gz",
+          "sha256": "098e875c1d9501822d08ef14ab094f24cfc87396385af5402994bf741a673b99",
+          "binaries": {
+            "crush": "bin/crush"
+          }
+        },
+        "armv7-linux-gnu": {
+          "url": "https://github.com/charmbracelet/crush/releases/download/v0.98.1/crush_0.98.1_Linux_armv7.tar.gz",
+          "sha256": "ba4361b5b2bfe28d7c0063cb25a570c4472d4fe0c10b125af12813b3ab27e25b",
+          "binaries": {
+            "crush": "bin/crush"
+          }
+        },
+        "i686-linux-gnu": {
+          "url": "https://github.com/charmbracelet/crush/releases/download/v0.98.1/crush_0.98.1_Linux_i386.tar.gz",
+          "sha256": "6d972d44e177130c27a76c4316a8a40ac6a4357dcd2f79b7904a0b31801a0fce",
+          "binaries": {
+            "crush": "bin/crush"
+          }
+        },
+        "x86_64-linux-gnu": {
+          "url": "https://github.com/charmbracelet/crush/releases/download/v0.98.1/crush_0.98.1_Linux_x86_64.tar.gz",
+          "sha256": "d85d913effef350f0152f594a70bd9749ad455bf15af77bb0d2b731036079885",
+          "binaries": {
+            "crush": "bin/crush"
+          }
+        },
+        "aarch64-netbsd": {
+          "url": "https://github.com/charmbracelet/crush/releases/download/v0.98.1/crush_0.98.1_Netbsd_arm64.tar.gz",
+          "sha256": "80b600a6c6457e486152d038f86cc3e28ff508224017002435aa96643b1d89a7",
+          "binaries": {
+            "crush": "bin/crush"
+          }
+        },
+        "armv7-netbsd": {
+          "url": "https://github.com/charmbracelet/crush/releases/download/v0.98.1/crush_0.98.1_Netbsd_armv7.tar.gz",
+          "sha256": "b93e783208cc23239fc4dc8a91a18cb7de9353c25844a31edbb203c46f179d88",
+          "binaries": {
+            "crush": "bin/crush"
+          }
+        },
+        "i686-netbsd": {
+          "url": "https://github.com/charmbracelet/crush/releases/download/v0.98.1/crush_0.98.1_Netbsd_i386.tar.gz",
+          "sha256": "407dfbbf9486df60c20207f8993a303256db82cf741073de5caab8449e6b2556",
+          "binaries": {
+            "crush": "bin/crush"
+          }
+        },
+        "x86_64-netbsd": {
+          "url": "https://github.com/charmbracelet/crush/releases/download/v0.98.1/crush_0.98.1_Netbsd_x86_64.tar.gz",
+          "sha256": "c069e53954d9382fd0eb8d4e1997eef5292f47b1911f35375b85b2f5cbc948dd",
+          "binaries": {
+            "crush": "bin/crush"
+          }
+        },
+        "aarch64-openbsd": {
+          "url": "https://github.com/charmbracelet/crush/releases/download/v0.98.1/crush_0.98.1_Openbsd_arm64.tar.gz",
+          "sha256": "6df0fe35b55c954ec0ec720fe6a24bbfd265ca0a946cb02e6e161e311c17e8d9",
+          "binaries": {
+            "crush": "bin/crush"
+          }
+        },
+        "armv7-openbsd": {
+          "url": "https://github.com/charmbracelet/crush/releases/download/v0.98.1/crush_0.98.1_Openbsd_armv7.tar.gz",
+          "sha256": "a95db0fe477c318836e558cf341ae1c3940133076fd091bc82ce1145a3156f1b",
+          "binaries": {
+            "crush": "bin/crush"
+          }
+        },
+        "i686-openbsd": {
+          "url": "https://github.com/charmbracelet/crush/releases/download/v0.98.1/crush_0.98.1_Openbsd_i386.tar.gz",
+          "sha256": "e3746b9be26d022805375fffe0808ccc7268da0affccba8076019bb9094e503e",
+          "binaries": {
+            "crush": "bin/crush"
+          }
+        },
+        "x86_64-openbsd": {
+          "url": "https://github.com/charmbracelet/crush/releases/download/v0.98.1/crush_0.98.1_Openbsd_x86_64.tar.gz",
+          "sha256": "633b2a69d98466cf2e6f2b4716701ceeb3406758e62668cbecd735213ef65a5e",
+          "binaries": {
+            "crush": "bin/crush"
+          }
+        },
+        "aarch64-pc-windows-gnu": {
+          "url": "https://github.com/charmbracelet/crush/releases/download/v0.98.1/crush_0.98.1_Windows_arm64.zip",
+          "sha256": "f463c0f748247a7bef759f32d3e85c4fa9a781d1626d7320b6f159e55cc2c626",
+          "binaries": {
+            "crush": "bin/crush.exe"
+          }
+        },
+        "i686-pc-windows-gnu": {
+          "url": "https://github.com/charmbracelet/crush/releases/download/v0.98.1/crush_0.98.1_Windows_i386.zip",
+          "sha256": "b4e66f01c887aa865a916cda27edf1a0a17175d3fbf8e3a86427c18c22a2ef51",
+          "binaries": {
+            "crush": "bin/crush.exe"
+          }
+        },
+        "x86_64-pc-windows-gnu": {
+          "url": "https://github.com/charmbracelet/crush/releases/download/v0.98.1/crush_0.98.1_Windows_x86_64.zip",
+          "sha256": "f0e456c560cc2e69eb2d4565768ae0fe2e04f4da90a0898374c45ab2caa33f2e",
+          "binaries": {
+            "crush": "bin/crush.exe"
+          }
+        }
+      }
     }
   }
 }
