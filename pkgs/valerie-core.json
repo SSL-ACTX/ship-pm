@@ -1,0 +1,27 @@
+{
+  "description": "**Full Changelog**: https://github.com/SSL-ACTX/valerie-core/commits/v0.1.0-alpha.1",
+  "author": "SSL-ACTX",
+  "repository": "https://github.com/SSL-ACTX/valerie-core",
+  "versions": {
+    "0.1.0-alpha.1": {
+      "channel": "prerelease",
+      "targets": {
+        "aarch64-linux-gnu": {
+          "url": "https://github.com/SSL-ACTX/valerie-core/releases/download/v0.1.0-alpha.1/valerie-compiler-v0.1.0-alpha.1-aarch64-unknown-linux-android.tar.gz",
+          "sha256": "6c6725e569dc52f4d5181732ba9c081192569ccefb029dec0728abd6492d3496",
+          "binaries": {
+            "valerie-core": "bin/valerie-core"
+          }
+        },
+        "aarch64-linux-musl": {
+          "url": "https://github.com/SSL-ACTX/valerie-core/releases/download/v0.1.0-alpha.1/valerie-compiler-v0.1.0-alpha.1-aarch64-unknown-linux-musl.tar.gz",
+          "sha256": "0d6a7dcc3d59db6e10167efc492d7dc014ec4958186be7d83d9a28502f4a34ff",
+          "binaries": {
+            "valerie-core": "bin/valerie-core"
+          }
+        }
+      }
+    }
+  },
+  "license": "AGPL-3.0"
+}
