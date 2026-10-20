@@ -1,0 +1,62 @@
+{
+  "description": "Julia installer and version manager",
+  "author": "JuliaLang",
+  "repository": "https://github.com/JuliaLang/juliaup",
+  "versions": {
+    "1.22.7": {
+      "channel": "stable",
+      "targets": {
+        "aarch64-apple-darwin": {
+          "url": "https://github.com/JuliaLang/juliaup/releases/download/v1.22.7/juliaup-1.22.7-aarch64-apple-darwin-portable.tar.gz",
+          "sha256": "12ca9428134fe753dd49d546a6743614f74168e4c305f3d528c7d7267c9a3546",
+          "binaries": {
+            "juliaup": "bin/juliaup"
+          }
+        },
+        "aarch64-linux-musl": {
+          "url": "https://github.com/JuliaLang/juliaup/releases/download/v1.22.7/juliaup-1.22.7-aarch64-unknown-linux-musl-portable.tar.gz",
+          "sha256": "0c22c3c1b7a91eaa094624bb0cdd6925fc01fed26d78a8f082a8238134231d8f",
+          "binaries": {
+            "juliaup": "bin/juliaup"
+          }
+        },
+        "i686-pc-windows-gnu": {
+          "url": "https://github.com/JuliaLang/juliaup/releases/download/v1.22.7/juliaup-1.22.7-i686-pc-windows-gnu-portable.tar.gz",
+          "sha256": "d02f41f79d25545f27cf7b41a0bfad0bf0f852fbe017dade5674e7e46718978b",
+          "binaries": {
+            "juliaup": "bin/juliaup.exe"
+          }
+        },
+        "i686-linux-musl": {
+          "url": "https://github.com/JuliaLang/juliaup/releases/download/v1.22.7/juliaup-1.22.7-i686-unknown-linux-musl-portable.tar.gz",
+          "sha256": "8ab256adbc18e7b9f84a58ee7514b69fb4515f46f7c6d906fcb042e16540aa13",
+          "binaries": {
+            "juliaup": "bin/juliaup"
+          }
+        },
+        "x86_64-apple-darwin": {
+          "url": "https://github.com/JuliaLang/juliaup/releases/download/v1.22.7/juliaup-1.22.7-x86_64-apple-darwin-portable.tar.gz",
+          "sha256": "4524421b17622cc7dca3c04c09e6c0db4b9e7d75ba09c40118cb3ad852f98574",
+          "binaries": {
+            "juliaup": "bin/juliaup"
+          }
+        },
+        "x86_64-pc-windows-gnu": {
+          "url": "https://github.com/JuliaLang/juliaup/releases/download/v1.22.7/juliaup-1.22.7-x86_64-pc-windows-gnu-portable.tar.gz",
+          "sha256": "040b688fc39e2f48a7c7c7ee83cbda88131fa6230ed68db24b2a19a40eb39849",
+          "binaries": {
+            "juliaup": "bin/juliaup.exe"
+          }
+        },
+        "x86_64-linux-musl": {
+          "url": "https://github.com/JuliaLang/juliaup/releases/download/v1.22.7/juliaup-1.22.7-x86_64-unknown-linux-musl-portable.tar.gz",
+          "sha256": "d7d4a4249da97fdca5e4b312f4cd0d2ecf2bf52111f3421f8c026ef131ec8df2",
+          "binaries": {
+            "juliaup": "bin/juliaup"
+          }
+        }
+      }
+    }
+  },
+  "license": "MIT"
+}
