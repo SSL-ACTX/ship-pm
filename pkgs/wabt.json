@@ -1,0 +1,45 @@
+{
+  "description": "The WebAssembly Binary Toolkit",
+  "author": "WebAssembly",
+  "repository": "https://github.com/WebAssembly/wabt",
+  "versions": {
+    "1.0.42": {
+      "channel": "stable",
+      "targets": {
+        "aarch64-linux-gnu": {
+          "url": "https://github.com/WebAssembly/wabt/releases/download/1.0.42/wabt-1.0.42-linux-arm64.tar.gz",
+          "sha256": "a7632c1cc66f70886441842ecf5a2ffa91a98c79e026059458451234ad013ea8",
+          "binaries": {
+            "wabt": "bin/wabt"
+          },
+          "download_size_bytes": 4817547
+        },
+        "x86_64-linux-gnu": {
+          "url": "https://github.com/WebAssembly/wabt/releases/download/1.0.42/wabt-1.0.42-linux-x64.tar.gz",
+          "sha256": "84895407a6bbb80e918f33b16b2fb2206021c150b6bc9ff6f761263a745ab131",
+          "binaries": {
+            "wabt": "bin/wabt"
+          },
+          "download_size_bytes": 4761911
+        },
+        "aarch64-apple-darwin": {
+          "url": "https://github.com/WebAssembly/wabt/releases/download/1.0.42/wabt-1.0.42-macos-arm64.tar.gz",
+          "sha256": "3f654779b436c628db3ca4323c51538815f5fbc887a6d5f3bb1c18d36281e240",
+          "binaries": {
+            "wabt": "bin/wabt"
+          },
+          "download_size_bytes": 3695890
+        },
+        "x86_64-pc-windows-gnu": {
+          "url": "https://github.com/WebAssembly/wabt/releases/download/1.0.42/wabt-1.0.42-windows-x64.tar.gz",
+          "sha256": "62f1eb2b51aa57cf0f0b8ba333bf2c72a049930aa9c5de01dcad271c4fe48c88",
+          "binaries": {
+            "wabt": "bin/wabt.exe"
+          },
+          "download_size_bytes": 6519558
+        }
+      }
+    }
+  },
+  "license": "Apache-2.0"
+}
