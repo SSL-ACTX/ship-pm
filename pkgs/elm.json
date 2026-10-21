@@ -1,0 +1,49 @@
+{
+  "description": "Compiler for Elm, a functional language for reliable webapps.",
+  "author": "elm",
+  "repository": "https://github.com/elm/compiler",
+  "versions": {
+    "0.19.3": {
+      "channel": "stable",
+      "targets": {
+        "armv7-linux-gnu": {
+          "url": "https://github.com/elm/compiler/releases/download/0.19.3/elm-0.19.3-linux-arm.gz",
+          "sha256": "4d22c4d10f89e482d3554b7af4f6527f8a05e4d82648a07b23f1f211495b5d24",
+          "binaries": {
+            "elm": "bin/elm"
+          }
+        },
+        "x86_64-linux-gnu": {
+          "url": "https://github.com/elm/compiler/releases/download/0.19.3/elm-0.19.3-linux-x64.gz",
+          "sha256": "d11702b31577ed8b720b9d81c52c8a19a52b72b1fcfadef0fcad92f21798c58a",
+          "binaries": {
+            "elm": "bin/elm"
+          }
+        },
+        "aarch64-apple-darwin": {
+          "url": "https://github.com/elm/compiler/releases/download/0.19.3/elm-0.19.3-mac-arm.gz",
+          "sha256": "a426e47d14cba0588aa81475adc32ba24bbf045209d0c560d0a89a5c4f3c34d0",
+          "binaries": {
+            "elm": "bin/elm"
+          }
+        },
+        "x86_64-apple-darwin": {
+          "url": "https://github.com/elm/compiler/releases/download/0.19.3/elm-0.19.3-mac-x64.gz",
+          "sha256": "4a9c5578e53c4feb55b91c8ee9a0f46da9913414c6303d1c55add0d3abcd9921",
+          "binaries": {
+            "elm": "bin/elm"
+          }
+        },
+        "x86_64-pc-windows-gnu": {
+          "url": "https://github.com/elm/compiler/releases/download/0.19.3/elm-0.19.3-windows-x64.gz",
+          "sha256": "02d827be1d8489dbe53aaf5f923cb1f580aed257a9a8b642ff04bbe625572507",
+          "binaries": {
+            "elm": "bin/elm.exe"
+          }
+        }
+      }
+    }
+  },
+  "homepage": "https://elm-lang.org/",
+  "license": "BSD-3-Clause"
+}
