@@ -1,0 +1,54 @@
+{
+  "description": "Lean 4 programming language and theorem prover",
+  "author": "leanprover",
+  "repository": "https://github.com/leanprover/lean4",
+  "versions": {
+    "4.35.0": {
+      "channel": "stable",
+      "targets": {
+        "x86_64-apple-darwin": {
+          "url": "https://github.com/leanprover/lean4/releases/download/v4.35.0/lean-4.35.0-darwin.zip",
+          "sha256": "67002270b63c6cb12d6024fd00a38aa1e5fc9dc9b6c91cd3bd6f5aa34ed333ef",
+          "binaries": {
+            "lean4": "bin/lean4"
+          },
+          "download_size_bytes": 897507697
+        },
+        "aarch64-apple-darwin": {
+          "url": "https://github.com/leanprover/lean4/releases/download/v4.35.0/lean-4.35.0-darwin_aarch64.zip",
+          "sha256": "55132a570e3dfc6203626944b262793c0f0f6a8230c0d09344a06ac992fac4a9",
+          "binaries": {
+            "lean4": "bin/lean4"
+          },
+          "download_size_bytes": 884857559
+        },
+        "x86_64-linux-gnu": {
+          "url": "https://github.com/leanprover/lean4/releases/download/v4.35.0/lean-4.35.0-linux.zip",
+          "sha256": "c8531faaa4a93d5a4dae0c742cbc1bd42a2993594d02f93a9d629ebf299fb2c8",
+          "binaries": {
+            "lean4": "bin/lean4"
+          },
+          "download_size_bytes": 925899528
+        },
+        "aarch64-linux-gnu": {
+          "url": "https://github.com/leanprover/lean4/releases/download/v4.35.0/lean-4.35.0-linux_aarch64.zip",
+          "sha256": "ffdfdbe00c975e3f31880fcb636135f6bec806d569583dcb280f5a68b6873e05",
+          "binaries": {
+            "lean4": "bin/lean4"
+          },
+          "download_size_bytes": 928084075
+        },
+        "x86_64-pc-windows-gnu": {
+          "url": "https://github.com/leanprover/lean4/releases/download/v4.35.0/lean-4.35.0-windows.zip",
+          "sha256": "5fc033e93e1a7bc59c5ebf311103d2c9cd18d4b3eddda4ffa3414e8adb0ef79e",
+          "binaries": {
+            "lean4": "bin/lean4.exe"
+          },
+          "download_size_bytes": 902262322
+        }
+      }
+    }
+  },
+  "homepage": "https://lean-lang.org",
+  "license": "Apache-2.0"
+}
