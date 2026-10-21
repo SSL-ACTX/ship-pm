@@ -1,0 +1,56 @@
+#!/usr/bin/env python3
+"""Entrypoint executable for the ship package orchestrator."""
+
+import os
+import sys
+from pathlib import Path
+
+self_dir = Path(__file__).resolve().parent
+repo_root = self_dir.parent
+
+is_termux = "TERMUX_VERSION" in os.environ or os.path.exists(
+    "/data/data/com.termux"
+)
+prefix = Path(
+    os.environ.get(
+        "PREFIX",
+        "/data/data/com.termux/files/usr" if is_termux else "/usr/local",
+    )
+)
+ship_root = Path(
+    os.environ.get(
+        "SHIP_ROOT",
+        prefix / "share" / "ship"
+        if is_termux
+        else Path.home() / ".local" / "share" / "ship",
+    )
+)
+
+# Search paths for the 'ship' library module:
+# 1. Local git repository (development mode: ~/ship-pm/ship)
+# 2. Installed ship library ($SHIP_ROOT/lib)
+# 3. Cloned registry directory ($SHIP_ROOT/registry)
+candidates = [
+    repo_root,
+    ship_root / "lib",
+    ship_root / "registry",
+]
+
+for candidate in candidates:
+    if (candidate / "ship" / "__init__.py").is_file():
+        sys.path.insert(0, str(candidate))
+        break
+
+try:
+    from ship.cli import main
+except ModuleNotFoundError as e:
+    sys.stderr.write(
+        f"error: Could not load the 'ship' core module from any location.\n"
+        f"Search paths checked:\n"
+        + "".join(f"  - {c}\n" for c in candidates)
+        + f"Run 'bash install.sh' to repair the installation.\n"
+    )
+    sys.exit(1)
+
+if __name__ == "__main__":
+    main()
