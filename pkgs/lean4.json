@@ -1,0 +1,99 @@
+{
+  "description": "Lean 4 programming language and theorem prover",
+  "author": "leanprover",
+  "repository": "https://github.com/leanprover/lean4",
+  "versions": {
+    "4.35.0": {
+      "channel": "stable",
+      "targets": {
+        "x86_64-apple-darwin": {
+          "url": "https://github.com/leanprover/lean4/releases/download/v4.35.0/lean-4.35.0-darwin.zip",
+          "sha256": "67002270b63c6cb12d6024fd00a38aa1e5fc9dc9b6c91cd3bd6f5aa34ed333ef",
+          "binaries": {
+            "lean4": "bin/lean4"
+          },
+          "download_size_bytes": 897507697
+        },
+        "aarch64-apple-darwin": {
+          "url": "https://github.com/leanprover/lean4/releases/download/v4.35.0/lean-4.35.0-darwin_aarch64.zip",
+          "sha256": "55132a570e3dfc6203626944b262793c0f0f6a8230c0d09344a06ac992fac4a9",
+          "binaries": {
+            "lean4": "bin/lean4"
+          },
+          "download_size_bytes": 884857559
+        },
+        "x86_64-linux-gnu": {
+          "url": "https://github.com/leanprover/lean4/releases/download/v4.35.0/lean-4.35.0-linux.zip",
+          "sha256": "c8531faaa4a93d5a4dae0c742cbc1bd42a2993594d02f93a9d629ebf299fb2c8",
+          "binaries": {
+            "lean4": "bin/lean4"
+          },
+          "download_size_bytes": 925899528
+        },
+        "aarch64-linux-gnu": {
+          "url": "https://github.com/leanprover/lean4/releases/download/v4.35.0/lean-4.35.0-linux_aarch64.zip",
+          "sha256": "ffdfdbe00c975e3f31880fcb636135f6bec806d569583dcb280f5a68b6873e05",
+          "binaries": {
+            "lean4": "bin/lean4"
+          },
+          "download_size_bytes": 928084075
+        },
+        "x86_64-pc-windows-gnu": {
+          "url": "https://github.com/leanprover/lean4/releases/download/v4.35.0/lean-4.35.0-windows.zip",
+          "sha256": "5fc033e93e1a7bc59c5ebf311103d2c9cd18d4b3eddda4ffa3414e8adb0ef79e",
+          "binaries": {
+            "lean4": "bin/lean4.exe"
+          },
+          "download_size_bytes": 902262322
+        }
+      }
+    },
+    "4.36.0-rc2": {
+      "channel": "prerelease",
+      "targets": {
+        "x86_64-apple-darwin": {
+          "url": "https://github.com/leanprover/lean4/releases/download/v4.36.0-rc2/lean-4.36.0-rc2-darwin.zip",
+          "sha256": "82be4efdf9e1d439293f35e165acac91ae5555ee5aca50fe8477df705b5c70ae",
+          "binaries": {
+            "lean4": "bin/lean4"
+          },
+          "download_size_bytes": 916880458
+        },
+        "aarch64-apple-darwin": {
+          "url": "https://github.com/leanprover/lean4/releases/download/v4.36.0-rc2/lean-4.36.0-rc2-darwin_aarch64.zip",
+          "sha256": "5c666afb4b5d8cc6e8627e18b7b3202134f40ae0683ea5607734312a6ee5f13c",
+          "binaries": {
+            "lean4": "bin/lean4"
+          },
+          "download_size_bytes": 903968963
+        },
+        "x86_64-linux-gnu": {
+          "url": "https://github.com/leanprover/lean4/releases/download/v4.36.0-rc2/lean-4.36.0-rc2-linux.zip",
+          "sha256": "6a5824f201b63f0f56f5ad11154becfea9369748b8f48662386a1ae7aa3a23e1",
+          "binaries": {
+            "lean4": "bin/lean4"
+          },
+          "download_size_bytes": 946481418
+        },
+        "aarch64-linux-gnu": {
+          "url": "https://github.com/leanprover/lean4/releases/download/v4.36.0-rc2/lean-4.36.0-rc2-linux_aarch64.zip",
+          "sha256": "af8408d5002113666db0f0b92caf7bed95de3c99913cce92fb210c52068000d8",
+          "binaries": {
+            "lean4": "bin/lean4"
+          },
+          "download_size_bytes": 949190230
+        },
+        "x86_64-pc-windows-gnu": {
+          "url": "https://github.com/leanprover/lean4/releases/download/v4.36.0-rc2/lean-4.36.0-rc2-windows.zip",
+          "sha256": "ad1ed478bbde27cb178c46d8dfd4721d0d5424729280991a8d54537589e1949e",
+          "binaries": {
+            "lean4": "bin/lean4.exe"
+          },
+          "download_size_bytes": 889582738
+        }
+      }
+    }
+  },
+  "homepage": "https://lean-lang.org",
+  "license": "Apache-2.0"
+}
