@@ -1,0 +1,53 @@
+{
+  "description": "Simple, fast, safe, compiled language for developing maintainable software. Compiles itself in <1s with zero library dependencies. Supports automatic C => V translation. https://vlang.io",
+  "author": "vlang",
+  "repository": "https://github.com/vlang/v",
+  "versions": {
+    "0.5.2": {
+      "channel": "stable",
+      "targets": {
+        "x86_64-linux-gnu": {
+          "url": "https://github.com/vlang/v/releases/download/0.5.2/v_linux.zip",
+          "sha256": "86caf9e70c3342d48ef19eb4f6c47b709f18c90ae86255520d5c29df6b482e23",
+          "binaries": {
+            "v": "bin/v"
+          },
+          "download_size_bytes": 25674314
+        },
+        "aarch64-linux-gnu": {
+          "url": "https://github.com/vlang/v/releases/download/0.5.2/v_linux_arm64.zip",
+          "sha256": "7e102f0ecc722bc59fea83ab1c99ae49c2f7be8f30abee9443220e452a439ed3",
+          "binaries": {
+            "v": "bin/v"
+          },
+          "download_size_bytes": 24773734
+        },
+        "aarch64-apple-darwin": {
+          "url": "https://github.com/vlang/v/releases/download/0.5.2/v_macos_arm64.zip",
+          "sha256": "e539a8dc3aeea47267f3cf00c25c4f0a364d8037fb13f5379d2a574a7abac8ee",
+          "binaries": {
+            "v": "bin/v"
+          },
+          "download_size_bytes": 24313376
+        },
+        "x86_64-apple-darwin": {
+          "url": "https://github.com/vlang/v/releases/download/0.5.2/v_macos_x86_64.zip",
+          "sha256": "de19ef02874aec502f091b75e504e4836da38f627ddf7f7f9ecf6e8cf262f9d0",
+          "binaries": {
+            "v": "bin/v"
+          },
+          "download_size_bytes": 24077806
+        },
+        "x86_64-pc-windows-gnu": {
+          "url": "https://github.com/vlang/v/releases/download/0.5.2/v_windows.zip",
+          "sha256": "5f1d619b6b04a2b54b4ad21826a25bdcba2acf75a941c8f72fc95672b6b064ca",
+          "binaries": {
+            "v": "bin/v.exe"
+          },
+          "download_size_bytes": 23745972
+        }
+      }
+    }
+  },
+  "license": "MIT"
+}
