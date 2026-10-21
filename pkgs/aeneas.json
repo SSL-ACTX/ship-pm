@@ -1,0 +1,59 @@
+{
+    "description": "A verification toolchain for Rust programs",
+    "author": "AeneasVerif",
+    "repository": "https://github.com/AeneasVerif/aeneas",
+    "versions": {
+        "nightly-2026.10.28-399081f": {
+            "channel": "nightly",
+            "targets": {
+                "aarch64-linux-gnu": {
+                    "url": "https://github.com/AeneasVerif/aeneas/releases/download/nightly-2026.10.28-399081f/aeneas-linux-aarch64.tar.gz",
+                    "sha256": "ecf9d9790d3a412c1406302c16a7f6e222488b944595eda9b3d5fea58cc1dac4",
+                    "binaries": {
+                        "aeneas": "bin/aeneas"
+                    },
+                    "download_size_bytes": 159014578
+                },
+                "x86_64-linux-gnu": {
+                    "url": "https://github.com/AeneasVerif/aeneas/releases/download/nightly-2026.10.28-399081f/aeneas-linux-x86_64.tar.gz",
+                    "sha256": "051add48507c216449f42175e5dfc4b3c1cd378ff560307936a6f737c09471ea",
+                    "binaries": {
+                        "aeneas": "bin/aeneas"
+                    },
+                    "download_size_bytes": 158635543
+                },
+                "aarch64-apple-darwin": {
+                    "url": "https://github.com/AeneasVerif/aeneas/releases/download/nightly-2026.10.28-399081f/aeneas-macos-aarch64.tar.gz",
+                    "sha256": "e54af16c5c6c8c2b33433258389f5e28fc5c0bdef4684cc1705d441a678246e3",
+                    "binaries": {
+                        "aeneas": "bin/aeneas"
+                    },
+                    "download_size_bytes": 156529928
+                }
+            }
+        },
+        "build-ae027ab": {
+            "channel": "prerelease",
+            "targets": {
+                "aarch64-linux-gnu": {
+                    "url": "https://github.com/AeneasVerif/aeneas/releases/download/build-ae027ab/aeneas-linux-aarch64.tar.gz",
+                    "sha256": "26b0b37a08ec3a5ee6b02e33a181b5cf4b827f8ec0d76a22feaf9be3a50929d9",
+                    "binaries": {
+                        "aeneas": "bin/aeneas"
+                    },
+                    "download_size_bytes": 158925243
+                },
+                "aarch64-apple-darwin": {
+                    "url": "https://github.com/AeneasVerif/aeneas/releases/download/build-ae027ab/aeneas-macos-aarch64.tar.gz",
+                    "sha256": "aff2617d31604b627a51040a55700bf45e150a714a982a77e130622640b31047",
+                    "binaries": {
+                        "aeneas": "bin/aeneas"
+                    },
+                    "download_size_bytes": 156472387
+                }
+            }
+        }
+    },
+    "homepage": "https://aeneasverif.github.io/",
+    "license": "Apache-2.0"
+}

@@ -1,0 +1,60 @@
+{
+  "description": "cvc5 is an open-source automatic theorem prover for Satisfiability Modulo Theories (SMT) problems.",
+  "author": "cvc5",
+  "repository": "https://github.com/cvc5/cvc5",
+  "versions": {
+    "1.4.2": {
+      "channel": "stable",
+      "targets": {
+        "aarch64-linux-gnu": {
+          "url": "https://github.com/cvc5/cvc5/releases/download/cvc5-1.4.2/cvc5-Linux-arm64-shared-gpl.zip",
+          "sha256": "448ccfcb1454d440ea686177e3c7b861cd07465ff9fff12de537283d95c96788",
+          "binaries": {
+            "cvc5": "bin/cvc5"
+          },
+          "download_size_bytes": 192406414
+        },
+        "x86_64-linux-gnu": {
+          "url": "https://github.com/cvc5/cvc5/releases/download/cvc5-1.4.2/cvc5-Linux-x86_64-shared-gpl.zip",
+          "sha256": "0eea38e0e79498214b006bcaf36a80b69f01fc6cea10cd719a4cdc6a93c158f3",
+          "binaries": {
+            "cvc5": "bin/cvc5"
+          },
+          "download_size_bytes": 198973574
+        },
+        "aarch64-apple-darwin": {
+          "url": "https://github.com/cvc5/cvc5/releases/download/cvc5-1.4.2/cvc5-macOS-arm64-shared-gpl.zip",
+          "sha256": "4fc4e109a3efd2a6364ebd9fb23414349aa1c3746a0de0c90f9cacf61bb4c5f3",
+          "binaries": {
+            "cvc5": "bin/cvc5"
+          },
+          "download_size_bytes": 41057611
+        },
+        "x86_64-apple-darwin": {
+          "url": "https://github.com/cvc5/cvc5/releases/download/cvc5-1.4.2/cvc5-macOS-x86_64-shared-gpl.zip",
+          "sha256": "76720610d62d9b3f76ceb41b7dbcf63ee1abee32ef06b67fe71c989d2b417113",
+          "binaries": {
+            "cvc5": "bin/cvc5"
+          },
+          "download_size_bytes": 45349034
+        },
+        "aarch64-pc-windows-gnu": {
+          "url": "https://github.com/cvc5/cvc5/releases/download/cvc5-1.4.2/cvc5-Win64-arm64-shared.zip",
+          "sha256": "61c57d447baa6e4a02b83cfceea85d3ebcf3019979ce87abb8b64ef87c195464",
+          "binaries": {
+            "cvc5": "bin/cvc5.exe"
+          },
+          "download_size_bytes": 11058547
+        },
+        "x86_64-pc-windows-gnu": {
+          "url": "https://github.com/cvc5/cvc5/releases/download/cvc5-1.4.2/cvc5-Win64-x86_64-shared.zip",
+          "sha256": "a34089adcde761d0ce5c9f0e47e2c62b993f6923da42a032572c81afea649636",
+          "binaries": {
+            "cvc5": "bin/cvc5.exe"
+          },
+          "download_size_bytes": 11864384
+        }
+      }
+    }
+  }
+}

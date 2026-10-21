@@ -1,0 +1,10 @@
+temp_env/
+tmp/
+*.tar.gz
+*.tmp*
+.patch_cache
+**/*.rnano_*
+__pycache__/
+*.out
+*.a
+*.o
