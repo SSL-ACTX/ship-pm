@@ -1,0 +1,46 @@
+{
+  "description": "dmd D Programming Language compiler",
+  "author": "dlang",
+  "repository": "https://github.com/dlang/dmd",
+  "versions": {
+    "2.113.0": {
+      "channel": "stable",
+      "targets": {
+        "x86_64-pc-windows-gnu": {
+          "url": "https://github.com/dlang/dmd/releases/download/v2.113.0/dmd-2.113.0.exe",
+          "sha256": "299a443feb2a6b57e520d5e0230a01ecbe1e6f234a25673d427063268da6037c",
+          "binaries": {
+            "dmd": "dmd-2.113.0.exe"
+          },
+          "download_size_bytes": 34042940
+        },
+        "x86_64-freebsd": {
+          "url": "https://github.com/dlang/dmd/releases/download/v2.113.0/dmd.2.113.0.freebsd-64.tar.xz",
+          "sha256": "ca89c390a8f6b7501581e7376061ed1b04c266fcc5a19f4a5b24c5912ef46aef",
+          "binaries": {
+            "dmd": "bin/dmd"
+          },
+          "download_size_bytes": 16838196
+        },
+        "x86_64-linux-gnu": {
+          "url": "https://github.com/dlang/dmd/releases/download/v2.113.0/dmd.2.113.0.linux.tar.xz",
+          "sha256": "b342ab8bd40cc0c46407692b31d7cd69661ff01da686234f426949e881727294",
+          "binaries": {
+            "dmd": "bin/dmd"
+          },
+          "download_size_bytes": 24201188
+        },
+        "x86_64-apple-darwin": {
+          "url": "https://github.com/dlang/dmd/releases/download/v2.113.0/dmd.2.113.0.osx.tar.xz",
+          "sha256": "0e8aa53b9a725fc9fd467ca5aed2bb383c41e596340fa94930a0b12ef13e6425",
+          "binaries": {
+            "dmd": "bin/dmd"
+          },
+          "download_size_bytes": 14851772
+        }
+      }
+    }
+  },
+  "homepage": "https://dlang.org",
+  "license": "BSL-1.0"
+}
