@@ -1,0 +1,28 @@
+{
+  "description": "The Rocq Prover is an interactive theorem prover, or proof assistant. It provides a formal language to write mathematical definitions, executable algorithms and theorems together with an environment for semi-interactive development of machine-checked proofs.",
+  "author": "SSL-ACTX",
+  "repository": "https://github.com/SSL-ACTX/exp-rocq-prebuilts",
+  "versions": {
+    "9": {
+      "channel": "prerelease",
+      "targets": {
+        "aarch64-linux-gnu": {
+          "url": "https://github.com/SSL-ACTX/exp-rocq-prebuilts/releases/download/v9/rocq-prover-9.2-iris-actris-iron-aarch64-linux-new.tar.gz",
+          "sha256": "9feb385b3f6631e533db57c43a4b32c9b99371614d8897c288288dc4a7863235",
+          "binaries": {
+            "exp-rocq-prebuilts": "bin/exp-rocq-prebuilts"
+          },
+          "download_size_bytes": 246980463
+        },
+        "x86_64-linux-gnu": {
+          "url": "https://github.com/SSL-ACTX/exp-rocq-prebuilts/releases/download/v9/rocq-prover-9.3.0-x86_64-linux.tar.gz",
+          "sha256": "3914938790dbc4d0908763425a314be7a06b8ee3d49aa84861a1e4ef6d663f57",
+          "binaries": {
+            "exp-rocq-prebuilts": "bin/exp-rocq-prebuilts"
+          },
+          "download_size_bytes": 359380288
+        }
+      }
+    }
+  }
+}
