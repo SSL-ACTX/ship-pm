@@ -334,6 +334,34 @@ def install_package(
         if cand.is_file() and is_cli_executable(cand):
             found_binaries[symlink_name] = cand
 
+    # Generated manifests can contain a guessed path that differs from the
+    # executable's name inside an archive (for example, a project named
+    # "valerie-core" shipping `bin/valerie-compiler`). Preserve the declared
+    # command name when the package has exactly one declared command and one
+    # discoverable CLI executable; do not guess when either side is ambiguous.
+    if binary_map and len(declared_binaries) == 1 and not found_binaries:
+        symlink_name = next(iter(declared_binaries))
+        candidates = []
+        for root, dirs, files in os.walk(install_dir):
+            dirs[:] = [
+                d
+                for d in dirs
+                if d not in ("lib", "lib64", "share", "include", "build")
+            ]
+            for filename in files:
+                candidate = Path(root) / filename
+                if is_cli_executable(candidate) and not candidate.name.endswith(
+                    "-real"
+                ):
+                    candidates.append(candidate)
+        if len(candidates) == 1:
+            found_binaries[symlink_name] = candidates[0]
+            warn(
+                f"Manifest binary path {next(iter(declared_binaries.values()))!r} "
+                f"was missing; using the package's only CLI executable "
+                f"{candidates[0].relative_to(install_dir)} as {symlink_name}."
+            )
+
     # An explicit manifest map is authoritative. Only use archive discovery
     # for older or local manifests that do not declare their commands.
     if not binary_map:
