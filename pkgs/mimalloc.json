@@ -1,0 +1,63 @@
+{
+  "description": "mimalloc is a compact general purpose allocator with excellent performance.",
+  "author": "microsoft",
+  "repository": "https://github.com/microsoft/mimalloc",
+  "versions": {
+    "3.5.3": {
+      "channel": "stable",
+      "targets": {
+        "aarch64-linux-gnu": {
+          "url": "https://github.com/microsoft/mimalloc/releases/download/v3.5.3/mimalloc-v1.15.2-linux-arm64.tar.gz",
+          "sha256": "c0bd611876acc254b3d87271b2092465cc4ea8badf283db56c09f1a998e2be68",
+          "binaries": {
+            "mimalloc": "bin/mimalloc"
+          }
+        },
+        "x86_64-linux-gnu": {
+          "url": "https://github.com/microsoft/mimalloc/releases/download/v3.5.3/mimalloc-v1.15.2-linux-x64.tar.gz",
+          "sha256": "9d58324d012b95eb59731138b462bde52b403bf66afce31c87e0650679c8f51d",
+          "binaries": {
+            "mimalloc": "bin/mimalloc"
+          }
+        },
+        "aarch64-apple-darwin": {
+          "url": "https://github.com/microsoft/mimalloc/releases/download/v3.5.3/mimalloc-v1.15.2-macos-arm64.tar.gz",
+          "sha256": "bf3fa8973f65b544aaf6be8d8f1d62302fb9a4994b958a5055b8d3eb1cb86548",
+          "binaries": {
+            "mimalloc": "bin/mimalloc"
+          }
+        },
+        "x86_64-apple-darwin": {
+          "url": "https://github.com/microsoft/mimalloc/releases/download/v3.5.3/mimalloc-v1.15.2-macos-x64.tar.gz",
+          "sha256": "9e07029077b5b22947d2ae405d44afbcc0dfd35eaf6fdc39de9ab341496a41ef",
+          "binaries": {
+            "mimalloc": "bin/mimalloc"
+          }
+        },
+        "aarch64-pc-windows-gnu": {
+          "url": "https://github.com/microsoft/mimalloc/releases/download/v3.5.3/mimalloc-v1.15.2-windows-arm64.tar.gz",
+          "sha256": "6448378ce56ba173f339aa24d146c8eed768666d87bcd7607081450389134ed0",
+          "binaries": {
+            "mimalloc": "bin/mimalloc.exe"
+          }
+        },
+        "x86_64-pc-windows-gnu": {
+          "url": "https://github.com/microsoft/mimalloc/releases/download/v3.5.3/mimalloc-v1.15.2-windows-x64.tar.gz",
+          "sha256": "0f1b7489de3c5acee031812775f7b83c2636d735c16c7a78464862b4814bf52d",
+          "binaries": {
+            "mimalloc": "bin/mimalloc.exe"
+          }
+        },
+        "i686-pc-windows-gnu": {
+          "url": "https://github.com/microsoft/mimalloc/releases/download/v3.5.3/mimalloc-v1.15.2-windows-x86.tar.gz",
+          "sha256": "5cb997906e4f625b7b48efc232d782f8e5dab040bc644dc43f5a53b5d8e20daa",
+          "binaries": {
+            "mimalloc": "bin/mimalloc.exe"
+          }
+        }
+      }
+    }
+  },
+  "homepage": "https://microsoft.github.io/mimalloc",
+  "license": "MIT"
+}
