@@ -1,0 +1,130 @@
+name: Automated Package Registration
+
+on:
+  repository_dispatch:
+    types: [register-release]
+  workflow_dispatch:
+    inputs:
+      repo:
+        description: "Target repository (e.g. owner/repo)"
+        required: true
+        type: string
+      tag:
+        description: "Release tag (e.g. v1.0.0 or latest)"
+        required: false
+        default: "latest"
+        type: string
+
+concurrency:
+  group: register-${{ github.event.client_payload.repo || inputs.repo }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  resolve-and-pr:
+    name: Resolve & Submit Package
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Process Release Metadata
+        id: process
+        env:
+          TARGET_REPO: ${{ github.event.client_payload.repo || inputs.repo }}
+          TARGET_TAG: ${{ github.event.client_payload.tag || inputs.tag }}
+          REQUESTER_LOGIN: ${{ github.event.client_payload.requester_login || '' }}
+          REQUESTER_ID: ${{ github.event.client_payload.requester_id || '' }}
+          UPSTREAM_PERMISSION: ${{ github.event.client_payload.upstream_permission || 'unknown' }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          python3 .github/scripts/resolve_release.py
+
+      - name: Ensure trusted-contributor label exists
+        if: steps.process.outputs.updated == 'true' && steps.process.outputs.trusted_contributor == 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
+          script: |
+            const label = 'trusted-contributor';
+            try {
+              await github.rest.issues.getLabel({ ...context.repo, name: label });
+            } catch (error) {
+              if (error.status !== 404) throw error;
+              await github.rest.issues.createLabel({
+                ...context.repo,
+                name: label,
+                color: '0e8a16',
+                description: 'Publisher has write access to the upstream repository'
+              });
+            }
+
+      - name: Create Package Pull Request
+        if: steps.process.outputs.updated == 'true'
+        id: cpr
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
+          commit-message: "feat(pkgs): add ${{ steps.process.outputs.pkg }}@${{ steps.process.outputs.version }}"
+          title: "feat(pkgs): add `${{ steps.process.outputs.pkg }}@${{ steps.process.outputs.version }}`"
+          branch: "publish/${{ steps.process.outputs.pkg }}-${{ steps.process.outputs.version }}"
+          delete-branch: true
+          # Crucial: only commit the isolated package manifest, never touch other files
+          add-paths: |
+            ${{ steps.process.outputs.pkg_file || 'pkgs/*.json' }}
+          labels: |
+            automated
+            package-submission
+            needs-review
+            ${{ steps.process.outputs.trusted_contributor == 'true' && 'trusted-contributor' || '' }}
+          body: |
+            ## 📦 Package Submission: `${{ steps.process.outputs.pkg }}`
+
+            An automated package registration was generated for [`${{ steps.process.outputs.repo }}`](${{ steps.process.outputs.repo_link }}).
+
+            ### 📋 Package Details
+            | Field | Details |
+            | :--- | :--- |
+            | **Package** | `${{ steps.process.outputs.pkg }}` |
+            | **Version** | [`${{ steps.process.outputs.version }}`](${{ steps.process.outputs.release_url }}) |
+            | **Repository** | [${{ steps.process.outputs.repo }}](${{ steps.process.outputs.repo_link }}) |
+            | **Author / Org** | [${{ steps.process.outputs.author }}](https://github.com/${{ steps.process.outputs.author }}) |
+            | **License** | `${{ steps.process.outputs.license }}` |
+            | **Description** | ${{ steps.process.outputs.description }} |
+            | **Targets Resolved** | ${{ steps.process.outputs.target_count }} architectures |
+            | **Manifest** | `${{ steps.process.outputs.pkg_file }}` |
+
+            ### 🎯 Resolved Binary Targets
+            ${{ steps.process.outputs.targets_table }}
+
+            ---
+            ### 🔍 Verification Checklist
+            - [ ] Upstream release authenticity verified: [Release Tag](${{ steps.process.outputs.release_url }})
+            - [ ] Executable name matches intended binary symlinks
+            - [ ] SHA-256 checksums match upstream release artifacts
+
+            *Triggered via `ship publish ${{ steps.process.outputs.repo }} ${{ steps.process.outputs.version }}`.*
+
+            ${{ steps.process.outputs.publisher_marker }}
+
+      - name: Workflow Run Summary
+        if: steps.process.outputs.updated == 'true'
+        run: |
+          echo "### 🚀 Package Submission Created" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Package:** \`${{ steps.process.outputs.pkg }}@${{ steps.process.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Pull Request:** ${{ steps.cpr.outputs.pull-request-url }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Manifest:** \`${{ steps.process.outputs.pkg_file }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Architectures:** ${{ steps.process.outputs.target_count }} targets resolved" >> $GITHUB_STEP_SUMMARY
