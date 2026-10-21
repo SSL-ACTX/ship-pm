@@ -1,0 +1,46 @@
+{
+  "description": "Odin Programming Language",
+  "author": "odin-lang",
+  "repository": "https://github.com/odin-lang/Odin",
+  "versions": {
+    "dev-2026-11a": {
+      "channel": "nightly",
+      "targets": {
+        "x86_64-linux-gnu": {
+          "url": "https://github.com/odin-lang/Odin/releases/download/dev-2026-11a/odin-linux-amd64-dev-2026-11a.tar.gz",
+          "sha256": "65c9f6e97d6f8a30930e151f270ce5aeaa98fe8b2ba49fe067394e2af04f7618",
+          "binaries": {
+            "odin": "bin/odin"
+          },
+          "download_size_bytes": 76175813
+        },
+        "aarch64-linux-gnu": {
+          "url": "https://github.com/odin-lang/Odin/releases/download/dev-2026-11a/odin-linux-arm64-dev-2026-11a.tar.gz",
+          "sha256": "5bdba22447ea46a99765235e401c2ad83930f967f987aab1531ed76c3aa7ea3b",
+          "binaries": {
+            "odin": "bin/odin"
+          },
+          "download_size_bytes": 74227989
+        },
+        "aarch64-apple-darwin": {
+          "url": "https://github.com/odin-lang/Odin/releases/download/dev-2026-11a/odin-macos-arm64-dev-2026-11a.tar.gz",
+          "sha256": "fa10eee280c8786758e3ff0b8fdd9355e1c9447b1f0b8c72764e25ee4ebc3e22",
+          "binaries": {
+            "odin": "bin/odin"
+          },
+          "download_size_bytes": 60827906
+        },
+        "x86_64-pc-windows-gnu": {
+          "url": "https://github.com/odin-lang/Odin/releases/download/dev-2026-11a/odin-windows-amd64-dev-2026-11a.zip",
+          "sha256": "259effedf2997293c8fa4a5e497496f8ebce9f826652d9dd353a9dd2113c31fd",
+          "binaries": {
+            "odin": "bin/odin.exe"
+          },
+          "download_size_bytes": 162310651
+        }
+      }
+    }
+  },
+  "homepage": "https://odin-lang.org",
+  "license": "Zlib"
+}

@@ -1,0 +1,30 @@
+{
+  "description": "SRI Yices SMT Solver",
+  "author": "SRI-CSL",
+  "repository": "https://github.com/SRI-CSL/yices2",
+  "versions": {
+    "yices-2.7.0": {
+      "channel": "stable",
+      "targets": {
+        "x86_64-apple-darwin": {
+          "url": "https://github.com/SRI-CSL/yices2/releases/download/yices-2.7.0/yices-2.7.0-arm-apple-darwin24.5.0-static-gmp.tar.gz",
+          "sha256": "5682fedf13add7818e8d05796b9133e67844fce2bb72fd1ecc75dcb73167c7ac",
+          "binaries": {
+            "yices2": "bin/yices2"
+          },
+          "download_size_bytes": 6194089
+        },
+        "x86_64-linux-gnu": {
+          "url": "https://github.com/SRI-CSL/yices2/releases/download/yices-2.7.0/yices-2.7.0-x86_64-pc-linux-gnu-static-gmp.tar.gz",
+          "sha256": "49566b6f817692820538df78fe406878400d79810631c9372b2495bc81d3e00a",
+          "binaries": {
+            "yices2": "bin/yices2"
+          },
+          "download_size_bytes": 9848047
+        }
+      }
+    }
+  },
+  "homepage": "https://yices.csl.sri.com/",
+  "license": "GPL-3.0"
+}
