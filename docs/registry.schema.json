@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Agnostic Shell Package Orchestrator Registry",
+  "description": "Central declarative registry for distribution of pre-built binaries across GNU, Musl, and Termux environments.",
+  "type": "object",
+  "required": ["packages"],
+  "properties": {
+    "repository": {
+      "type": "string"
+    },
+    "packages": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["versions"],
+        "properties": {
+          "description": { "type": "string" },
+          "author": { "type": "string" },
+          "repository": { "type": "string" },
+          "homepage": { "type": "string" },
+          "license": { "type": "string" },
+          "versions": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "required": ["binaries", "targets"],
+              "properties": {
+                "binaries": {
+                  "type": "object",
+                  "additionalProperties": { "type": "string" }
+                },
+                "targets": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "object",
+                    "required": ["url"],
+                    "properties": {
+                      "url": { "type": "string" },
+                      "sha256": { "type": "string" },
+                      "download_size_bytes": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "description": "Compressed release asset size in bytes."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
