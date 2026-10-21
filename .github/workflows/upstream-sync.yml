@@ -1,0 +1,117 @@
+name: Scheduled Upstream Sync & JSON Validation
+
+on:
+  schedule:
+    # Run twice daily at 00:00 and 12:00 UTC
+    - cron: '0 0,12 * * *'
+  workflow_dispatch:
+    inputs:
+      package:
+        description: "Specific package to check (e.g. z3) or 'all'"
+        required: false
+        default: "all"
+        type: string
+
+concurrency:
+  group: upstream-sync
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  validate-and-discover:
+    name: Validate Manifests & Discover Updates
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.discover.outputs.matrix }}
+      has_updates: ${{ steps.discover.outputs.has_updates }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Validate Schema and Discover Upstream Packages
+        id: discover
+        env:
+          TARGET_PACKAGE: ${{ github.event.inputs.package || 'all' }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          python3 .github/scripts/validate_and_discover.py
+
+  sync-package:
+    name: Sync ${{ matrix.pkg }}
+    needs: validate-and-discover
+    if: needs.validate-and-discover.outputs.has_updates == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix: ${{ fromJson(needs.validate-and-discover.outputs.matrix) }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Fetch and Update Package Manifest
+        id: update
+        env:
+          TARGET_REPO: ${{ matrix.repo }}
+          TARGET_TAG: ${{ matrix.latest_tag }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          python3 .github/scripts/resolve_release.py
+
+      - name: Auto-Commit & Push Updated Package JSON
+        if: steps.update.outputs.updated == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          git checkout main
+          git add pkgs/${{ matrix.pkg }}.json
+          git diff --quiet && git diff --staged --quiet || (
+            git commit -m "chore(pkgs): auto-update ${{ matrix.pkg }} to ${{ steps.update.outputs.version }} [skip ci]"
+            # Rebase and push directly so no manual PR or publish is needed
+            git pull --rebase origin main
+            git push origin main
+          )
+
+  compile-registry:
+    name: Recompile Registry
+    needs: sync-package
+    if: always() && needs.validate-and-discover.outputs.has_updates == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Compile and Commit registry.json
+        run: |
+          python3 .github/scripts/build_registry.py
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add registry.json
+          git diff --quiet && git diff --staged --quiet || (
+            git commit -m "chore(registry): recompile registry.json [skip ci]"
+            git pull --rebase origin main
+            git push origin main
+          )

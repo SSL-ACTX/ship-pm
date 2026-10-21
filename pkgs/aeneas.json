@@ -1,0 +1,59 @@
+{
+  "description": "A verification toolchain for Rust programs",
+  "author": "AeneasVerif",
+  "repository": "https://github.com/AeneasVerif/aeneas",
+  "versions": {
+    "build-ae027ab": {
+      "channel": "prerelease",
+      "targets": {
+        "aarch64-linux-gnu": {
+          "url": "https://github.com/AeneasVerif/aeneas/releases/download/build-ae027ab/aeneas-linux-aarch64.tar.gz",
+          "sha256": "26b0b37a08ec3a5ee6b02e33a181b5cf4b827f8ec0d76a22feaf9be3a50929d9",
+          "binaries": {
+            "aeneas": "bin/aeneas"
+          },
+          "download_size_bytes": 158925243
+        },
+        "aarch64-apple-darwin": {
+          "url": "https://github.com/AeneasVerif/aeneas/releases/download/build-ae027ab/aeneas-macos-aarch64.tar.gz",
+          "sha256": "aff2617d31604b627a51040a55700bf45e150a714a982a77e130622640b31047",
+          "binaries": {
+            "aeneas": "bin/aeneas"
+          },
+          "download_size_bytes": 156472387
+        }
+      }
+    },
+    "nightly-2026.11.03-ab34bd2": {
+      "channel": "nightly",
+      "targets": {
+        "aarch64-linux-gnu": {
+          "url": "https://github.com/AeneasVerif/aeneas/releases/download/nightly-2026.11.03-ab34bd2/aeneas-linux-aarch64.tar.gz",
+          "sha256": "d35d0cfd5ebf9aa158bd312f2cf3a8076a691f27b08605f6664dfdb705ad175e",
+          "binaries": {
+            "aeneas": "bin/aeneas"
+          },
+          "download_size_bytes": 159053497
+        },
+        "x86_64-linux-gnu": {
+          "url": "https://github.com/AeneasVerif/aeneas/releases/download/nightly-2026.11.03-ab34bd2/aeneas-linux-x86_64.tar.gz",
+          "sha256": "ed0e336c506dad37e4e1c53f6cc4d6d5959d7e3afab2fd55aead280775651f5e",
+          "binaries": {
+            "aeneas": "bin/aeneas"
+          },
+          "download_size_bytes": 158648932
+        },
+        "aarch64-apple-darwin": {
+          "url": "https://github.com/AeneasVerif/aeneas/releases/download/nightly-2026.11.03-ab34bd2/aeneas-macos-aarch64.tar.gz",
+          "sha256": "e10a92d89b434a654dde1f31c2a66119134260341f9a3763ab63ffe613ad6f98",
+          "binaries": {
+            "aeneas": "bin/aeneas"
+          },
+          "download_size_bytes": 156546106
+        }
+      }
+    }
+  },
+  "homepage": "https://aeneasverif.github.io/",
+  "license": "Apache-2.0"
+}

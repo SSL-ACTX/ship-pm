@@ -1,0 +1,45 @@
+{
+  "description": "Bitwuzla is a Satisfiability Modulo Theories (SMT) solver for the theories of fixed-size bit-vectors, floating-point arithmetic, arrays and uninterpreted functions and their combinations. Its name is derived from an Austrian dialect expression that can be translated as \u201csomeone who tinkers with bits\u201d.",
+  "author": "bitwuzla",
+  "repository": "https://github.com/bitwuzla/bitwuzla",
+  "versions": {
+    "0.9.1": {
+      "channel": "stable",
+      "targets": {
+        "aarch64-linux-gnu": {
+          "url": "https://github.com/bitwuzla/bitwuzla/releases/download/0.9.1/Bitwuzla-Linux-arm64-static.zip",
+          "sha256": "f2e9f77b5f5c5d6a7bbb2c0fbea096952f61f9fd5d387f0a06fd235f2ec0d3a1",
+          "binaries": {
+            "bitwuzla": "bin/bitwuzla"
+          },
+          "download_size_bytes": 4628731
+        },
+        "x86_64-linux-gnu": {
+          "url": "https://github.com/bitwuzla/bitwuzla/releases/download/0.9.1/Bitwuzla-Linux-x86_64-static.zip",
+          "sha256": "057f1546ae2068df57beb178f3eeab1678f0e5f0c378787a05b7bb294617c9c6",
+          "binaries": {
+            "bitwuzla": "bin/bitwuzla"
+          },
+          "download_size_bytes": 4909392
+        },
+        "aarch64-apple-darwin": {
+          "url": "https://github.com/bitwuzla/bitwuzla/releases/download/0.9.1/Bitwuzla-macOS-arm64-static.zip",
+          "sha256": "86a6fb1af2b7cdaf3f7807662ab679088113bbf3e55d243597f98d826bcb7511",
+          "binaries": {
+            "bitwuzla": "bin/bitwuzla"
+          },
+          "download_size_bytes": 5505266
+        },
+        "x86_64-pc-windows-gnu": {
+          "url": "https://github.com/bitwuzla/bitwuzla/releases/download/0.9.1/Bitwuzla-Win64-x86_64-static.zip",
+          "sha256": "d4f623c47409e54254b3f3ce1bd8a7e4a601b19bace5e98113a11bd933ab181f",
+          "binaries": {
+            "bitwuzla": "bin/bitwuzla.exe"
+          },
+          "download_size_bytes": 5056791
+        }
+      }
+    }
+  },
+  "homepage": "https://bitwuzla.github.io"
+}

@@ -1,0 +1,69 @@
+{
+  "description": "WIP",
+  "author": "SSL-ACTX",
+  "repository": "https://github.com/SSL-ACTX/valerie",
+  "versions": {
+    "0.1.0-alpha.1": {
+      "channel": "prerelease",
+      "targets": {
+        "aarch64-linux-gnu": {
+          "url": "https://github.com/SSL-ACTX/valerie/releases/download/v0.1.0-alpha.1/valerie-v0.1.0-alpha.1-aarch64-unknown-linux-gnu.tar.gz",
+          "sha256": "680855ab81051bf2d29134bb27bf3b3425eedbd5e9924b255cdfb235c5593832",
+          "binaries": {
+            "valerie": "bin/valerie"
+          },
+          "download_size_bytes": 659816
+        },
+        "aarch64-linux-musl": {
+          "url": "https://github.com/SSL-ACTX/valerie/releases/download/v0.1.0-alpha.1/valerie-v0.1.0-alpha.1-aarch64-unknown-linux-musl.tar.gz",
+          "sha256": "cb5fac421cfe9a45092afbfaab868d107960a2da49d5122ef15dc55e7b4651f4",
+          "binaries": {
+            "valerie": "bin/valerie"
+          },
+          "download_size_bytes": 710758
+        },
+        "armv7-linux-gnu": {
+          "url": "https://github.com/SSL-ACTX/valerie/releases/download/v0.1.0-alpha.1/valerie-v0.1.0-alpha.1-armv7-unknown-linux-gnueabihf.tar.gz",
+          "sha256": "2c3a6340c845d171be2666a1e0f826c804967439af7f45fb4c546f4a9b2202b6",
+          "binaries": {
+            "valerie": "bin/valerie"
+          },
+          "download_size_bytes": 651461
+        },
+        "i686-linux-gnu": {
+          "url": "https://github.com/SSL-ACTX/valerie/releases/download/v0.1.0-alpha.1/valerie-v0.1.0-alpha.1-i686-unknown-linux-gnu.tar.gz",
+          "sha256": "8f1ae49517773bc2692a0bd346da07a24a8b4123c4d685d7ffe10b0fe3c88236",
+          "binaries": {
+            "valerie": "bin/valerie"
+          },
+          "download_size_bytes": 714204
+        },
+        "i686-linux-musl": {
+          "url": "https://github.com/SSL-ACTX/valerie/releases/download/v0.1.0-alpha.1/valerie-v0.1.0-alpha.1-i686-unknown-linux-musl.tar.gz",
+          "sha256": "e2c2189a62b4bc29697a3fc6a02c003955cbe45e5da87893ed6795b887f6fcd3",
+          "binaries": {
+            "valerie": "bin/valerie"
+          },
+          "download_size_bytes": 736625
+        },
+        "x86_64-linux-gnu": {
+          "url": "https://github.com/SSL-ACTX/valerie/releases/download/v0.1.0-alpha.1/valerie-v0.1.0-alpha.1-x86_64-unknown-linux-gnu.tar.gz",
+          "sha256": "6d28ee76f1f49d8a75d38e1d815c2d5f41ff742ca9542ba7587fdd61a0f64113",
+          "binaries": {
+            "valerie": "bin/valerie"
+          },
+          "download_size_bytes": 678596
+        },
+        "x86_64-linux-musl": {
+          "url": "https://github.com/SSL-ACTX/valerie/releases/download/v0.1.0-alpha.1/valerie-v0.1.0-alpha.1-x86_64-unknown-linux-musl.tar.gz",
+          "sha256": "b20ccf8c7aab639b1944b7d623fddaf2265334a281de405a74d52557324a0334",
+          "binaries": {
+            "valerie": "bin/valerie"
+          },
+          "download_size_bytes": 736155
+        }
+      }
+    }
+  },
+  "license": "AGPL-3.0"
+}

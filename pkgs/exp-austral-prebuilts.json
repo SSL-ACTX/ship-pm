@@ -1,0 +1,36 @@
+{
+  "description": "Systems language with linear types and capability-based security.",
+  "author": "SSL-ACTX",
+  "repository": "https://github.com/SSL-ACTX/exp-austral-prebuilts",
+  "versions": {
+    "0.2.0": {
+      "channel": "prerelease",
+      "targets": {
+        "aarch64-linux-musl": {
+          "url": "https://github.com/SSL-ACTX/exp-austral-prebuilts/releases/download/v0.2.0/austral-aarch64-linux-musl.zip",
+          "sha256": "7e84fae157969edccbb38ffca53dfc283f9d6093fb5035be641fae319d7cbd9d",
+          "binaries": {
+            "exp-austral-prebuilts": "bin/exp-austral-prebuilts"
+          },
+          "download_size_bytes": 2676873
+        },
+        "armv7-linux-musl": {
+          "url": "https://github.com/SSL-ACTX/exp-austral-prebuilts/releases/download/v0.2.0/austral-armhf-linux-musl.zip",
+          "sha256": "80e9cb893899f21a180e7c5a51553ada8b1ff7d706efd1ba2d421f7c8c9cd04e",
+          "binaries": {
+            "exp-austral-prebuilts": "bin/exp-austral-prebuilts"
+          },
+          "download_size_bytes": 2496492
+        },
+        "x86_64-linux-musl": {
+          "url": "https://github.com/SSL-ACTX/exp-austral-prebuilts/releases/download/v0.2.0/austral-x86_64-linux-musl.zip",
+          "sha256": "7fdfd7541a0d2d859e22fc245fde03009ae802add415155995d369160bdfced3",
+          "binaries": {
+            "exp-austral-prebuilts": "bin/exp-austral-prebuilts"
+          },
+          "download_size_bytes": 2529467
+        }
+      }
+    }
+  }
+}

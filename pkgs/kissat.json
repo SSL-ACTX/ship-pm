@@ -1,0 +1,37 @@
+{
+  "description": "Version 4.0.4",
+  "author": "arminbiere",
+  "repository": "https://github.com/arminbiere/kissat",
+  "versions": {
+    "rel-4.0.4": {
+      "channel": "stable",
+      "targets": {
+        "x86_64-apple-darwin": {
+          "url": "https://github.com/arminbiere/kissat/releases/download/rel-4.0.4/kissat-4.0.4-apple-amd64.zip",
+          "sha256": "5528e9488e9d44346ee1f22a5cb6e2b692b0d13811cf3fef45afe008fe67e6fd",
+          "binaries": {
+            "kissat": "bin/kissat"
+          },
+          "download_size_bytes": 219955
+        },
+        "aarch64-apple-darwin": {
+          "url": "https://github.com/arminbiere/kissat/releases/download/rel-4.0.4/kissat-4.0.4-apple-arm64.zip",
+          "sha256": "4cfc917128c65a61386960df5b3bf54432ec0357b7497a64b015949c38e257c4",
+          "binaries": {
+            "kissat": "bin/kissat"
+          },
+          "download_size_bytes": 191271
+        },
+        "x86_64-linux-gnu": {
+          "url": "https://github.com/arminbiere/kissat/releases/download/rel-4.0.4/kissat-4.0.4-linux-amd64.zip",
+          "sha256": "63282e5168ca040a2018edfba0726bf893a7a6bcdb1db87feb67857e2da697a7",
+          "binaries": {
+            "kissat": "bin/kissat"
+          },
+          "download_size_bytes": 629070
+        }
+      }
+    }
+  },
+  "license": "MIT"
+}
