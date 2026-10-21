@@ -1,0 +1,129 @@
+{
+  "description": "The Z3 Theorem Prover",
+  "author": "Z3Prover",
+  "repository": "https://github.com/Z3Prover/z3",
+  "versions": {
+    "5.3.1": {
+      "channel": "stable",
+      "targets": {
+        "aarch64-linux-gnu": {
+          "url": "https://github.com/Z3Prover/z3/releases/download/z3-5.3.1/z3-5.3.1-arm64-glibc-2.38.zip",
+          "sha256": "73195cee08f4a1a53a605b65845268e0ac999666cb8f4e604d2260e0c9c60b5a",
+          "binaries": {
+            "z3": "bin/z3"
+          },
+          "download_size_bytes": 45939122
+        },
+        "aarch64-apple-darwin": {
+          "url": "https://github.com/Z3Prover/z3/releases/download/z3-5.3.1/z3-5.3.1-arm64-osx-13.3.zip",
+          "sha256": "0de02438052952153aab5d1361be4d61b6d226337440356c054d403c959da86b",
+          "binaries": {
+            "z3": "bin/z3"
+          },
+          "download_size_bytes": 35894547
+        },
+        "aarch64-pc-windows-gnu": {
+          "url": "https://github.com/Z3Prover/z3/releases/download/z3-5.3.1/z3-5.3.1-arm64-win.zip",
+          "sha256": "985661b9407fda5a4d805402493d1177e8564b0e589e5fb78d3de205695e3ca0",
+          "binaries": {
+            "z3": "bin/z3.exe"
+          },
+          "download_size_bytes": 85448423
+        },
+        "x86_64-linux-gnu": {
+          "url": "https://github.com/Z3Prover/z3/releases/download/z3-5.3.1/z3-5.3.1-x64-glibc-2.39.zip",
+          "sha256": "acca9625e8cc8edeb9647b653a1bd696544ddeb5d1c2970a4576734a0c175b40",
+          "binaries": {
+            "z3": "bin/z3"
+          },
+          "download_size_bytes": 68501224
+        },
+        "x86_64-apple-darwin": {
+          "url": "https://github.com/Z3Prover/z3/releases/download/z3-5.3.1/z3-5.3.1-x64-osx-13.3.zip",
+          "sha256": "221a03688d6b08814a90c78b42d16d38aa6355dacd0a5253665d42c4d4361230",
+          "binaries": {
+            "z3": "bin/z3"
+          },
+          "download_size_bytes": 39140377
+        },
+        "x86_64-pc-windows-gnu": {
+          "url": "https://github.com/Z3Prover/z3/releases/download/z3-5.3.1/z3-5.3.1-x64-win.zip",
+          "sha256": "014e2705e53609bcf46718d7c29426e7d0b98512ed00b8f794e3304869a5fd8b",
+          "binaries": {
+            "z3": "bin/z3.exe"
+          },
+          "download_size_bytes": 124290290
+        },
+        "i686-pc-windows-gnu": {
+          "url": "https://github.com/Z3Prover/z3/releases/download/z3-5.3.1/z3-5.3.1-x86-win.zip",
+          "sha256": "6df7343e798ad39c3ed6fbefe662bafaeabca448b742509d4db7ca2f2f5a479f",
+          "binaries": {
+            "z3": "bin/z3.exe"
+          },
+          "download_size_bytes": 79048077
+        }
+      }
+    },
+    "Nightly": {
+      "channel": "nightly",
+      "targets": {
+        "aarch64-linux-gnu": {
+          "url": "https://github.com/Z3Prover/z3/releases/download/Nightly/z3-5.3.1-arm64-glibc-2.38.zip",
+          "sha256": "89de63e8a2cf20127d036be9393c56ddb5470323fb14cf9c3ed44c7c1e0df933",
+          "binaries": {
+            "z3": "bin/z3"
+          },
+          "download_size_bytes": 46559071
+        },
+        "aarch64-apple-darwin": {
+          "url": "https://github.com/Z3Prover/z3/releases/download/Nightly/z3-5.3.1-arm64-osx-13.3.zip",
+          "sha256": "ba8004104bb29780b5235659f98f9741bec469834efdf5f01f1cc7cd73e29c35",
+          "binaries": {
+            "z3": "bin/z3"
+          },
+          "download_size_bytes": 36840441
+        },
+        "aarch64-pc-windows-gnu": {
+          "url": "https://github.com/Z3Prover/z3/releases/download/Nightly/z3-5.3.1-arm64-win.zip",
+          "sha256": "dd1770200e764c766f0f43ac30dbcfedae8ff7c391092728086e86d64eff12b5",
+          "binaries": {
+            "z3": "bin/z3.exe"
+          },
+          "download_size_bytes": 86566224
+        },
+        "x86_64-linux-gnu": {
+          "url": "https://github.com/Z3Prover/z3/releases/download/Nightly/z3-5.3.1-x64-glibc-2.39.zip",
+          "sha256": "633c4b2baf4ef2abcf1294d9926398a40b545ea5fee829f572bd203b7a294da2",
+          "binaries": {
+            "z3": "bin/z3"
+          },
+          "download_size_bytes": 69354757
+        },
+        "x86_64-apple-darwin": {
+          "url": "https://github.com/Z3Prover/z3/releases/download/Nightly/z3-5.3.1-x64-osx-13.3.zip",
+          "sha256": "85fb0a24c6db4e8fc87bfa4924c0555448fd0afd82c51cb657d03dbaae43021e",
+          "binaries": {
+            "z3": "bin/z3"
+          },
+          "download_size_bytes": 39868378
+        },
+        "x86_64-pc-windows-gnu": {
+          "url": "https://github.com/Z3Prover/z3/releases/download/Nightly/z3-5.3.1-x64-win.zip",
+          "sha256": "d40c64b33855af7feb30b3f9355f2e535358d6a27883b09ea57ec03aa1b1feb9",
+          "binaries": {
+            "z3": "bin/z3.exe"
+          },
+          "download_size_bytes": 125947063
+        },
+        "i686-pc-windows-gnu": {
+          "url": "https://github.com/Z3Prover/z3/releases/download/Nightly/z3-5.3.1-x86-win.zip",
+          "sha256": "c6a4ca9560cb3cbc61eb4a39da1ab1f33a6096fc3e28b009099f53ae7ebdc05c",
+          "binaries": {
+            "z3": "bin/z3.exe"
+          },
+          "download_size_bytes": 80047913
+        }
+      }
+    }
+  }
+}
