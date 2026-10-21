@@ -1,0 +1,23 @@
+"""Sieve of Eratosthenes: count primes up to one million."""
+
+
+def primes_up_to(limit: int) -> list[int]:
+    is_prime = [True] * (limit + 1)
+    is_prime[0] = False
+    is_prime[1] = False
+
+    candidate = 2
+    while candidate * candidate <= limit:
+        if is_prime[candidate]:
+            multiple = candidate * candidate
+            while multiple <= limit:
+                is_prime[multiple] = False
+                multiple += candidate
+        candidate += 1
+
+    return [n for n in range(2, limit + 1) if is_prime[n]]
+
+
+limit = 1_000_000
+primes = primes_up_to(limit)
+print(f"{len(primes)} primes up to {limit}; largest is {primes[-1]}")

@@ -1,0 +1,99 @@
+{
+  "description": "A Proof-oriented Programming Language",
+  "author": "FStarLang",
+  "repository": "https://github.com/FStarLang/FStar",
+  "versions": {
+    "2026.10.18": {
+      "channel": "stable",
+      "targets": {
+        "aarch64-apple-darwin": {
+          "url": "https://github.com/FStarLang/FStar/releases/download/v2026.10.18/fstar-v2026.10.18-Darwin-arm64.tar.gz",
+          "sha256": "2e4ae521c17cb83c6a2b186b8a119cc2062de140e7178a366e82febde5ec907d",
+          "binaries": {
+            "fstar": "bin/fstar"
+          },
+          "download_size_bytes": 218140844
+        },
+        "x86_64-apple-darwin": {
+          "url": "https://github.com/FStarLang/FStar/releases/download/v2026.10.18/fstar-v2026.10.18-Darwin-x86_64.tar.gz",
+          "sha256": "eed6bbfcbdc96d6c5d18430b0f5af9890e77453f15bc194482fe32bf5cf0ca6f",
+          "binaries": {
+            "fstar": "bin/fstar"
+          },
+          "download_size_bytes": 219923806
+        },
+        "aarch64-linux-gnu": {
+          "url": "https://github.com/FStarLang/FStar/releases/download/v2026.10.18/fstar-v2026.10.18-Linux-aarch64.tar.gz",
+          "sha256": "c49799e14749839acf007797ea25d08f9b573fbfa55516a9177ab08ee992c8c2",
+          "binaries": {
+            "fstar": "bin/fstar"
+          },
+          "download_size_bytes": 239279030
+        },
+        "x86_64-linux-gnu": {
+          "url": "https://github.com/FStarLang/FStar/releases/download/v2026.10.18/fstar-v2026.10.18-Linux-x86_64.tar.gz",
+          "sha256": "07c14d95c2ef0e94e524448ee144574ff0527feead79907234f9e166aba6ce18",
+          "binaries": {
+            "fstar": "bin/fstar"
+          },
+          "download_size_bytes": 234227379
+        },
+        "x86_64-pc-windows-gnu": {
+          "url": "https://github.com/FStarLang/FStar/releases/download/v2026.10.18/fstar-v2026.10.18-Windows_NT-x86_64.zip",
+          "sha256": "b5e74834d51ffc62c89012ca41aa823dff91f46f6f328cb0f68fbe8b924e314d",
+          "binaries": {
+            "fstar": "bin/fstar.exe"
+          },
+          "download_size_bytes": 261074239
+        }
+      }
+    },
+    "2026.10.25": {
+      "channel": "stable",
+      "targets": {
+        "aarch64-apple-darwin": {
+          "url": "https://github.com/FStarLang/FStar/releases/download/v2026.10.25/fstar-v2026.10.25-Darwin-arm64.tar.gz",
+          "sha256": "cdd215b977380b7b0b3c8a5e628a556042789406d8684128e4e074a3d2ecf1e1",
+          "binaries": {
+            "fstar": "bin/fstar"
+          },
+          "download_size_bytes": 225864025
+        },
+        "x86_64-apple-darwin": {
+          "url": "https://github.com/FStarLang/FStar/releases/download/v2026.10.25/fstar-v2026.10.25-Darwin-x86_64.tar.gz",
+          "sha256": "0f9bcbbca4e9e3cc6dda0bf70bfaef0775f7891dfb7da4b8964e066cb835a40d",
+          "binaries": {
+            "fstar": "bin/fstar"
+          },
+          "download_size_bytes": 227627163
+        },
+        "aarch64-linux-gnu": {
+          "url": "https://github.com/FStarLang/FStar/releases/download/v2026.10.25/fstar-v2026.10.25-Linux-aarch64.tar.gz",
+          "sha256": "38050095f5027fa1a81f2d4416683b95323a2849c4a29f619a46770b9038177c",
+          "binaries": {
+            "fstar": "bin/fstar"
+          },
+          "download_size_bytes": 246994336
+        },
+        "x86_64-linux-gnu": {
+          "url": "https://github.com/FStarLang/FStar/releases/download/v2026.10.25/fstar-v2026.10.25-Linux-x86_64.tar.gz",
+          "sha256": "a716153960545bc26b9d093f55614fedc716a202e4daa1665e5c63e4a2fb04e4",
+          "binaries": {
+            "fstar": "bin/fstar"
+          },
+          "download_size_bytes": 241925188
+        },
+        "x86_64-pc-windows-gnu": {
+          "url": "https://github.com/FStarLang/FStar/releases/download/v2026.10.25/fstar-v2026.10.25-Windows_NT-x86_64.zip",
+          "sha256": "438582d5986b68c827cb1b16e7dea5002c7eab8c0a2ce4d30a4f076effd19711",
+          "binaries": {
+            "fstar": "bin/fstar.exe"
+          },
+          "download_size_bytes": 272816526
+        }
+      }
+    }
+  },
+  "homepage": "https://fstar-lang.org",
+  "license": "Apache-2.0"
+}
