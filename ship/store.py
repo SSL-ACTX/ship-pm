@@ -109,6 +109,23 @@ def is_cli_executable(file_path: Path) -> bool:
     return False
 
 
+def is_compiled_executable(file_path: Path) -> bool:
+    """Return whether a CLI candidate is a native executable, not a script."""
+    try:
+        with open(file_path, "rb") as f:
+            magic = f.read(4)
+    except OSError:
+        return False
+
+    return magic.startswith((b"\x7fELF", b"MZ")) or magic in (
+        b"\xfe\xed\xfa\xce",
+        b"\xfe\xed\xfa\xcf",
+        b"\xce\xfa\xed\xfe",
+        b"\xcf\xfa\xed\xfe",
+        b"\xca\xfe\xba\xbe",
+    )
+
+
 def extract_archive(archive_path: Path, extract_dir: Path, pkg_name: str) -> None:
     extract_dir.mkdir(parents=True, exist_ok=True)
     bin_dir = extract_dir / "bin"

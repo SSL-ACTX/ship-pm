@@ -28,7 +28,12 @@ from ship.patches import apply_package_patch
 from ship.patches.api import PatchReport
 from ship.platform import detect_target_keys
 from ship.registry import fetch_cached_file
-from ship.store import clean_symlinks, extract_archive, is_cli_executable
+from ship.store import (
+    clean_symlinks,
+    extract_archive,
+    is_cli_executable,
+    is_compiled_executable,
+)
 from ship.ui import c, die, status, warn
 
 SIG_EXTENSIONS = (
@@ -367,14 +372,28 @@ def install_from_github(
     status("Linking", "discovering and linking binaries...")
 
     execs: list[Path] = []
-    for root, _, files in os.walk(install_dir):
+    compiled_execs: list[Path] = []
+    for root, dirs, files in os.walk(install_dir):
+        dirs[:] = [
+            d for d in dirs if d not in ("lib", "lib64", "share", "include", "build")
+        ]
         if os.path.basename(root) in ("bin", "usr/bin"):
             for f in files:
                 p = Path(root) / f
                 if is_cli_executable(p):
                     execs.append(p)
 
-    if not execs:
+        for f in files:
+            p = Path(root) / f
+            if is_cli_executable(p) and is_compiled_executable(p):
+                compiled_execs.append(p)
+
+    # Release archives can contain executable example scripts in nested bin/
+    # folders. Prefer actual compiled programs anywhere in the payload when
+    # available; retain bin-script discovery for script-only distributions.
+    if compiled_execs:
+        execs = compiled_execs
+    elif not execs:
         for root, dirs, files in os.walk(install_dir):
             dirs[:] = [
                 d
