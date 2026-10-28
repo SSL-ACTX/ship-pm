@@ -81,6 +81,27 @@
           "download_size_bytes": 156529928
         }
       }
+    },
+    "build-ae027ab": {
+      "channel": "prerelease",
+      "targets": {
+        "aarch64-linux-gnu": {
+          "url": "https://github.com/AeneasVerif/aeneas/releases/download/build-ae027ab/aeneas-linux-aarch64.tar.gz",
+          "sha256": "26b0b37a08ec3a5ee6b02e33a181b5cf4b827f8ec0d76a22feaf9be3a50929d9",
+          "binaries": {
+            "aeneas": "bin/aeneas"
+          },
+          "download_size_bytes": 158925243
+        },
+        "aarch64-apple-darwin": {
+          "url": "https://github.com/AeneasVerif/aeneas/releases/download/build-ae027ab/aeneas-macos-aarch64.tar.gz",
+          "sha256": "aff2617d31604b627a51040a55700bf45e150a714a982a77e130622640b31047",
+          "binaries": {
+            "aeneas": "bin/aeneas"
+          },
+          "download_size_bytes": 156472387
+        }
+      }
     }
   },
   "homepage": "https://aeneasverif.github.io/",
