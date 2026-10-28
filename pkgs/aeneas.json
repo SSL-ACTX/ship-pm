@@ -52,6 +52,35 @@
           "download_size_bytes": 156513143
         }
       }
+    },
+    "nightly-2026.10.28-399081f": {
+      "channel": "nightly",
+      "targets": {
+        "aarch64-linux-gnu": {
+          "url": "https://github.com/AeneasVerif/aeneas/releases/download/nightly-2026.10.28-399081f/aeneas-linux-aarch64.tar.gz",
+          "sha256": "ecf9d9790d3a412c1406302c16a7f6e222488b944595eda9b3d5fea58cc1dac4",
+          "binaries": {
+            "aeneas": "bin/aeneas"
+          },
+          "download_size_bytes": 159014578
+        },
+        "x86_64-linux-gnu": {
+          "url": "https://github.com/AeneasVerif/aeneas/releases/download/nightly-2026.10.28-399081f/aeneas-linux-x86_64.tar.gz",
+          "sha256": "051add48507c216449f42175e5dfc4b3c1cd378ff560307936a6f737c09471ea",
+          "binaries": {
+            "aeneas": "bin/aeneas"
+          },
+          "download_size_bytes": 158635543
+        },
+        "aarch64-apple-darwin": {
+          "url": "https://github.com/AeneasVerif/aeneas/releases/download/nightly-2026.10.28-399081f/aeneas-macos-aarch64.tar.gz",
+          "sha256": "e54af16c5c6c8c2b33433258389f5e28fc5c0bdef4684cc1705d441a678246e3",
+          "binaries": {
+            "aeneas": "bin/aeneas"
+          },
+          "download_size_bytes": 156529928
+        }
+      }
     }
   },
   "homepage": "https://aeneasverif.github.io/",
