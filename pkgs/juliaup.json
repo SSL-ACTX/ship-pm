@@ -132,6 +132,67 @@
           "download_size_bytes": 15638629
         }
       }
+    },
+    "1.23.0": {
+      "channel": "stable",
+      "targets": {
+        "aarch64-apple-darwin": {
+          "url": "https://github.com/JuliaLang/juliaup/releases/download/v1.23.0/juliaup-1.23.0-aarch64-apple-darwin-portable.tar.gz",
+          "sha256": "d853725d5ae609f8397d4070f9c08c4c2df880ef94f74260b20d087d2b555dac",
+          "binaries": {
+            "juliaup": "bin/juliaup"
+          },
+          "download_size_bytes": 8852446
+        },
+        "aarch64-linux-musl": {
+          "url": "https://github.com/JuliaLang/juliaup/releases/download/v1.23.0/juliaup-1.23.0-aarch64-unknown-linux-musl-portable.tar.gz",
+          "sha256": "0f9f508eb1f9c5eab1646caa165d14139277bbe2cd8d2fab8d7ba5c00a6a54d5",
+          "binaries": {
+            "juliaup": "bin/juliaup"
+          },
+          "download_size_bytes": 14531813
+        },
+        "i686-pc-windows-gnu": {
+          "url": "https://github.com/JuliaLang/juliaup/releases/download/v1.23.0/juliaup-1.23.0-i686-pc-windows-gnu-portable.tar.gz",
+          "sha256": "9cf444f00d2d3ab9ffc9b8ba9aaa571d5e9b5e421d2aec9d35f0c5e37a711397",
+          "binaries": {
+            "juliaup": "bin/juliaup.exe"
+          },
+          "download_size_bytes": 9802478
+        },
+        "i686-linux-musl": {
+          "url": "https://github.com/JuliaLang/juliaup/releases/download/v1.23.0/juliaup-1.23.0-i686-unknown-linux-musl-portable.tar.gz",
+          "sha256": "22b6c3bd8113acd4a44ed4692adcedd64d21c230240c803258e2225037537d0a",
+          "binaries": {
+            "juliaup": "bin/juliaup"
+          },
+          "download_size_bytes": 4841698
+        },
+        "x86_64-apple-darwin": {
+          "url": "https://github.com/JuliaLang/juliaup/releases/download/v1.23.0/juliaup-1.23.0-x86_64-apple-darwin-portable.tar.gz",
+          "sha256": "4d789a9fc7db9dcdd70a04101bd7cc86cacebd379e11a946c4c36e475324ff72",
+          "binaries": {
+            "juliaup": "bin/juliaup"
+          },
+          "download_size_bytes": 9575006
+        },
+        "x86_64-pc-windows-gnu": {
+          "url": "https://github.com/JuliaLang/juliaup/releases/download/v1.23.0/juliaup-1.23.0-x86_64-pc-windows-gnu-portable.tar.gz",
+          "sha256": "658998db70847f79987341904d70b8dddd6c35d2f41354fd90f14624053656cb",
+          "binaries": {
+            "juliaup": "bin/juliaup.exe"
+          },
+          "download_size_bytes": 9372510
+        },
+        "x86_64-linux-musl": {
+          "url": "https://github.com/JuliaLang/juliaup/releases/download/v1.23.0/juliaup-1.23.0-x86_64-unknown-linux-musl-portable.tar.gz",
+          "sha256": "5d5078d5ec5d92874e21122ffd9f4c36e42f913debbd73a560c55fce63c39a8a",
+          "binaries": {
+            "juliaup": "bin/juliaup"
+          },
+          "download_size_bytes": 15633125
+        }
+      }
     }
   },
   "license": "MIT"
