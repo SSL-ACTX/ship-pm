@@ -47,6 +47,51 @@
           "download_size_bytes": 902262322
         }
       }
+    },
+    "4.36.0-rc2": {
+      "channel": "prerelease",
+      "targets": {
+        "x86_64-apple-darwin": {
+          "url": "https://github.com/leanprover/lean4/releases/download/v4.36.0-rc2/lean-4.36.0-rc2-darwin.zip",
+          "sha256": "82be4efdf9e1d439293f35e165acac91ae5555ee5aca50fe8477df705b5c70ae",
+          "binaries": {
+            "lean4": "bin/lean4"
+          },
+          "download_size_bytes": 916880458
+        },
+        "aarch64-apple-darwin": {
+          "url": "https://github.com/leanprover/lean4/releases/download/v4.36.0-rc2/lean-4.36.0-rc2-darwin_aarch64.zip",
+          "sha256": "5c666afb4b5d8cc6e8627e18b7b3202134f40ae0683ea5607734312a6ee5f13c",
+          "binaries": {
+            "lean4": "bin/lean4"
+          },
+          "download_size_bytes": 903968963
+        },
+        "x86_64-linux-gnu": {
+          "url": "https://github.com/leanprover/lean4/releases/download/v4.36.0-rc2/lean-4.36.0-rc2-linux.zip",
+          "sha256": "6a5824f201b63f0f56f5ad11154becfea9369748b8f48662386a1ae7aa3a23e1",
+          "binaries": {
+            "lean4": "bin/lean4"
+          },
+          "download_size_bytes": 946481418
+        },
+        "aarch64-linux-gnu": {
+          "url": "https://github.com/leanprover/lean4/releases/download/v4.36.0-rc2/lean-4.36.0-rc2-linux_aarch64.zip",
+          "sha256": "af8408d5002113666db0f0b92caf7bed95de3c99913cce92fb210c52068000d8",
+          "binaries": {
+            "lean4": "bin/lean4"
+          },
+          "download_size_bytes": 949190230
+        },
+        "x86_64-pc-windows-gnu": {
+          "url": "https://github.com/leanprover/lean4/releases/download/v4.36.0-rc2/lean-4.36.0-rc2-windows.zip",
+          "sha256": "ad1ed478bbde27cb178c46d8dfd4721d0d5424729280991a8d54537589e1949e",
+          "binaries": {
+            "lean4": "bin/lean4.exe"
+          },
+          "download_size_bytes": 889582738
+        }
+      }
     }
   },
   "homepage": "https://lean-lang.org",
