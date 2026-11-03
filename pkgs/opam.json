@@ -111,6 +111,115 @@
           "download_size_bytes": 12548608
         }
       }
+    },
+    "2.6.0-rc1": {
+      "channel": "prerelease",
+      "targets": {
+        "aarch64-linux-gnu": {
+          "url": "https://github.com/ocaml/opam/releases/download/2.6.0-rc1/opam-2.6.0-rc1-arm64-linux",
+          "sha256": "c060ca7b8098bf93fc7cae502d9d5c6376c472ac5a9a30e636e90908b9ab61aa",
+          "binaries": {
+            "opam": "opam-2.6.0-rc1-arm64-linux"
+          },
+          "download_size_bytes": 9609440
+        },
+        "aarch64-apple-darwin": {
+          "url": "https://github.com/ocaml/opam/releases/download/2.6.0-rc1/opam-2.6.0-rc1-arm64-macos",
+          "sha256": "c511cd0aca2aeb7d3d6114ca922cc995575579d3a93a41f1a7e72b4cec8fc9f8",
+          "binaries": {
+            "opam": "opam-2.6.0-rc1-arm64-macos"
+          },
+          "download_size_bytes": 9172176
+        },
+        "armv7-linux-gnu": {
+          "url": "https://github.com/ocaml/opam/releases/download/2.6.0-rc1/opam-2.6.0-rc1-armhf-linux",
+          "sha256": "2518f8c40dee89570e1140be0c1c9a67a5cbe5bb691b3039151bed7e932cbb20",
+          "binaries": {
+            "opam": "opam-2.6.0-rc1-armhf-linux"
+          },
+          "download_size_bytes": 6953224
+        },
+        "i686-linux-gnu": {
+          "url": "https://github.com/ocaml/opam/releases/download/2.6.0-rc1/opam-2.6.0-rc1-i686-linux",
+          "sha256": "5f85c0a233cab6f41f7449ac3b17151dd58d77446d06828b23a537aee74ddc34",
+          "binaries": {
+            "opam": "opam-2.6.0-rc1-i686-linux"
+          },
+          "download_size_bytes": 8625400
+        },
+        "powerpc64le-linux-gnu": {
+          "url": "https://github.com/ocaml/opam/releases/download/2.6.0-rc1/opam-2.6.0-rc1-ppc64le-linux",
+          "sha256": "04bf048faf83fe6fc9577d092e9709864bd3d7ec9efb0e6736c7b77665f70729",
+          "binaries": {
+            "opam": "opam-2.6.0-rc1-ppc64le-linux"
+          },
+          "download_size_bytes": 10915112
+        },
+        "riscv64-linux-gnu": {
+          "url": "https://github.com/ocaml/opam/releases/download/2.6.0-rc1/opam-2.6.0-rc1-riscv64-linux",
+          "sha256": "96f7153eb3b52a2bf45f0745a45a53dc7817ddc02b11c0e5168a8bf0376e8669",
+          "binaries": {
+            "opam": "opam-2.6.0-rc1-riscv64-linux"
+          },
+          "download_size_bytes": 9363752
+        },
+        "s390x-linux-gnu": {
+          "url": "https://github.com/ocaml/opam/releases/download/2.6.0-rc1/opam-2.6.0-rc1-s390x-linux",
+          "sha256": "e5cb32a5f025b8bf6e3085878fd7e6030228d8789a73b5a48a948a0bd17b6586",
+          "binaries": {
+            "opam": "opam-2.6.0-rc1-s390x-linux"
+          },
+          "download_size_bytes": 10513336
+        },
+        "x86_64-freebsd": {
+          "url": "https://github.com/ocaml/opam/releases/download/2.6.0-rc1/opam-2.6.0-rc1-x86_64-freebsd",
+          "sha256": "98250a503dfb8a91fbe2ab25bd2badc9364185e8140d998d2fe0e136486062d5",
+          "binaries": {
+            "opam": "opam-2.6.0-rc1-x86_64-freebsd"
+          },
+          "download_size_bytes": 10245608
+        },
+        "x86_64-linux-gnu": {
+          "url": "https://github.com/ocaml/opam/releases/download/2.6.0-rc1/opam-2.6.0-rc1-x86_64-linux",
+          "sha256": "822e6cec892f4a27bd71ab83989b8c9ebe965b5d044f388885a13bb1cdbe25d5",
+          "binaries": {
+            "opam": "opam-2.6.0-rc1-x86_64-linux"
+          },
+          "download_size_bytes": 9457168
+        },
+        "x86_64-apple-darwin": {
+          "url": "https://github.com/ocaml/opam/releases/download/2.6.0-rc1/opam-2.6.0-rc1-x86_64-macos",
+          "sha256": "acf0c23236aff9f2c011bff1166551c70f01d9626bb5a4b15199b2e477b893b2",
+          "binaries": {
+            "opam": "opam-2.6.0-rc1-x86_64-macos"
+          },
+          "download_size_bytes": 9042696
+        },
+        "x86_64-netbsd": {
+          "url": "https://github.com/ocaml/opam/releases/download/2.6.0-rc1/opam-2.6.0-rc1-x86_64-netbsd",
+          "sha256": "0efcb58f893448f19d14b522b9d30efedfbde415ec588a3c3c21b16510d3ebac",
+          "binaries": {
+            "opam": "opam-2.6.0-rc1-x86_64-netbsd"
+          },
+          "download_size_bytes": 9982984
+        },
+        "x86_64-openbsd": {
+          "url": "https://github.com/ocaml/opam/releases/download/2.6.0-rc1/opam-2.6.0-rc1-x86_64-openbsd",
+          "sha256": "fdb1bb897a078bef09edb35c439dede059d64986dd3639f9b66b989ffba4cf35",
+          "binaries": {
+            "opam": "opam-2.6.0-rc1-x86_64-openbsd"
+          },
+          "download_size_bytes": 13188864
+        },
+        "x86_64-pc-windows-gnu": {
+          "url": "https://github.com/ocaml/opam/releases/download/2.6.0-rc1/opam-2.6.0-rc1-x86_64-windows.exe",
+          "sha256": "03192851c7739ff14d69dd22ada8eadfd2381b8ae2c62a1c950dc36f7ac41f00",
+          "binaries": {
+            "opam": "opam-2.6.0-rc1-x86_64-windows.exe"
+          },
+          "download_size_bytes": 12549632
+        }
+      }
     }
   },
   "homepage": "https://opam.ocaml.org"
