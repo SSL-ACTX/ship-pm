@@ -90,7 +90,9 @@ def finalize_install(artifact: InstallArtifact, *, record_history: bool = True) 
     if artifact.validate_elf_architecture:
         exes = scan_executables(install_dir)
         wrong_arch_execs = [
-            path for path in exes if not _matches_target_elf_architecture(path, target_key)
+            path
+            for path in exes
+            if not _matches_target_elf_architecture(path, target_key)
         ]
         matching_execs = [
             path for path in exes if _matches_target_elf_architecture(path, target_key)

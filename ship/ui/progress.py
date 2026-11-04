@@ -21,18 +21,18 @@ class Progress:
     """Compact progress line with a quiet non-TTY fallback."""
 
     __slots__ = (
-        "action",
-        "label",
-        "unit",
-        "total",
-        "current",
-        "started",
-        "last_draw",
-        "tty",
-        "finished",
-        "_theme",
         "_color",
         "_status",
+        "_theme",
+        "action",
+        "current",
+        "finished",
+        "label",
+        "last_draw",
+        "started",
+        "total",
+        "tty",
+        "unit",
     )
 
     def __init__(

@@ -175,9 +175,7 @@ class CliEngine:
         width = max((len(label) for label in labels), default=0)
         rows = []
         for opt, label in zip(opts, labels, strict=True):
-            rows.append(
-                f"    {self._paint(label.ljust(width), 'package')}  {opt.help}"
-            )
+            rows.append(f"    {self._paint(label.ljust(width), 'package')}  {opt.help}")
         return rows
 
     def _render_command_help(self, command: Command) -> str:
@@ -272,7 +270,9 @@ class CliEngine:
         cmd_name = leading[0]
         command = self.find(cmd_name)
         if command is None:
-            ui.die(f"Unknown command: '{cmd_name}'. Run '{self.name} --help' for usage.")
+            ui.die(
+                f"Unknown command: '{cmd_name}'. Run '{self.name} --help' for usage."
+            )
 
         ns.command = command.name
         for opt in command.opts:

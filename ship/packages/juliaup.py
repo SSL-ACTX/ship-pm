@@ -5,9 +5,6 @@ import shutil
 import subprocess
 from pathlib import Path
 
-from ship.core.profile import get_active_profile
-from ship.core.settings import settings
-from ship.runtime import apply_patchers
 from ship.api import (
     ArgumentOneOf,
     BinaryQuery,
@@ -20,6 +17,9 @@ from ship.api import (
     set_elf_interpreter,
     set_elf_rpath,
 )
+from ship.core.profile import get_active_profile
+from ship.core.settings import settings
+from ship.runtime import apply_patchers
 from ship.runtime.termux import termux_glibc_loader_path, termux_glibc_prefix
 from ship.ui import status
 
@@ -167,7 +167,9 @@ def juliaup_command(
     qemu = shutil.which("qemu-aarch64")
     if not qemu:
         return None
-    return RuntimeCommand(argv=(qemu, "-L", get_active_profile().paths.prefix, real_binary))
+    return RuntimeCommand(
+        argv=(qemu, "-L", get_active_profile().paths.prefix, real_binary)
+    )
 
 
 PATCH = PackagePatch(

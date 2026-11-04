@@ -243,7 +243,9 @@ def run_info(ns: Namespace) -> None:
             )
             for target in targets:
                 marker = (
-                    ui.style(" [host match]", "success") if target in host_targets else ""
+                    ui.style(" [host match]", "success")
+                    if target in host_targets
+                    else ""
                 )
                 ui.bullet(f"{target}{marker}")
     ui.blank()

@@ -26,7 +26,7 @@ def pad_visible(text: object, width: int, align: str = "left") -> str:
     return f"{text}{spaces}" if align == "left" else f"{spaces}{text}"
 
 
-def format_size(size_bytes: int | float | None) -> str:
+def format_size(size_bytes: float | None) -> str:
     """Format a byte count with binary units."""
     if size_bytes is None:
         return "unknown"

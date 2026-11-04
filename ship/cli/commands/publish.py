@@ -58,7 +58,9 @@ def run_publish(ns: Namespace) -> None:
         except (json.JSONDecodeError, AttributeError):
             detail = ""
         suffix = f": {detail}" if detail else ""
-        ui.die(f"Registry bridge rejected the publish request (HTTP {exc.code}){suffix}")
+        ui.die(
+            f"Registry bridge rejected the publish request (HTTP {exc.code}){suffix}"
+        )
     except urllib.error.URLError as exc:
         if isinstance(exc.reason, TimeoutError):
             ui.die(

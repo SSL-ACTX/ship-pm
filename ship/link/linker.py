@@ -3,9 +3,9 @@
 import time
 from pathlib import Path
 
+from ship.api import PatchReport
 from ship.core.settings import settings
 from ship.core.state import load_state
-from ship.api import PatchReport
 from ship.packages import get_export_policy
 from ship.runtime import apply_patchers
 from ship.ui import c, die, status, warn
@@ -113,7 +113,10 @@ def link_package(
                     is_ship_owned = False
 
             if not is_ship_owned:
-                backup = settings.ship_backup_dir / f"{symlink_name}.backup.{int(time.time())}"
+                backup = (
+                    settings.ship_backup_dir
+                    / f"{symlink_name}.backup.{int(time.time())}"
+                )
                 pub_link.rename(backup)
                 warn(f"Backed up external binary to {backup}")
             else:

@@ -8,7 +8,7 @@ from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from typing import TextIO
 
-from ship.ui.format import format_license, format_size, pad_visible, visible_len
+from ship.ui.format import pad_visible
 from ship.ui.progress import Progress
 from ship.ui.theme import DEFAULT_THEME, Style, Theme
 
@@ -31,7 +31,7 @@ class Column:
 class UI:
     """Single renderer used by CLI and install/runtime status output."""
 
-    __slots__ = ("out", "err", "theme", "color", "action_width")
+    __slots__ = ("action_width", "color", "err", "out", "theme")
 
     def __init__(
         self,
@@ -119,9 +119,7 @@ class UI:
         for row in rows:
             cells = []
             for col, cell in zip(columns, row, strict=False):
-                painted = (
-                    self.style(cell, col.style) if col.style else str(cell)
-                )
+                painted = self.style(cell, col.style) if col.style else str(cell)
                 cells.append(pad_visible(painted, col.width))
             print(indent + " ".join(cells), file=self.out)
 

@@ -36,7 +36,9 @@ def run_admin(ns: Namespace) -> None:
         if action == "reject":
             if ns.get("pr") is None:
                 ui.die("Usage: ship admin reject <PR> [--reason TEXT] [--yes]")
-            reason = (ns.get("reason") or "").strip() or "Rejected by registry maintainer."
+            reason = (
+                ns.get("reason") or ""
+            ).strip() or "Rejected by registry maintainer."
             reject_package_submission(
                 repo,
                 _pr_number(ns.pr),

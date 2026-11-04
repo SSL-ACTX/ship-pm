@@ -2,13 +2,13 @@
 
 from pathlib import Path
 
-from ship.core.profile import get_active_profile
 from ship.api import (
     ExportPolicy,
     InstallPatch,
     PackagePatch,
     PatchContext,
 )
+from ship.core.profile import get_active_profile
 from ship.runtime.termux import termux_glibc_loader_path, termux_glibc_prefix
 
 _PUBLIC_COMMANDS = ("lean", "lake", "leanc", "lean4")

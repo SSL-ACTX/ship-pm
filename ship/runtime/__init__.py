@@ -40,6 +40,7 @@ def apply_patchers(
 
 
 __all__ = [
+    "PATCHERS",
     "BinaryPatcher",
     "BinaryQuery",
     "ElfClass",
@@ -47,7 +48,6 @@ __all__ = [
     "ExportPolicy",
     "InstallPatch",
     "LauncherTemplate",
-    "PATCHERS",
     "PackagePatch",
     "PatchContext",
     "PatchReport",

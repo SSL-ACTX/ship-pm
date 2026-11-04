@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import os
 import platform
-from dataclasses import dataclass, field, replace
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Literal
 
-ProfileId = Literal["termux", "linux", "darwin", "freebsd", "openbsd", "netbsd", "windows", "generic"]
+ProfileId = Literal[
+    "termux", "linux", "darwin", "freebsd", "openbsd", "netbsd", "windows", "generic"
+]
 
 TERMUX_PREFIX_DEFAULT = Path("/data/data/com.termux/files/usr")
 TERMUX_ROOT_MARKER = Path("/data/data/com.termux")
@@ -117,7 +119,9 @@ def _is_musl_host() -> bool:
     return False
 
 
-def default_target_priority(profile_id: ProfileId, arch: str | None = None) -> tuple[str, ...]:
+def default_target_priority(
+    profile_id: ProfileId, arch: str | None = None
+) -> tuple[str, ...]:
     host_arch = arch or _normalize_arch(platform.machine())
     if profile_id == "darwin":
         if host_arch == "aarch64":

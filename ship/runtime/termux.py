@@ -1,6 +1,5 @@
 """Termux platform compatibility helpers and runtime launcher patcher."""
 
-import os
 import platform
 import shlex
 import shutil

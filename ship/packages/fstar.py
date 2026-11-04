@@ -1,6 +1,5 @@
 """Platform compatibility patches for F* and its bundled solvers."""
 
-from ship.runtime import apply_patchers
 from ship.api import (
     ExportPolicy,
     InstallPatch,
@@ -8,6 +7,7 @@ from ship.api import (
     PatchContext,
     inspect_elf,
 )
+from ship.runtime import apply_patchers
 
 _PUBLIC_COMMANDS = ("fstar", "fstar.exe", "krml")
 

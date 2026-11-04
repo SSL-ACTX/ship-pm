@@ -59,7 +59,9 @@ def run_update(ns: Namespace) -> None:
         if not manifest:
             continue
         versions = manifest.get("versions", {})
-        channel = data.get("channel") or classify_channel_for_version(curr_ver, versions)
+        channel = data.get("channel") or classify_channel_for_version(
+            curr_ver, versions
+        )
         latest = _latest_for_channel(versions, channel)
         if not latest or versions_equal(curr_ver, latest):
             continue
@@ -203,7 +205,9 @@ def run_check_upstream(ns: Namespace) -> None:
             continue
         if registry_ver and versions_equal(registry_ver, upstream_tag):
             continue
-        if registry_ver and semver_sort_key(registry_ver) >= semver_sort_key(upstream_tag):
+        if registry_ver and semver_sort_key(registry_ver) >= semver_sort_key(
+            upstream_tag
+        ):
             continue
         actionable.append((channel, registry_ver or "—", upstream_tag))
     ui.blank()
@@ -226,7 +230,9 @@ def run_check_upstream(ns: Namespace) -> None:
         )
         if ui.confirm("Propose this stable update to the registry now?", default=True):
             run_publish(
-                Namespace(values={"repo": upstream_repo, "tag": _publish_tag(upstream_tag)})
+                Namespace(
+                    values={"repo": upstream_repo, "tag": _publish_tag(upstream_tag)}
+                )
             )
         else:
             ui.status("Skipped", "update proposal cancelled")
@@ -293,7 +299,8 @@ def _print_channel_row(
     if registry_ver and upstream_tag and versions_equal(registry_ver, upstream_tag):
         mark = ui.style("ok", "success")
     elif upstream_tag and (
-        not registry_ver or semver_sort_key(upstream_tag) > semver_sort_key(registry_ver)
+        not registry_ver
+        or semver_sort_key(upstream_tag) > semver_sort_key(registry_ver)
     ):
         mark = ui.style("ahead", "warning")
     elif registry_ver and not upstream_tag:
@@ -308,7 +315,9 @@ def run_self_update(_ns: Namespace) -> None:
     self_path = Path(__file__).resolve()
 
     # Prefer git pull when running from a checkout (cli/commands -> repo root).
-    repo_probe = self_path.parents[3] if len(self_path.parents) >= 4 else self_path.parent
+    repo_probe = (
+        self_path.parents[3] if len(self_path.parents) >= 4 else self_path.parent
+    )
     res = subprocess.run(
         ["git", "-C", str(repo_probe), "rev-parse", "--show-toplevel"],
         check=False,
@@ -317,7 +326,9 @@ def run_self_update(_ns: Namespace) -> None:
     )
     if res.returncode == 0:
         git_root = Path(res.stdout.strip())
-        if (git_root / ".git").is_dir() and (git_root / "ship" / "__init__.py").is_file():
+        if (git_root / ".git").is_dir() and (
+            git_root / "ship" / "__init__.py"
+        ).is_file():
             ui.status("Updating", f"git repository at {git_root}...")
             pull = subprocess.run(
                 ["git", "-C", str(git_root), "pull", "--ff-only"],

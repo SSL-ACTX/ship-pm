@@ -6,8 +6,8 @@ import shutil
 from pathlib import Path
 from typing import ClassVar
 
-from ship.core.profile import get_active_profile
 from ship.api import PatchReport
+from ship.core.profile import get_active_profile
 from ship.runtime.base import BinaryPatcher, LauncherTemplate, install_launcher
 from ship.ui import status, warn
 

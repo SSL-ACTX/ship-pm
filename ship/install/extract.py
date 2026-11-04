@@ -196,5 +196,3 @@ def extract_archive(archive_path: Path, extract_dir: Path, pkg_name: str) -> Non
     except Exception:
         progress.finish(success=False)
         raise
-
-

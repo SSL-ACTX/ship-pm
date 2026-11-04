@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
+import platform as py_platform
 import shutil
 
 from ship.core.profile import _normalize_arch, get_active_profile
-import platform as py_platform
 
 
 def detect_target_keys(override: str | None = None) -> list[str]:

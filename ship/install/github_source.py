@@ -1,3 +1,4 @@
+# ship/install/github_source.py
 """Install packages resolved from GitHub release assets."""
 
 from __future__ import annotations
@@ -7,7 +8,6 @@ import re
 import sys
 import urllib.error
 import urllib.request
-from pathlib import Path
 
 from ship import __version__
 from ship.core.platform import detect_target_keys
@@ -53,6 +53,7 @@ BUILD_ARTIFACT_PATTERNS = (
     "installer",
     "setup",
 )
+
 
 def install_from_github(
     repo_input: str,
@@ -142,8 +143,10 @@ def install_from_github(
 
         for idx, target in enumerate(target_keys):
             t_arch, t_os, *t_abi = target.split("-")
+            is_universal = "universal" in name or "all" in name
             matches_arch = (
-                (
+                is_universal
+                or (
                     t_arch in ("aarch64", "arm64")
                     and any(
                         x in name for x in ("aarch64", "arm64", "mac-arm", "-mac-arm")
@@ -183,6 +186,7 @@ def install_from_github(
             if (
                 not matches_arch
                 and t_arch == "x86_64"
+                and not is_universal
                 and not any(
                     token in name
                     for token in (
@@ -195,7 +199,6 @@ def install_from_github(
                         "riscv",
                         "ppc",
                         "s390",
-                        "universal",
                         "source",
                         "src",
                         "-all",
@@ -205,7 +208,8 @@ def install_from_github(
             ):
                 matches_arch = True
             matches_os = (
-                (
+                is_universal
+                or (
                     t_os in ("darwin", "apple")
                     and any(
                         x in name
@@ -249,6 +253,8 @@ def install_from_github(
 
             if matches_arch and matches_os:
                 score = 100 - idx * 10
+                if is_universal:
+                    score += 20
                 if t_abi and t_abi[0] in name:
                     score += 15
                 if any(
@@ -308,7 +314,9 @@ def install_from_github(
 
     status("Matched", f"asset {asset_name} ({best_target})")
     url_key = hashlib.sha256(download_url.encode("utf-8")).hexdigest()[:16]
-    dest_archive = settings.ship_cache_dir / f"{owner}_{raw_repo_name}_{url_key}_{asset_name}"
+    dest_archive = (
+        settings.ship_cache_dir / f"{owner}_{raw_repo_name}_{url_key}_{asset_name}"
+    )
 
     expected_sha = ""
     for ca in checksum_assets:
@@ -338,7 +346,6 @@ def install_from_github(
         expected_sha256=expected_sha,
         description=f"{owner}/{raw_repo_name}@{raw_version} ({asset_name})",
     )
-
 
     finalize_install(
         InstallArtifact(

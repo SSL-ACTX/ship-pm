@@ -1,8 +1,8 @@
 """Ship terminal UI engine."""
 
 from ship.ui.engine import (
-    Column,
     UI,
+    Column,
     c,
     die,
     info,
@@ -15,12 +15,12 @@ from ship.ui.progress import Progress
 from ship.ui.theme import DEFAULT_THEME, Style, Theme
 
 __all__ = [
-    "Column",
     "DEFAULT_THEME",
+    "UI",
+    "Column",
     "Progress",
     "Style",
     "Theme",
-    "UI",
     "c",
     "die",
     "format_license",

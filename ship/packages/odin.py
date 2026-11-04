@@ -8,7 +8,6 @@ import sys
 import tempfile
 from pathlib import Path
 
-from ship.core.profile import get_active_profile
 from ship.api import (
     EM_AARCH64,
     ArgumentEquals,
@@ -21,6 +20,7 @@ from ship.api import (
     find_binaries,
     raise_tls_alignment,
 )
+from ship.core.profile import get_active_profile
 
 ODIN_TLS_ALIGNMENT = 64
 RUN_UNSUPPORTED_FLAGS = frozenset(
