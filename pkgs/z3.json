@@ -124,6 +124,67 @@
           "download_size_bytes": 80047913
         }
       }
+    },
+    "5.3.3": {
+      "channel": "stable",
+      "targets": {
+        "aarch64-linux-gnu": {
+          "url": "https://github.com/Z3Prover/z3/releases/download/z3-5.3.3/z3-5.3.3-arm64-glibc-2.38.zip",
+          "sha256": "d4586e12af2609499e07d615ac578256125b19f396f0d6ca358fe7b22988bcec",
+          "binaries": {
+            "z3": "bin/z3"
+          },
+          "download_size_bytes": 64975322
+        },
+        "aarch64-apple-darwin": {
+          "url": "https://github.com/Z3Prover/z3/releases/download/z3-5.3.3/z3-5.3.3-arm64-osx-13.3.zip",
+          "sha256": "6957e6c75266d7ca8fa77030e86e83d78624567dcdf34cc11f4192fdc6f93c6b",
+          "binaries": {
+            "z3": "bin/z3"
+          },
+          "download_size_bytes": 53744860
+        },
+        "aarch64-pc-windows-gnu": {
+          "url": "https://github.com/Z3Prover/z3/releases/download/z3-5.3.3/z3-5.3.3-arm64-win.zip",
+          "sha256": "af442c9a8ac995ae0be789e33e60a5670d5e3895fd4f19d333b242b1b8afff24",
+          "binaries": {
+            "z3": "bin/z3.exe"
+          },
+          "download_size_bytes": 70889960
+        },
+        "x86_64-linux-gnu": {
+          "url": "https://github.com/Z3Prover/z3/releases/download/z3-5.3.3/z3-5.3.3-x64-glibc-2.39.zip",
+          "sha256": "d56f60b06f432f33de5810f7f1a384a339131f361e2d54d08ea83eea14326880",
+          "binaries": {
+            "z3": "bin/z3"
+          },
+          "download_size_bytes": 69671358
+        },
+        "x86_64-apple-darwin": {
+          "url": "https://github.com/Z3Prover/z3/releases/download/z3-5.3.3/z3-5.3.3-x64-osx-13.3.zip",
+          "sha256": "ace69787d5a21762154b103abe68178188f38e02362fb0f82d346621af90f8e7",
+          "binaries": {
+            "z3": "bin/z3"
+          },
+          "download_size_bytes": 54428314
+        },
+        "x86_64-pc-windows-gnu": {
+          "url": "https://github.com/Z3Prover/z3/releases/download/z3-5.3.3/z3-5.3.3-x64-win.zip",
+          "sha256": "4e48624a6895b49606b3cf91ca4fbcc069fb2973b9706532170a144baa3fd798",
+          "binaries": {
+            "z3": "bin/z3.exe"
+          },
+          "download_size_bytes": 71064711
+        },
+        "i686-pc-windows-gnu": {
+          "url": "https://github.com/Z3Prover/z3/releases/download/z3-5.3.3/z3-5.3.3-x86-win.zip",
+          "sha256": "4beff25232ddaf1d80425dd2f033dc22dd08948d4e3045654d454e3d87b8caec",
+          "binaries": {
+            "z3": "bin/z3.exe"
+          },
+          "download_size_bytes": 66248954
+        }
+      }
     }
   }
 }
