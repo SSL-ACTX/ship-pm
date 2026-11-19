@@ -17,6 +17,7 @@ from ship.api import (
     inspect_elf,
 )
 from ship.runtime.base import BinaryPatcher, LauncherTemplate, install_launcher
+from ship.runtime.interceptor import SyscallInterceptor
 from ship.runtime.qemu import QemuRunnerPatcher
 from ship.runtime.termux import TermuxPatcher
 
@@ -55,6 +56,7 @@ __all__ = [
     "ReapplyHandler",
     "RuntimeCommand",
     "RuntimePatch",
+    "SyscallInterceptor",
     "TermuxPatcher",
     "apply_patchers",
     "inspect_elf",

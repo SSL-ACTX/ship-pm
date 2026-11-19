@@ -9,7 +9,9 @@ __pycache__/
 *.a
 *.o
 *.vo
-.lia.cache/
+.lia.cache
+*.so
+libship_interceptor.so/
 *.aux
 *.glob
 *.checked
@@ -17,3 +19,5 @@ __pycache__/
 .cache/
 .cache/*.fst.checked
 .lia.cache
+*.so
+libship_interceptor.so

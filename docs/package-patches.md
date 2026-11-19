@@ -24,7 +24,6 @@ PATCH = (
     .flatten_nested_root("my-tool-*")
     .symlink("lib/my-tool", to="lib/runtime")
     .ensure_dirs("cache", "stublibs")
-
     # 2. Config templates with automatic interpolation
     .write_template(
         "etc/tool.conf",
@@ -34,7 +33,6 @@ PATCH = (
         profile_prefix = "{profile.prefix}"
         """,
     )
-
     # 3. Export policy & binary visibility
     .export(
         only=("my-tool", "my-tool-cli"),
@@ -42,7 +40,6 @@ PATCH = (
         aliases={"tool": "my-tool"},
         discover_all_bins=True,
     )
-
     # 4. ELF & toolchain compatibility
     .raise_tls_alignment(
         ("bin/my-tool",),
@@ -55,7 +52,6 @@ PATCH = (
         condition=on_platform(target="*-linux-*"),
     )
     .patch_subtree("**/solvers/**/z3*")
-
     # 5. Public launcher environment & runtime behavior
     .runtime(
         binaries=("my-tool",),

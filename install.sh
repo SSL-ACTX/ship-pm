@@ -99,4 +99,23 @@ else
 fi
 mv "$BIN_STAGE" "$SHIP_BIN_TARGET/ship"
 
+# Opportunistically compile native syscall interceptor if C compiler is available
+INTERCEPTOR_SRC="${SHIP_LIB_DIR}/ship/runtime/interceptor/interceptor.c"
+INTERCEPTOR_SO="${SHIP_LIB_DIR}/libship_interceptor.so"
+if [ -f "$INTERCEPTOR_SRC" ]; then
+  CC_BIN=""
+  if command -v clang >/dev/null 2>&1; then
+    CC_BIN="$(command -v clang)"
+  elif command -v gcc >/dev/null 2>&1; then
+    CC_BIN="$(command -v gcc)"
+  fi
+
+  if [ -n "$CC_BIN" ]; then
+    ui_status "Compiling" "native syscall interceptor core..."
+    if "$CC_BIN" -O2 -shared -fPIC "$INTERCEPTOR_SRC" -o "$INTERCEPTOR_SO" 2>/dev/null; then
+      ui_status "Enabled" "native seccomp syscall supervisor"
+    fi
+  fi
+fi
+
 ui_status "Finished" "ship installed successfully"
