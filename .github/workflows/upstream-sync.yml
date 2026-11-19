@@ -83,9 +83,12 @@ jobs:
           git add pkgs/${{ matrix.pkg }}.json
           git diff --quiet && git diff --staged --quiet || (
             git commit -m "chore(pkgs): auto-update ${{ matrix.pkg }} to ${{ steps.update.outputs.version }} [skip ci]"
-            # Rebase and push directly so no manual PR or publish is needed
-            git pull --rebase origin main
-            git push origin main
+            # Rebase and push with retries to resolve concurrent matrix pushes
+            for i in {1..8}; do
+              git pull --rebase origin main && git push origin main && exit 0
+              sleep $((RANDOM % 3 + 2))
+            done
+            exit 1
           )
 
   compile-registry:
@@ -112,6 +115,9 @@ jobs:
           git add registry.json
           git diff --quiet && git diff --staged --quiet || (
             git commit -m "chore(registry): recompile registry.json [skip ci]"
-            git pull --rebase origin main
-            git push origin main
+            for i in {1..5}; do
+              git pull --rebase origin main && git push origin main && exit 0
+              sleep 2
+            done
+            exit 1
           )
