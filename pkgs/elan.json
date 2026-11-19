@@ -47,6 +47,51 @@
           "download_size_bytes": 4996571
         }
       }
+    },
+    "4.4.0": {
+      "channel": "stable",
+      "targets": {
+        "aarch64-apple-darwin": {
+          "url": "https://github.com/leanprover/elan/releases/download/v4.4.0/elan-aarch64-apple-darwin.tar.gz",
+          "sha256": "27af24edeace839730e8c9119783f12d5f694327d4771605021ca09db1ab0a87",
+          "binaries": {
+            "elan": "bin/elan"
+          },
+          "download_size_bytes": 2221661
+        },
+        "aarch64-linux-gnu": {
+          "url": "https://github.com/leanprover/elan/releases/download/v4.4.0/elan-aarch64-unknown-linux-gnu.tar.gz",
+          "sha256": "45cde3006f82f98804c94cf2ca4949d117060a5f3cc8afa62f523759947ee21f",
+          "binaries": {
+            "elan": "bin/elan"
+          },
+          "download_size_bytes": 5458915
+        },
+        "x86_64-apple-darwin": {
+          "url": "https://github.com/leanprover/elan/releases/download/v4.4.0/elan-x86_64-apple-darwin.tar.gz",
+          "sha256": "a5123096d662216ceaf69d68d6bbabb118c024d20d270bf0d639a830dd4ff97e",
+          "binaries": {
+            "elan": "bin/elan"
+          },
+          "download_size_bytes": 2359046
+        },
+        "x86_64-pc-windows-msvc": {
+          "url": "https://github.com/leanprover/elan/releases/download/v4.4.0/elan-x86_64-pc-windows-msvc.zip",
+          "sha256": "63f50605424284927799702347e2bdbd99d017b9d80ae083c65ee2189c4caf75",
+          "binaries": {
+            "elan": "bin/elan.exe"
+          },
+          "download_size_bytes": 2598959
+        },
+        "x86_64-linux-gnu": {
+          "url": "https://github.com/leanprover/elan/releases/download/v4.4.0/elan-x86_64-unknown-linux-gnu.tar.gz",
+          "sha256": "0e8250aa2be86c7af929ade68db617af9edc8b9ccf6eaf5ece228250d0d032e2",
+          "binaries": {
+            "elan": "bin/elan"
+          },
+          "download_size_bytes": 5341840
+        }
+      }
     }
   },
   "license": "Apache-2.0"
