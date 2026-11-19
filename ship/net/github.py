@@ -170,15 +170,15 @@ def fetch_github_json(url: str, *, ttl: int | None = None) -> dict | list | None
     """
     effective_ttl = _DEFAULT_TTL if ttl is None else ttl
 
-    # 1. Check cache
+    # Check cache
     cached = _cache_load(url)
     if cached is not None:
         return cached
 
-    # 2. Live fetch
+    # Live fetch
     result = _fetch_github_json_live(url)
 
-    # 3. Store in cache (only on success, never cache None/errors)
+    # Store in cache (only on success, never cache None/errors)
     if result is not None and effective_ttl > 0:
         _cache_store(url, result, ttl=effective_ttl)
 

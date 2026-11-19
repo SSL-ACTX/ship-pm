@@ -25,7 +25,7 @@ class DoctorEngine:
         issues_found = 0
         healed_count = 0
 
-        # 1. Verify bin symlinks
+        # Verify bin symlinks
         bin_dir = settings.ship_bin_dir
         ui.status("Checking", f"public symlinks in {bin_dir}...")
         broken_symlinks = []
@@ -38,7 +38,7 @@ class DoctorEngine:
                         f"Broken symlink detected: {link.name} -> {os.readlink(link)}"
                     )
 
-        # 2. Check installed package health
+        # Check installed package health
         for pkg_name, data in installed.items():
             version = data.get("version", "unknown")
             inst_dir = Path(data.get("install_dir", ""))

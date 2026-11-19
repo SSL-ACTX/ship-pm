@@ -28,28 +28,28 @@
       "channel": "stable",
       "targets": {
         "x86_64-linux-gnu": {
-          "url": "https://github.com/SRI-CSL/yices2/releases/download/yices-2.8.0/yices-2.8.0-x86_64-pc-linux-gnu-relink-kit.tar.gz",
-          "sha256": "9fd37333d0126d079d7e27ee6fa929e9261cc2f318a6611302e7e68db79689a4",
+          "url": "https://github.com/SRI-CSL/yices2/releases/download/yices-2.8.0/yices-2.8.0-x86_64-pc-linux-gnu-static-gmp.tar.gz",
+          "sha256": "10bf60dd8f96ac357aa168049697bed526a9bf5904906a8d79087ae150a4b2ef",
           "binaries": {
             "yices2": "bin/yices2"
           },
-          "download_size_bytes": 6734101
+          "download_size_bytes": 17499649
         },
         "aarch64-apple-darwin": {
-          "url": "https://github.com/SRI-CSL/yices2/releases/download/yices-2.8.0/yices-2.8.0-aarch64-apple-darwin25.6.0-relink-kit.tar.gz",
-          "sha256": "77e6b2787a78ba5dfb92afee476cf4e6359603125f362a66caadb1af8137a3f6",
+          "url": "https://github.com/SRI-CSL/yices2/releases/download/yices-2.8.0/yices-2.8.0-aarch64-apple-darwin25.6.0-static-gmp.tar.gz",
+          "sha256": "a211b6555eea26bf992e7028aca5c37feec96f8fdbbba4301c2c1a1a4962fd46",
           "binaries": {
             "yices2": "bin/yices2"
           },
-          "download_size_bytes": 5762033
+          "download_size_bytes": 11412804
         },
         "x86_64-apple-darwin": {
-          "url": "https://github.com/SRI-CSL/yices2/releases/download/yices-2.8.0/yices-2.8.0-x86_64-apple-darwin25.6.0-relink-kit.tar.gz",
-          "sha256": "0dd945d1a4a51449624238af507615d58109e7467cae828cf187636fe4182940",
+          "url": "https://github.com/SRI-CSL/yices2/releases/download/yices-2.8.0/yices-2.8.0-x86_64-apple-darwin25.6.0-static-gmp.tar.gz",
+          "sha256": "cd8ee3dda49fca1b802b51af1ebccae8c9e501a5a73a95e7e3c992eb706e78e9",
           "binaries": {
             "yices2": "bin/yices2"
           },
-          "download_size_bytes": 5498263
+          "download_size_bytes": 12337589
         }
       }
     }

@@ -16,3 +16,4 @@ __pycache__/
 .cache
 .cache/
 .cache/*.fst.checked
+.lia.cache

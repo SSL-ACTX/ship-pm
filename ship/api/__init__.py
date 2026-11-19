@@ -7,7 +7,15 @@ modules under ``ship.api.toolkit`` and ``ship.runtime`` are not a stable surface
 from __future__ import annotations
 
 from ship.api.code import SourcePatcher
-from ship.api.recipes import BuildContext, Mixin, PackageRecipe
+from ship.api.recipes import (
+    BuildContext,
+    Mixin,
+    PackageRecipe,
+    PlatformCondition,
+    RecipeAction,
+    on_platform,
+    on_termux,
+)
 from ship.api.scripting import (
     InlineScript,
     WrapperBuilder,
@@ -91,7 +99,9 @@ __all__ = [
     "PatchContext",
     "PatchRecipe",
     "PatchReport",
+    "PlatformCondition",
     "ReapplyHandler",
+    "RecipeAction",
     "RuntimeCommand",
     "RuntimePatch",
     "RuntimeValue",
@@ -102,6 +112,8 @@ __all__ = [
     "inspect_elf",
     "make_executable",
     "move_file",
+    "on_platform",
+    "on_termux",
     "patch_external_toolchain",
     "patch_subtree_binaries",
     "promote_nested_directory",

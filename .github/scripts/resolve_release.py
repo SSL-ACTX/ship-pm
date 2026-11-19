@@ -324,6 +324,7 @@ BUILD_ARTIFACT_PATTERNS = (
     "-sources.",
     "installer",
     "setup",
+    "-relink-kit",
 )
 
 for asset in assets:

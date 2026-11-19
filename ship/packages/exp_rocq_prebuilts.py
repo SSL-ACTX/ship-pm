@@ -1,11 +1,8 @@
 """Platform compatibility patches and runtime configuration for Rocq (Coq) prebuilts."""
 
 from ship.api import (
-    ExportPolicy,
-    InstallPatch,
-    PackagePatch,
+    PackageRecipe,
     PatchContext,
-    RuntimePatch,
 )
 
 # All user-facing Rocq/Coq commands shipped in the prebuilt bundle.
@@ -38,18 +35,7 @@ _ALL_ROCQ_BINARIES = _ROCQ_COMMANDS + _ROCQ_WORKERS
 
 
 def _setup_rocq_environment(context: PatchContext) -> None:
-    """Configure findlib metadata, plugins, and worker symlinks for Rocq.
-
-    Rocq 9.x split into rocq-core, rocq-stdlib, and rocq-runtime.
-    At runtime, coqc uses findlib to locate the rocqworker binary and
-    dynamic plugins (e.g., micromega, ltac, ring).
-
-    This patch:
-      1. Generates an ocamlfind.conf pointing to the package lib dir.
-      2. Symlinks lib/rocq-runtime -> coq so findlib can locate package rocq-runtime.
-      3. Generates lib/coq/META declaring the rocqworker path and all plugin subpackages.
-    """
-    # Locate install prefix (handles nested archive folder if present)
+    """Configure findlib metadata, plugins, and worker symlinks for Rocq."""
     target_prefix = context.install_dir
     nested = list(context.install_dir.glob("rocq-prover-*"))
     if nested and nested[0].is_dir():
@@ -63,19 +49,19 @@ def _setup_rocq_environment(context: PatchContext) -> None:
     if not coq_dir.exists():
         return
 
-    # 1. Symlink lib/rocq-runtime -> coq
+    # Symlink lib/rocq-runtime -> coq
     rocq_runtime_link = lib_dir / "rocq-runtime"
     if not rocq_runtime_link.exists() and not rocq_runtime_link.is_symlink():
         rocq_runtime_link.symlink_to("coq")
         context.record(rocq_runtime_link, "symlink", "-> coq")
 
-    # 2. Write ocamlfind.conf
+    # Write ocamlfind.conf
     ocamlfind_conf = target_prefix / "ocamlfind.conf"
     conf_content = f'destdir="{lib_dir}"\npath="{lib_dir}"\n'
     ocamlfind_conf.write_text(conf_content, encoding="utf-8")
     context.record(ocamlfind_conf, "write", "ocamlfind configuration")
 
-    # 3. Generate findlib META for rocq-runtime and its plugins
+    # Generate findlib META for rocq-runtime and its plugins
     meta_lines = [
         'description = "Rocq runtime"',
         'version = "9.2"',
@@ -106,7 +92,7 @@ def _setup_rocq_environment(context: PatchContext) -> None:
     meta_file.write_text("\n".join(meta_lines) + "\n", encoding="utf-8")
     context.record(meta_file, "write", "findlib META for rocq-runtime plugins")
 
-    # 4. Symlink rocqworker, rocqnative, rocqworker_with_drop in rocq-runtime to bin
+    # Symlink rocqworker, rocqnative, rocqworker_with_drop in rocq-runtime to bin
     runtime_dir = (coq_dir.parent / "rocq-runtime").resolve()
     if runtime_dir.is_dir():
         for name in _ROCQ_WORKERS:
@@ -118,24 +104,22 @@ def _setup_rocq_environment(context: PatchContext) -> None:
                 context.record(worker_file, "symlink", f"-> {bin_target}")
 
 
-PATCH = PackagePatch(
-    export_policy=ExportPolicy(
-        only=_ROCQ_COMMANDS,
-    ),
-    pre_link=(InstallPatch(_setup_rocq_environment),),
-    runtime=(
-        RuntimePatch(
-            binaries=_ALL_ROCQ_BINARIES,
-            prepend_path=("bin",),
-            prepend_ld_library_path=("lib/aarch64-linux-gnu",),
-            env={
-                "CAML_LD_LIBRARY_PATH": "{install_dir}/lib/stublibs:${CAML_LD_LIBRARY_PATH:-}",
-                "OCAMLFIND_CONF": "{install_dir}/ocamlfind.conf",
-                "ROCQLIB": "{install_dir}/lib/coq",
-                "COQLIB": "{install_dir}/lib/coq",
-                "ROCQRUNTIMELIB": "{install_dir}/lib/coq",
-                "COQCORELIB": "{install_dir}/lib/coq",
-            },
-        ),
-    ),
+PATCH = (
+    PackageRecipe("exp-rocq-prebuilts")
+    .export(only=_ROCQ_COMMANDS)
+    .hook(_setup_rocq_environment, stage="pre_link")
+    .runtime(
+        binaries=_ALL_ROCQ_BINARIES,
+        prepend_path=("bin",),
+        prepend_ld_library_path=("lib/aarch64-linux-gnu",),
+        env={
+            "CAML_LD_LIBRARY_PATH": "{install_dir}/lib/stublibs:${CAML_LD_LIBRARY_PATH:-}",
+            "OCAMLFIND_CONF": "{install_dir}/ocamlfind.conf",
+            "ROCQLIB": "{install_dir}/lib/coq",
+            "COQLIB": "{install_dir}/lib/coq",
+            "ROCQRUNTIMELIB": "{install_dir}/lib/coq",
+            "COQCORELIB": "{install_dir}/lib/coq",
+        },
+    )
+    .to_patch()
 )

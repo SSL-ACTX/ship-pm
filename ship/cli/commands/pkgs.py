@@ -202,7 +202,7 @@ def run_search(ns: Namespace) -> None:
     seen_names: set[str] = set()
 
     ui.blank()
-    # 1. Search primary pkgs/ directory (unless explicitly restricted to --deb)
+    # Search primary pkgs/ directory (unless explicitly restricted to --deb)
     if not search_deb_only:
         for path in sorted(pkgs_dir.glob("*.json")):
             try:
@@ -235,7 +235,7 @@ def run_search(ns: Namespace) -> None:
                 print(f"    {desc}")
             print()
 
-    # 2. Search secondary .deb registry only when requested (--deb or --all)
+    # Search secondary .deb registry only when requested (--deb or --all)
     if search_deb_only or search_all:
         from ship.registry.manifests import load_secondary_registries
 
@@ -511,42 +511,96 @@ def run_sandbox(ns: Namespace) -> None:
 
     action = ns.get("action") or "list"
     target = ns.get("target")
+    cmd_args = ns.get("cmd") or []
 
     if action == "create":
-        SandboxArea.create(target)
+        box = SandboxArea.create(target)
+        ui.info(f"Path: {box}")
     elif action == "enter":
         SandboxArea.enter(target or "default")
     elif action == "test":
-        if not target:
-            ui.die("Usage: ship sandbox test <package> [--keep]")
-        success = SandboxArea.test_install(target, keep=bool(ns.get("keep")))
-        if not success:
+        # Supports: ship sandbox test <pkg> [flags...]
+        # where target is first token (e.g. package), cmd_args are additional args (version, flags like --deb, etc.)
+        pkg_spec = [target] if target else []
+        pkg_spec.extend(cmd_args)
+        if not pkg_spec:
+            ui.die("Usage: ship sandbox test <package> [install-options...] [--keep]")
+        ok = SandboxArea.test_install(pkg_spec, keep=bool(ns.get("keep")))
+        if not ok:
             sys.exit(1)
     elif action in ("clean", "destroy", "rm"):
-        SandboxArea.clean(target)
+        SandboxArea.clean(target, yes=bool(ns.get("yes")))
+    elif action == "install":
+        # Supports:
+        # 1) ship sandbox install <sandbox_name> <pkg> [flags...] (if target is existing sandbox)
+        # 2) ship sandbox install <pkg> [flags...] (installs into 'default' sandbox)
+        known_boxes = {b["name"] for b in SandboxArea.list_sandboxes()}
+        if not target:
+            ui.die(
+                "Usage: ship sandbox install [sandbox_name] <package> [install-options...]"
+            )
+        if cmd_args and (
+            target in known_boxes or SandboxArea.get_sandbox_path(target).exists()
+        ):
+            box_name = target
+            install_args = cmd_args
+        else:
+            # target is actually the package name, defaulting to 'default' sandbox
+            box_name = "default"
+            install_args = [target, *cmd_args]
+        ok = SandboxArea.install_package(box_name, install_args)
+        if not ok:
+            sys.exit(1)
     elif action == "list":
         boxes = SandboxArea.list_sandboxes()
         if not boxes:
             ui.blank()
-            ui.info("No active sandbox areas.")
+            ui.info("No sandbox areas. Create one with: ship sandbox create <name>")
             ui.blank()
             return
         ui.blank()
-        ui.heading("Active Sandbox Areas:")
+        ui.heading("Sandbox Areas")
         ui.blank()
-        for b in boxes:
-            pkgs = ", ".join(b["packages"]) if b["packages"] else "empty"
-            ui.bullet(f"{b['name']} - [{pkgs}]")
+        ui.table(
+            columns=[
+                Column("Name", 20),
+                Column("Packages", 30),
+                Column("Size", 10),
+                Column("Path", 50),
+            ],
+            rows=[
+                (
+                    b["name"],
+                    ", ".join(b["packages"]) if b["packages"] else "—",
+                    format_size(b["size"]),
+                    b["path"],
+                )
+                for b in boxes
+            ],
+        )
         ui.blank()
     elif action == "run":
+        # Supports:
+        # 1) ship sandbox run <name> <command...>
+        # 2) ship sandbox run <command...> (if target is not an existing sandbox name, run in 'default')
         if not target:
-            ui.die("Usage: ship sandbox run <name> <command...>")
-        cmd = ns.get("cmd") or []
-        code = SandboxArea.run_command(target, cmd)
+            ui.die("Usage: ship sandbox run [sandbox_name] <command...>")
+        known_boxes = {b["name"] for b in SandboxArea.list_sandboxes()}
+        if target in known_boxes or SandboxArea.get_sandbox_path(target).exists():
+            if not cmd_args:
+                ui.die(f"Usage: ship sandbox run {target} <command...>")
+            box_name = target
+            exec_cmd = cmd_args
+        else:
+            # target is the command itself! e.g. `ship sandbox run python -V`
+            box_name = "default"
+            exec_cmd = [target, *cmd_args]
+        code = SandboxArea.run_command(box_name, exec_cmd)
         sys.exit(code)
     else:
         ui.die(
-            f"Unknown sandbox action '{action}'. Valid: test, create, enter, run, list, clean"
+            f"Unknown sandbox action '{action}'. "
+            "Valid: list, create, enter, install, run, test, clean"
         )
 
 

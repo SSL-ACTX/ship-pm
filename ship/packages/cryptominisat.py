@@ -1,33 +1,20 @@
 """Termux runtime compatibility patch for CryptoMiniSat."""
 
-from pathlib import Path
-
 from ship.api import (
-    ExportPolicy,
-    PackagePatch,
-    RuntimeCommand,
-    RuntimePatch,
+    PackageRecipe,
     qemu_command,
 )
 
-
-def cryptominisat_command(
-    binary_name: str, real_binary: Path, target_key: str
-) -> RuntimeCommand | None:
-    """Run cryptominisat via qemu-aarch64 on Termux to bypass Android seccomp restrictions."""
-    return qemu_command(real_binary, arch="aarch64")
-
-
-PATCH = PackagePatch(
-    export_policy=ExportPolicy(
+PATCH = (
+    PackageRecipe("cryptominisat")
+    .export(
         only=("cryptominisat5", "cryptominisat"),
         aliases={"cryptominisat": "cryptominisat5"},
-    ),
-    runtime=(
-        RuntimePatch(
-            binaries=("cryptominisat", "cryptominisat5"),
-            targets=("aarch64-*",),
-            command=cryptominisat_command,
-        ),
-    ),
+    )
+    .runtime(
+        binaries=("cryptominisat", "cryptominisat5"),
+        targets=("aarch64-*",),
+        command=lambda name, real_bin, target: qemu_command(real_bin, arch="aarch64"),
+    )
+    .to_patch()
 )

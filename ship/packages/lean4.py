@@ -1,14 +1,12 @@
 """Sandbox Lean 4's bundled LLVM toolchain and inject Termux glibc linker flags."""
 
 from ship.api import (
-    ExportPolicy,
-    InstallPatch,
-    PackagePatch,
+    PackageRecipe,
     PatchContext,
     WrapperBuilder,
+    on_termux,
     promote_nested_directory,
 )
-from ship.core.profile import get_active_profile
 from ship.runtime.termux import termux_glibc_loader_path, termux_glibc_prefix
 
 _PUBLIC_COMMANDS = ("lean", "lake", "leanc", "lean4")
@@ -51,9 +49,6 @@ def _promote_bins(context: PatchContext) -> None:
 
 def _hijack_bundled_linker(context: PatchContext) -> None:
     """Wrap bundled ld.lld so leanc/lake emit executables with Termux glibc interpreter and RPATH."""
-    if not get_active_profile().is_termux:
-        return
-
     target_arch = context.target_key.split("-")[0]
     glibc_pfx = termux_glibc_prefix()
     glibc_lib = glibc_pfx / "lib"
@@ -81,15 +76,15 @@ def _hijack_bundled_linker(context: PatchContext) -> None:
         wrapper.apply(context)
 
 
-PATCH = PackagePatch(
-    export_policy=ExportPolicy(
+PATCH = (
+    PackageRecipe("lean4")
+    .export(
         only=_PUBLIC_COMMANDS,
         internal_only=_INTERNAL_TOOLCHAIN,
         aliases={"lean4": "lean"},
-    ),
-    pre_link=(
-        InstallPatch(_promote_bins),
-        InstallPatch(_hijack_bundled_linker),
-    ),
-    discover_all_bins=True,
+        discover_all_bins=True,
+    )
+    .hook(_promote_bins, stage="pre_link")
+    .hook(_hijack_bundled_linker, stage="pre_link", condition=on_termux())
+    .to_patch()
 )

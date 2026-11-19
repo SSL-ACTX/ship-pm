@@ -89,12 +89,12 @@ def link_package(
         target.chmod(0o755)
         patched = apply_patchers(target, target_key, patch_report)
 
-        # 1. Internal link
+        # Internal link
         internal_link = settings.ship_internal_bin / symlink_name
         internal_link.unlink(missing_ok=True)
         internal_link.symlink_to(patched)
 
-        # 2. Public link
+        # Public link
         pub_link = settings.ship_bin_dir / symlink_name
 
         if pub_link.parent in settings.system_bin_dirs:

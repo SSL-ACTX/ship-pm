@@ -126,7 +126,9 @@ class WrapperBuilder:
             lines.append(f"unset {var}")
 
         for k, v in self.environment.items():
-            lines.append(f"export {k}={shlex.quote(str(v))}")
+            # Double-quote so shell expansions in values (e.g. ${PATH:-}) are preserved.
+            safe = str(v).replace("\\", "\\\\").replace('"', '\\"')
+            lines.append(f'export {k}="{safe}"')
 
         if self.before:
             lines.append(textwrap.dedent(self.before).strip())

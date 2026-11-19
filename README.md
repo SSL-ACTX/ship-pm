@@ -25,8 +25,8 @@ curl -fsSL https://github.com/SSL-ACTX/ship-pm/raw/refs/heads/main/install.sh | 
 
 The installer puts `ship` in a writable binary directory and configures `PATH`
 when needed. Ship's data directory defaults to `$PREFIX/share/ship` on Termux
-and `~/.local/share/ship` elsewhere. Set `SHIP_ROOT` or `SHIP_BIN_TARGET` to
-choose different installer locations.
+and `~/.local/share/ship` elsewhere. Set `SHIP_ROOT` or `SHIP_BIN_DIR` to
+choose different locations.
 
 ## Use
 
@@ -42,9 +42,10 @@ ship install fd 10.5.0
 ship install sharkdp/fd
 ship install sharkdp/fd v10.5.0
 
-# Secondary Ubuntu deb registry
+# Secondary Ubuntu deb registry (requires --deb flag)
 ship install zstd --deb
-ship install gdu
+# gdu is also a deb package; --deb is required when it's not in the core registry
+ship install gdu --deb
 
 # Direct URL or local .deb
 ship install https://example.com/package_1.0_arm64.deb
@@ -85,6 +86,11 @@ available. Command-specific flags such as `-t, --target <triple>`, `--select-tar
 | `ship admin review <PR>` | Show submission metadata and manifest diff (registry admins only) |
 | `ship admin accept <PR> [--yes]` | Merge an eligible submission (registry admins only) |
 | `ship admin reject <PR> [--reason TEXT] [--yes]` | Close a submission with a comment (registry admins only) |
+| `ship doctor [--heal]` | Check symlinks, ELF patches, and store integrity; `--heal` auto-repairs fixable issues |
+| `ship export <package> [output_bundle]` | Bundle an installed package into a portable offline archive |
+| `ship import <bundle>` | Install a package from a local offline bundle |
+| `ship sandbox <action> [target] [cmd...]` | Manage isolated sandbox areas (see **Sandbox** below) |
+| `ship call <module:function> [args...]` | Dispatch an internal ship package entrypoint directly |
 
 Run `ship --help` for global options. Target-specific options (`-t`, `--select-target`, `--asset`)
 live directly under `ship install`.
@@ -97,7 +103,7 @@ synchronized from the Git repository configured by `SHIP_REGISTRY_GIT`.
 
 In addition to core manifests, Ship supports secondary repositories:
 - **Ubuntu Noble registry**: Over 69,000 packages indexed directly from Ubuntu Noble (`main` and `universe`).
-  Stored in `~/.ship/cache/registries/ubuntu-noble.json` with automatic TTL cache management. Updatable via `ship update deb`.
+  Stored in `$SHIP_ROOT/cache/registries/ubuntu-noble.json` with automatic TTL cache management. Updatable via `ship update deb`.
 - **Search filtering**: Primary search (`ship search <query>`) queries core manifests first. Adding `--deb` searches Ubuntu deb packages, while `--all` searches both pools.
 
 Ship stores archives, extracted packages, and state under `$SHIP_ROOT`. Repeated

@@ -6,108 +6,143 @@ in package names become underscores. Platform-wide compatibility belongs in
 
 Import the public authoring API from `ship.api` only.
 
-Package modules declare install and runtime behavior through typed `PATCH`
-recipes. Each handler receives a `PatchContext` that includes the active
-`profile` (host paths and defaults — do not hardcode Termux paths):
+Package modules declare install, layout, and runtime behavior through the modern
+declarative `PackageRecipe` builder (which compiles down to `PackagePatch`).
+
+## Declarative PackageRecipe API
+
+The `PackageRecipe` builder unifies layout normalization, config generation,
+ELF mutations, proxy multiplexing, and runtime launcher wrappers into a single
+fluent specification:
 
 ```python
-from pathlib import Path
-from functools import partial
+from ship.api import PackageRecipe, on_platform, on_termux, raise_tls_alignment
 
-from ship.api import (
-    InstallPatch,
-    PackagePatch,
-    PatchRecipe,
-    PatchContext,
-    RuntimeCommand,
-    RuntimePatch,
-    make_executable,
-    write_text,
-)
+PATCH = (
+    PackageRecipe("my-tool")
+    # 1. Archive & Layout normalization
+    .flatten_nested_root("my-tool-*")
+    .symlink("lib/my-tool", to="lib/runtime")
+    .ensure_dirs("cache", "stublibs")
 
-
-prepare = PatchRecipe(
-    (
-        partial(write_text, path="share/tool/config.ini", content="mode=compat\n"),
-        partial(make_executable, path="bin/tool-helper"),
-    )
-)
-
-
-def tool_command(
-    binary_name: str, real_binary: Path, target_key: str
-) -> RuntimeCommand:
-    return RuntimeCommand(
-        argv=("qemu-aarch64", "-L", "/some/sysroot", real_binary),
-        environment=(("TOOL_MODE", "compat"),),
+    # 2. Config templates with automatic interpolation
+    .write_template(
+        "etc/tool.conf",
+        """
+        install_prefix = "{install_dir}"
+        bin_dir = "{bin_dir}"
+        profile_prefix = "{profile.prefix}"
+        """,
     )
 
+    # 3. Export policy & binary visibility
+    .export(
+        only=("my-tool", "my-tool-cli"),
+        internal_only=("tool-worker", "tool-backend"),
+        aliases={"tool": "my-tool"},
+        discover_all_bins=True,
+    )
 
-PATCH = PackagePatch(
-    post_extract=(InstallPatch(prepare, targets=("aarch64-*",)),),
-    runtime=(
-        RuntimePatch(
-            binaries=("tool",),
-            targets=("aarch64-*",),
-            command=tool_command,
-        ),
-    ),
+    # 4. ELF & toolchain compatibility
+    .raise_tls_alignment(
+        ("bin/my-tool",),
+        alignment=64,
+        condition=on_termux(arch="aarch64"),
+    )
+    .resolve_sonames(
+        {"libedit.so.2": "libedit.so.0.0.78"},
+        stage="post_extract",
+        condition=on_platform(target="*-linux-*"),
+    )
+    .patch_subtree("**/solvers/**/z3*")
+
+    # 5. Public launcher environment & runtime behavior
+    .runtime(
+        binaries=("my-tool",),
+        prepend_path=("bin",),
+        prepend_ld_library_path=("lib",),
+        env={
+            "TOOL_HOME": "{install_dir}/share",
+            "TOOL_CONF": "{install_dir}/etc/tool.conf",
+        },
+    )
+    .to_patch()
 )
 ```
 
-`PatchRecipe` runs its reusable operations in order; `functools.partial` binds
-operation arguments so simple filesystem changes need no custom handler
-function. Custom handlers remain available for logic and conditional work.
-Install handlers run in declaration order. `InstallPatch` and `RuntimePatch`
-target filters use glob patterns against the target triple. A context contains
-the package name, stage, install directory, target, shared `PatchReport`, and
-active `profile`. Filesystem helpers (`write_text`, `set_permissions`,
-`make_executable`, `create_symlink`, and `move_file`) accept paths relative to
-the install directory, reject paths that escape it, skip no-op changes, and
-record changes in the report. A custom handler can report a change with
-`context.record(path, action, detail)`.
+`PackageRecipe` also directly proxies attributes of `PackagePatch`, meaning you can return either `recipe.to_patch()` or assign `PATCH = recipe`.
 
-`RuntimeCommand` quotes argv, optionally exports environment values, forwards
-the launcher's `"$@"` by default, and can suppress command failures.
-`ArgumentEquals(index, value)` and
-`ArgumentOneOf(index, values)` add positional argument conditions with an
-optional `otherwise` command. `shell_exec` and `shell_export` are available
-when building a shell snippet is more convenient. Multiple matching runtime
-recipes append their before/after hooks; the first command handler that returns
-a command takes precedence.
+---
 
-`inspect_elf(path)` returns typed `ElfInfo | None`. It exposes ELF class, byte
-order, machine and architecture, numeric file type plus its readable `type_name`,
-OS ABI and ABI version, ELF flags, a best effort ABI label, interpreter, and
-program headers. `arm_abi` separately decodes ARM EABI and float flags when
-available. Inspection memory maps the file instead of reading the full binary
-into memory. `BinaryQuery` and `find_binaries(root, query)` select sorted
-executable files by name, relative location, architecture or machine, ELF
-class/type, ABI, OS ABI, or interpreter. `BinaryQuery` can also exclude
-relative locations or prune every directory with a named component, which is
-useful for avoiding generated caches while walking a package tree.
+## High-Level Recipe Primitives
 
-ELF mutation helpers return whether they changed the file:
+### 1. Multi-Binary Proxy Multiplexing (`.multiplex_proxies`)
+Used for toolchains where multiple commands route back to a central dispatcher (e.g. `rustup`, `cargo`, `rustc`, `rustfmt`).
 
-- `set_elf_interpreter(binary, path)` sets the ELF interpreter.
-- `set_elf_rpath(binary, rpath)` sets its RPATH or RUNPATH.
-- `raise_tls_alignment(binary, alignment=..., machine=...)` updates `PT_TLS`
-  only when the file layout satisfies the stronger alignment.
+```python
+PATCH = (
+    PackageRecipe("rustup")
+    .multiplex_proxies(
+        target_binary="rustup",
+        proxies=("rustup", "rustc", "cargo", "rustfmt", "rust-analyzer"),
+        extra_dirs=[Path.home() / ".cargo" / "bin"],
+        environment={
+            "SSL_CERT_FILE": "/data/data/com.termux/files/usr/etc/tls/cert.pem",
+            "SSL_CERT_DIR": "/data/data/com.termux/files/usr/etc/tls",
+        },
+        condition=on_termux(),
+    )
+    .to_patch()
+)
+```
 
-Interpreter and RPATH mutation use `patchelf` and raise if it is unavailable
-or fails. Package patches choose when and where those operations apply.
+### 2. Maintenance Subcommand Triggers (`.on_subcommand`)
+Automatically triggers toolchain re-patching or maintenance tasks after a command runs specific subcommands (such as `rustup toolchain install` or `juliaup update`):
 
-Domain-oriented imports are also available:
+```python
+PATCH = (
+    PackageRecipe("juliaup")
+    .on_subcommand(
+        binaries=("juliaup",),
+        triggers=("add", "update", "install", "default"),
+        post_exec_call="ship.packages.juliaup:patch_toolchain_dir",
+        targets=("aarch64-*",),
+    )
+    .on_reapply(patch_toolchain_dir)
+    .to_patch()
+)
+```
 
-- `ship.api.recipes` — `PackagePatch`, `InstallPatch`, `RuntimeCommand`, …
-- `ship.api.context` — `PatchContext`, `PatchReport`
-- `ship.api.fs` — filesystem helpers
-- `ship.api.elf` — ELF inspect/mutate helpers
-- `ship.api.scripting` — `InlineScript`, `WrapperBuilder`, `promote_nested_directory`, `resolve_soname_symlinks`
+### 3. Compile-and-Run Interception (`.intercept_compiler_run`)
+For compilers whose `run` subcommand builds an ephemeral ELF binary and immediately executes it (preventing Ship from fixing up PT_TLS or interpreters). This intercepts the command, builds into an isolated tempdir with `-out:`, applies the post-build fixup, and transparently executes the binary while passing through all exit codes and POSIX signals:
 
-### Scripting & Wrapper Helpers
+```python
+PATCH = (
+    PackageRecipe("odin")
+    .intercept_compiler_run(
+        binary="odin",
+        subcommand="run",
+        build_subcommand="build",
+        output_flag="-out:{output}",
+        unsupported_flags=RUN_UNSUPPORTED_FLAGS,
+        fixup=lambda out: raise_tls_alignment(out, alignment=64),
+        condition=on_termux(arch="aarch64"),
+    )
+    .to_patch()
+)
+```
 
-Instead of hardcoded multi-line shell strings or manually moving binaries aside to `<name>-real`, use high-level helpers:
+### 4. Platform Conditions
+Instead of manual `if not profile.is_termux:` guards, attach conditions directly to any recipe action:
+
+- `on_platform(platform="linux"|"darwin"|"termux", arch="aarch64"|"x86_64", target="*-linux-*")`
+- `on_termux(arch="aarch64")`
+
+---
+
+## Low-Level & Scripting Helpers
+
+For custom logic that needs imperative control, drop into `.hook(...)` or use the underlying primitives:
 
 ```python
 from ship.api import (
@@ -115,9 +150,10 @@ from ship.api import (
     WrapperBuilder,
     promote_nested_directory,
     resolve_soname_symlinks,
+    patch_subtree_binaries,
 )
 
-# Clean dedented inline shell scripts with profile interpolation:
+# Inline shell scripts with safe substitution
 script = InlineScript("""
     unset LD_PRELOAD
     export SSL_CERT_FILE=@profile.tls_cert@
@@ -125,42 +161,35 @@ script = InlineScript("""
 """)
 rendered = script.render(profile=context.profile, wrapper="/path/to/real")
 
-# Declarative binary wrapper and linker hijack:
+# In-tree binary wrapper with arg rewriting
 WrapperBuilder(
     target_binary="bin/ld.lld",
     rewrite_args={r"/lib/ld-linux*.so.*": glibc_loader},
     append_args_if=[("-dynamic-linker", ["-rpath", str(glibc_lib)])],
 ).apply(context)
 
-# Flatten nested archive releases (e.g., pkg-1.0/bin/* -> bin/):
-promote_nested_directory(context, target_dir="bin")
-
-# Auto-link missing glibc sonames:
+# Auto-link missing glibc sonames into package lib/
 resolve_soname_symlinks(context, {"libedit.so.2": "libedit.so.0.0.78"})
 
-# Discovers and patches internal bundled ELF binaries:
+# Discovers and patches internal bundled ELF binaries
 patch_subtree_binaries(context, "**/z3*/**/z3*")
 ```
 
-### Declarative Runtime Environment
+---
 
-`RuntimePatch` supports declarative environment configuration, path prepending, and library search paths without manual string concatenation:
+## Domain-Oriented Imports
 
-```python
-RuntimePatch(
-    binaries=("tool",),
-    prepend_path=("bin",),
-    prepend_ld_library_path=("lib/custom",),
-    env={
-        "TOOL_HOME": "{install_dir}/share",
-        "TOOL_CONF": "{install_dir}/etc/tool.conf",
-    },
-)
-```
+All APIs are re-exported from `ship.api` for convenience, but modular imports are also available:
 
-`ship repatch <package>` reapplies package handlers and platform runtime
-adapters to an installed package, runs its optional `PackagePatch.reapply`
-handlers, refreshes its links, and displays reported package and platform file
-changes without downloading the archive again. Reapply handlers receive the
-shared `PatchReport`, including when they patch files outside the package
-directory.
+- `ship.api.recipes` — `PackageRecipe`, `PackagePatch`, `on_platform`, `on_termux`, `PlatformCondition`
+- `ship.api.toolkit` — `RuntimePatch`, `RuntimeCommand`, `ExportPolicy`, `InstallPatch`
+- `ship.api.context` — `PatchContext`, `PatchReport`
+- `ship.api.fs` — Filesystem mutation helpers (`write_text`, `create_symlink`, `make_executable`)
+- `ship.api.elf` — ELF inspection and mutation (`inspect_elf`, `raise_tls_alignment`, `set_elf_rpath`)
+- `ship.api.scripting` — `WrapperBuilder`, `InlineScript`, `promote_nested_directory`
+
+---
+
+## Re-applying Patches
+
+`ship repatch <package>` reapplies package handlers and platform runtime adapters to an installed package, runs its optional `.on_reapply(...)` handlers, refreshes links, and displays reported changes without downloading the archive again.

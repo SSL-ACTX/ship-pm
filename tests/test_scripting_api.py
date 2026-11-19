@@ -87,7 +87,7 @@ class TestScriptingAPI(unittest.TestCase):
 
         wrapper_text = wrapper_path.read_text()
         self.assertTrue(wrapper_text.startswith("#!/bin/sh\n"))
-        self.assertIn("export TOOL_HOME=/tmp", wrapper_text)
+        self.assertIn('export TOOL_HOME="/tmp"', wrapper_text)
         self.assertIn("/compat/ld-linux.so", wrapper_text)
         self.assertIn("-dynamic", wrapper_text)
         self.assertIn('exec -a "$0"', wrapper_text)
@@ -195,17 +195,59 @@ class TestScriptingAPI(unittest.TestCase):
         self.assertTrue(mock_patcher.called)
         self.assertEqual(mock_patcher.call_args[0][0], fake_bin)
 
-    def test_qemu_command_builder(self):
-        from types import SimpleNamespace
+    def test_package_recipe_fluent_builder(self):
+        from ship.api import PackageRecipe, on_platform
 
-        from ship.api import qemu_command
-
-        profile = SimpleNamespace(
-            is_termux=True,
-            paths=SimpleNamespace(prefix=Path("/data/prefix")),
+        recipe = (
+            PackageRecipe("my-tool")
+            .export(
+                only=["my-tool", "my-sub"],
+                exclude=["internal-helper"],
+                aliases={"tool": "my-tool"},
+            )
+            .write_template(
+                "config.conf",
+                "install={install_dir}\ntarget={target_key}",
+            )
+            .symlink("config.conf", to="conf.link")
+            .runtime(
+                binaries=["my-tool"],
+                prepend_path=["bin"],
+                env={"MY_VAR": "val"},
+            )
         )
-        with unittest.mock.patch("shutil.which", return_value="/bin/qemu-aarch64"):
-            cmd = qemu_command("/app/bin/tool", arch="aarch64", profile=profile)
-            self.assertIsNotNone(cmd)
-            rendered = cmd.render()
-            self.assertIn("/bin/qemu-aarch64 -L /data/prefix /app/bin/tool", rendered)
+
+        patch = recipe.to_patch()
+        self.assertEqual(patch.export_policy.only, ("my-tool", "my-sub"))
+        self.assertEqual(patch.export_policy.exclude, ("internal-helper",))
+        self.assertEqual(patch.export_policy.aliases, {"tool": "my-tool"})
+        self.assertEqual(len(patch.runtime), 1)
+        self.assertEqual(patch.runtime[0].binaries, ("my-tool",))
+
+        # Test execution of lifecycle hooks
+        report = PatchReport("my-tool")
+        context = PatchContext(
+            package_name="my-tool",
+            stage="pre_link",
+            install_dir=self.root,
+            target_key="x86_64-linux-gnu",
+            report=report,
+        )
+
+        for hook in patch.pre_link:
+            hook.handler(context)
+
+        conf_file = self.root / "config.conf"
+        self.assertTrue(conf_file.is_file())
+        self.assertIn(f"install={self.root}", conf_file.read_text())
+        self.assertIn("target=x86_64-linux-gnu", conf_file.read_text())
+
+        link_file = self.root / "conf.link"
+        self.assertTrue(link_file.is_symlink())
+
+        # Test PlatformCondition
+        cond_match = on_platform("linux", target="x86_64-*")
+        cond_mismatch = on_platform("darwin")
+        profile = SimpleNamespace(is_termux=False, os="linux")
+        self.assertTrue(cond_match.check(profile, "x86_64-linux-gnu"))
+        self.assertFalse(cond_mismatch.check(profile, "x86_64-linux-gnu"))

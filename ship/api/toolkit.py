@@ -313,7 +313,10 @@ ArgumentCondition = ArgumentEquals | ArgumentOneOf
 def shell_export(name: str, value: str | Path) -> str:
     if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", name):
         raise ValueError(f"invalid shell variable name: {name}")
-    return f"export {name}={shlex.quote(str(value))}"
+    # Use double quotes so embedded shell expansions (e.g. ${PATH:-}) are preserved.
+    # Escape any literal double quotes or backslashes in the value itself.
+    safe = str(value).replace("\\", "\\\\").replace('"', '\\"')
+    return f'export {name}="{safe}"'
 
 
 @dataclass(frozen=True)

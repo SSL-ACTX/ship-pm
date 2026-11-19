@@ -138,7 +138,7 @@ def resolve_command_binaries(
     resolved: dict[str, Path] = {}
     declared = declared_binaries or {}
 
-    # 1. Exact declared path matching
+    # Exact declared path matching
     for cmd_name, rel_path in declared.items():
         candidate = install_dir / rel_path
         if not candidate.is_file():
@@ -157,14 +157,14 @@ def resolve_command_binaries(
         if candidate.is_file() and is_cli_executable(candidate):
             resolved[cmd_name] = candidate
 
-    # 2. Gather candidates, prioritizing compiled ELFs
+    # Gather candidates, prioritizing compiled ELFs
     all_exes = [
         p for p in scan_executables(install_dir) if not p.name.endswith("-real")
     ]
     compiled = [p for p in all_exes if is_compiled_executable(p)]
     pool = compiled if compiled else all_exes
 
-    # 3. Handle single-binary manifests with mismatched filenames (e.g. kissat)
+    # Handle single-binary manifests with mismatched filenames (e.g. kissat)
     if not resolved:
         if len(declared) == 1 and len(pool) == 1:
             cmd_name = next(iter(declared))
@@ -173,7 +173,7 @@ def resolve_command_binaries(
             for cand in pool:
                 resolved[cand.name] = cand
 
-    # 4. Resolve package name alias (e.g. yices2 -> yices)
+    # Resolve package name alias (e.g. yices2 -> yices)
     if pkg_name not in resolved and pool:
         base_name = re.sub(r"\d+$", "", pkg_name)
         matched = next((p for p in pool if p.name == base_name), None)

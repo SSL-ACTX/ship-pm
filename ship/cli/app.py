@@ -303,17 +303,21 @@ def build_app() -> CliEngine:
             name="sandbox",
             aliases=("box",),
             help="Manage isolated sandbox areas for safe testing and execution",
-            usage="sandbox <test|create|enter|run|list|clean> [target] [cmd...] [--keep]",
+            usage="sandbox [action] [target] [args...] [--keep] [--yes]",
             args=(
                 Argument(
                     "action",
-                    "test | create | enter | run | list | clean",
+                    "list | create | enter | install | run | test | clean (default: list)",
                     required=False,
                 ),
-                Argument("target", "Package to test or sandbox name", required=False),
+                Argument(
+                    "target",
+                    "Sandbox name, package name, or command to run",
+                    required=False,
+                ),
                 Argument(
                     "cmd",
-                    "Command to run inside the sandbox",
+                    "Command arguments, package flags, or sub-arguments",
                     required=False,
                     variadic=True,
                 ),
@@ -322,7 +326,13 @@ def build_app() -> CliEngine:
                 Option(
                     ("--keep",),
                     dest="keep",
-                    help="Keep the sandbox area after testing instead of auto-destroying",
+                    help="Keep ephemeral test sandbox instead of auto-destroying",
+                    default=False,
+                ),
+                Option(
+                    ("--yes", "-y"),
+                    dest="yes",
+                    help="Skip confirmation when cleaning all sandboxes",
                     default=False,
                 ),
             ),

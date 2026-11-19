@@ -4,11 +4,9 @@ import json
 from pathlib import Path
 
 from ship.api import (
-    ArgumentOneOf,
-    PackagePatch,
+    PackageRecipe,
     PatchReport,
     RuntimeCommand,
-    RuntimePatch,
     patch_external_toolchain,
     qemu_command,
 )
@@ -60,12 +58,10 @@ def _link_julia_bin(report: PatchReport) -> None:
     if not julia_bin.is_file():
         return
 
-    # version_key e.g. "1.13.2+0.aarch64.linux.gnu"
-    # platform is everything after the build tag: "aarch64.linux.gnu" -> "aarch64-linux-gnu"
     try:
-        after_plus = version_key.split("+", 1)[1]  # "0.aarch64.linux.gnu"
-        platform = after_plus.split(".", 1)[1]  # "aarch64.linux.gnu"
-        target_key = platform.replace(".", "-")  # "aarch64-linux-gnu"
+        after_plus = version_key.split("+", 1)[1]
+        platform = after_plus.split(".", 1)[1]
+        target_key = platform.replace(".", "-")
     except IndexError:
         target_key = "aarch64-linux-gnu"
 
@@ -108,18 +104,6 @@ def patch_toolchain_dir(report: PatchReport | None = None) -> PatchReport:
     return report
 
 
-JULIAUP_AFTER = RuntimeCommand(
-    argv=(
-        "ship",
-        "call",
-        "ship.packages.juliaup:patch_toolchain_dir",
-    ),
-    forward_args=False,
-    ignore_failure=True,
-    condition=ArgumentOneOf(1, ("add", "update", "install", "default")),
-)
-
-
 def juliaup_command(
     binary_name: str, real_binary: Path, target_key: str
 ) -> RuntimeCommand | None:
@@ -127,14 +111,19 @@ def juliaup_command(
     return qemu_command(real_binary, arch="aarch64")
 
 
-PATCH = PackagePatch(
-    reapply=(patch_toolchain_dir,),
-    runtime=(
-        RuntimePatch(
-            binaries=("juliaup",),
-            targets=("aarch64-*",),
-            after=JULIAUP_AFTER,
-            command=juliaup_command,
-        ),
-    ),
+PATCH = (
+    PackageRecipe("juliaup")
+    .on_subcommand(
+        binaries=("juliaup",),
+        triggers=("add", "update", "install", "default"),
+        post_exec_call="ship.packages.juliaup:patch_toolchain_dir",
+        targets=("aarch64-*",),
+    )
+    .runtime(
+        binaries=("juliaup",),
+        targets=("aarch64-*",),
+        command=juliaup_command,
+    )
+    .on_reapply(patch_toolchain_dir)
+    .to_patch()
 )

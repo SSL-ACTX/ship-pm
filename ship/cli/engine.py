@@ -301,20 +301,24 @@ class CliEngine:
 
         has_variadic = any(arg.variadic for arg in command.args)
         if has_variadic:
-            # If command accepts variadic arguments/subcommands, prioritize help flags
-            # while letting command-specific options parse.
-            opts_to_parse = (
-                *[
-                    opt
-                    for opt in self.global_opts
-                    if opt.dest in ("help", "_global_help")
-                ],
-                *command.opts,
+            # For commands that accept variadic pass-through arguments/subcommands,
+            # only consume options before the first positional token. Once positional
+            # arguments start (e.g. subcommand, package, or exec target), all flags
+            # (such as -h, -v, --foo) belong to the downstream command/subcommand.
+            first_pos_idx = next(
+                (i for i, tok in enumerate(before_dd) if not tok.startswith("-")),
+                len(before_dd),
             )
+            parsed_head = self._parse_options(
+                before_dd[:first_pos_idx],
+                (*self.global_opts, *command.opts),
+                ns.values,
+            )
+            remaining = parsed_head + before_dd[first_pos_idx:]
         else:
-            opts_to_parse = (*self.global_opts, *command.opts)
-
-        remaining = self._parse_options(before_dd, opts_to_parse, ns.values)
+            remaining = self._parse_options(
+                before_dd, (*self.global_opts, *command.opts), ns.values
+            )
         if trailing_raw:
             remaining.extend(trailing_raw)
 

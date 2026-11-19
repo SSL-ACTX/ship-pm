@@ -11,6 +11,7 @@ from typing import Literal
 from ship.api import (
     ExportPolicy,
     PackagePatch,
+    PackageRecipe,
     PatchContext,
     PatchReport,
     ReapplyHandler,
@@ -27,6 +28,8 @@ def get_package_patch(pkg_name: str) -> PackagePatch | None:
     except ModuleNotFoundError:
         return None
     patch = getattr(mod, "PATCH", None)
+    if isinstance(patch, PackageRecipe):
+        return patch.to_patch()
     return patch if isinstance(patch, PackagePatch) else None
 
 
@@ -103,6 +106,8 @@ def find_patch_for_binary(binary_name: str) -> PackagePatch | None:
         try:
             mod = importlib.import_module(f"ship.packages.{mod_name}")
             candidate = getattr(mod, "PATCH", None)
+            if isinstance(candidate, PackageRecipe):
+                candidate = candidate.to_patch()
             if isinstance(candidate, PackagePatch):
                 for runtime in candidate.runtime:
                     if binary_name in runtime.binaries:

@@ -78,17 +78,28 @@ class SandboxArea:
                 except (OSError, json.JSONDecodeError):
                     installed_pkgs = []
 
+            # Compute disk usage (best-effort)
+            try:
+                total = sum(
+                    f.stat().st_size
+                    for f in item.rglob("*")
+                    if f.is_file() and not f.is_symlink()
+                )
+            except OSError:
+                total = 0
+
             results.append(
                 {
                     "name": item.name,
                     "path": str(item),
                     "packages": installed_pkgs,
+                    "size": total,
                 }
             )
         return results
 
     @classmethod
-    def clean(cls, name: str | None = None) -> int:
+    def clean(cls, name: str | None = None, *, yes: bool = False) -> int:
         """Destroy one or all sandbox areas."""
         root = cls.sandboxes_root()
         if name:
@@ -97,15 +108,30 @@ class SandboxArea:
                 die(f"Sandbox '{name}' does not exist.")
             shutil.rmtree(target, ignore_errors=True)
             status("Cleaned", f"sandbox area '{name}'")
-            return 1
+            return 0
 
+        boxes = [item for item in root.iterdir() if item.is_dir()]
+        if not boxes:
+            ui.info("No sandbox areas to clean.")
+            return 0
+        if not yes:
+            try:
+                answer = (
+                    input(f"  Destroy all {len(boxes)} sandbox area(s)? [y/N] ")
+                    .strip()
+                    .lower()
+                )
+            except (EOFError, KeyboardInterrupt):
+                answer = ""
+            if answer not in ("y", "yes"):
+                ui.info("Aborted.")
+                return 0
         count = 0
-        for item in root.iterdir():
-            if item.is_dir():
-                shutil.rmtree(item, ignore_errors=True)
-                count += 1
+        for item in boxes:
+            shutil.rmtree(item, ignore_errors=True)
+            count += 1
         status("Finished", f"purged {count} sandbox area(s)")
-        return count
+        return 0
 
     @classmethod
     def build_env(cls, box_dir: Path) -> dict[str, str]:
@@ -155,12 +181,39 @@ class SandboxArea:
             box_dir = cls.create(name)
 
         env = cls.build_env(box_dir)
-        proc = subprocess.run(cmd, check=False, env=env)
-        return proc.returncode
+        try:
+            proc = subprocess.run(cmd, check=False, env=env)
+            return proc.returncode
+        except FileNotFoundError:
+            executable = cmd[0] if cmd else ""
+            ui.error(f"command not found in sandbox '{box_dir.name}': {executable}")
+            ui.info(
+                f"Make sure it is installed in the sandbox: ship sandbox install {box_dir.name} <package>"
+            )
+            return 127
+        except OSError as exc:
+            ui.error(f"failed to execute {cmd[0] if cmd else ''}: {exc}")
+            return 126
 
     @classmethod
-    def test_install(cls, pkg_spec: str, *, keep: bool = False) -> bool:
+    def install_package(cls, name: str, pkg_args: list[str]) -> bool:
+        """Install a package into an existing named sandbox."""
+        box_dir = cls.get_sandbox_path(name)
+        if not box_dir.exists():
+            die(
+                f"Sandbox '{name}' does not exist. Create it first with: ship sandbox create {name}"
+            )
+        env = cls.build_env(box_dir)
+        ship_bin = shutil.which("ship") or str(settings.ship_bin_dir / "ship")
+        result = subprocess.run([ship_bin, "install", *pkg_args], check=False, env=env)
+        return result.returncode == 0
+
+    @classmethod
+    def test_install(cls, pkg_args: list[str], *, keep: bool = False) -> bool:
         """Perform a complete test installation in a clean, ephemeral sandbox."""
+        if not pkg_args:
+            die("No package specified to test.")
+        pkg_spec = " ".join(pkg_args)
         box_dir = cls.create()
         box_name = box_dir.name
         ui.heading(f"Running Sandbox Test for: {pkg_spec}")
@@ -170,10 +223,10 @@ class SandboxArea:
         ship_bin = shutil.which("ship") or str(settings.ship_bin_dir / "ship")
         env = cls.build_env(box_dir)
 
-        # 1. Install package in sandbox
+        # Install package in sandbox
         ui.status("Testing", f"installing {pkg_spec} inside sandbox...")
         install_res = subprocess.run(
-            [ship_bin, "install", pkg_spec], check=False, env=env
+            [ship_bin, "install", *pkg_args], check=False, env=env
         )
         if install_res.returncode != 0:
             ui.warn(f"Sandbox installation failed for '{pkg_spec}'.")
@@ -182,12 +235,12 @@ class SandboxArea:
                 status("Cleaned", f"destroyed temporary sandbox {box_name}")
             return False
 
-        # 2. Run diagnostics inside sandbox
+        # Run diagnostics inside sandbox
         ui.status("Diagnosing", f"verifying {pkg_spec} health inside sandbox...")
         doc_res = subprocess.run([ship_bin, "doctor"], check=False, env=env)
         success = doc_res.returncode == 0
 
-        # 3. Report test status and cleanup
+        # Report test status and cleanup
         ui.blank()
         if success:
             ui.status(
