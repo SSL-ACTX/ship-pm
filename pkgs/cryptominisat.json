@@ -1,53 +1,98 @@
 {
-    "description": "An advanced SAT solver",
-    "author": "msoos",
-    "repository": "https://github.com/msoos/cryptominisat",
-    "versions": {
-        "v5.17.0": {
-            "channel": "stable",
-            "targets": {
-                "x86_64-linux-gnu": {
-                    "url": "https://github.com/msoos/cryptominisat/releases/download/release/v5.17.0/cryptominisat5-v5.17.0-linux-amd64.tar.gz",
-                    "sha256": "474ff5cfaf77de7438dc063dbe4ccefcbb7dcf1e17de702c34ed88f5e026eda7",
-                    "binaries": {
-                        "cryptominisat": "bin/cryptominisat"
-                    },
-                    "download_size_bytes": 2636223
-                },
-                "aarch64-linux-gnu": {
-                    "url": "https://github.com/msoos/cryptominisat/releases/download/release/v5.17.0/cryptominisat5-v5.17.0-linux-arm64.tar.gz",
-                    "sha256": "03a2983801f8ffcb556b045709351fe63427803dbf6183b190936a15e9465ffa",
-                    "binaries": {
-                        "cryptominisat": "bin/cryptominisat"
-                    },
-                    "download_size_bytes": 2422872
-                },
-                "aarch64-apple-darwin": {
-                    "url": "https://github.com/msoos/cryptominisat/releases/download/release/v5.17.0/cryptominisat5-v5.17.0-mac-arm64.tar.gz",
-                    "sha256": "ce5edbedfa8d571711912692c4869b517c790bd2f0b8d0a58b6e0203fde10a1a",
-                    "binaries": {
-                        "cryptominisat": "bin/cryptominisat"
-                    },
-                    "download_size_bytes": 1480549
-                },
-                "x86_64-apple-darwin": {
-                    "url": "https://github.com/msoos/cryptominisat/releases/download/release/v5.17.0/cryptominisat5-v5.17.0-mac-x86_64.tar.gz",
-                    "sha256": "5440c257b34ceafcd80146ed1e6f437e0ba3b4249c070ff8f9889a9d1e7a1fe0",
-                    "binaries": {
-                        "cryptominisat": "bin/cryptominisat"
-                    },
-                    "download_size_bytes": 1590460
-                },
-                "x86_64-pc-windows-gnu": {
-                    "url": "https://github.com/msoos/cryptominisat/releases/download/release/v5.17.0/cryptominisat5-v5.17.0-windows-x86_64.zip",
-                    "sha256": "51ac3edfbe46e44d2a7623ac1fcb2d05a429aa8c212c60085c45b7bb9217588d",
-                    "binaries": {
-                        "cryptominisat": "bin/cryptominisat.exe"
-                    },
-                    "download_size_bytes": 1688449
-                }
-            }
+  "description": "An advanced SAT solver",
+  "author": "msoos",
+  "repository": "https://github.com/msoos/cryptominisat",
+  "versions": {
+    "v5.17.0": {
+      "channel": "stable",
+      "targets": {
+        "x86_64-linux-gnu": {
+          "url": "https://github.com/msoos/cryptominisat/releases/download/release/v5.17.0/cryptominisat5-v5.17.0-linux-amd64.tar.gz",
+          "sha256": "474ff5cfaf77de7438dc063dbe4ccefcbb7dcf1e17de702c34ed88f5e026eda7",
+          "binaries": {
+            "cryptominisat": "bin/cryptominisat"
+          },
+          "download_size_bytes": 2636223
+        },
+        "aarch64-linux-gnu": {
+          "url": "https://github.com/msoos/cryptominisat/releases/download/release/v5.17.0/cryptominisat5-v5.17.0-linux-arm64.tar.gz",
+          "sha256": "03a2983801f8ffcb556b045709351fe63427803dbf6183b190936a15e9465ffa",
+          "binaries": {
+            "cryptominisat": "bin/cryptominisat"
+          },
+          "download_size_bytes": 2422872
+        },
+        "aarch64-apple-darwin": {
+          "url": "https://github.com/msoos/cryptominisat/releases/download/release/v5.17.0/cryptominisat5-v5.17.0-mac-arm64.tar.gz",
+          "sha256": "ce5edbedfa8d571711912692c4869b517c790bd2f0b8d0a58b6e0203fde10a1a",
+          "binaries": {
+            "cryptominisat": "bin/cryptominisat"
+          },
+          "download_size_bytes": 1480549
+        },
+        "x86_64-apple-darwin": {
+          "url": "https://github.com/msoos/cryptominisat/releases/download/release/v5.17.0/cryptominisat5-v5.17.0-mac-x86_64.tar.gz",
+          "sha256": "5440c257b34ceafcd80146ed1e6f437e0ba3b4249c070ff8f9889a9d1e7a1fe0",
+          "binaries": {
+            "cryptominisat": "bin/cryptominisat"
+          },
+          "download_size_bytes": 1590460
+        },
+        "x86_64-pc-windows-gnu": {
+          "url": "https://github.com/msoos/cryptominisat/releases/download/release/v5.17.0/cryptominisat5-v5.17.0-windows-x86_64.zip",
+          "sha256": "51ac3edfbe46e44d2a7623ac1fcb2d05a429aa8c212c60085c45b7bb9217588d",
+          "binaries": {
+            "cryptominisat": "bin/cryptominisat.exe"
+          },
+          "download_size_bytes": 1688449
         }
+      }
     },
-    "homepage": "https://www.msoos.org"
+    "v5.18.0": {
+      "channel": "stable",
+      "targets": {
+        "x86_64-linux-gnu": {
+          "url": "https://github.com/msoos/cryptominisat/releases/download/release/v5.18.0/cryptominisat5-v5.18.0-linux-amd64.tar.gz",
+          "sha256": "928409e6edf4e0eaa991b52c5aaeb0c410e1d7d78c781c671b329cb8544838ba",
+          "binaries": {
+            "cryptominisat": "bin/cryptominisat"
+          },
+          "download_size_bytes": 2636465
+        },
+        "aarch64-linux-gnu": {
+          "url": "https://github.com/msoos/cryptominisat/releases/download/release/v5.18.0/cryptominisat5-v5.18.0-linux-arm64.tar.gz",
+          "sha256": "6d472def74947f12a8526c2f6a30713d5e07b774abe18c24b3a36e8cd8e95c3d",
+          "binaries": {
+            "cryptominisat": "bin/cryptominisat"
+          },
+          "download_size_bytes": 2423196
+        },
+        "aarch64-apple-darwin": {
+          "url": "https://github.com/msoos/cryptominisat/releases/download/release/v5.18.0/cryptominisat5-v5.18.0-mac-arm64.tar.gz",
+          "sha256": "8b425995fa1f2262605b8c7ef11591d528eb40c833701144c224d1814f380419",
+          "binaries": {
+            "cryptominisat": "bin/cryptominisat"
+          },
+          "download_size_bytes": 1401892
+        },
+        "x86_64-apple-darwin": {
+          "url": "https://github.com/msoos/cryptominisat/releases/download/release/v5.18.0/cryptominisat5-v5.18.0-mac-x86_64.tar.gz",
+          "sha256": "c1e1a50ed8676d946d2b86d04806779c9d21d008204a39579ad25c25563cabb0",
+          "binaries": {
+            "cryptominisat": "bin/cryptominisat"
+          },
+          "download_size_bytes": 1590762
+        },
+        "x86_64-pc-windows-gnu": {
+          "url": "https://github.com/msoos/cryptominisat/releases/download/release/v5.18.0/cryptominisat5-v5.18.0-windows-x86_64.zip",
+          "sha256": "121fc5a8d540fe21afe931b83b7107c595129096754a3ef86fa362486b4dab65",
+          "binaries": {
+            "cryptominisat": "bin/cryptominisat.exe"
+          },
+          "download_size_bytes": 1688216
+        }
+      }
+    }
+  },
+  "homepage": "https://www.msoos.org"
 }
