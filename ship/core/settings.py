@@ -103,9 +103,16 @@ settings = Settings()
 
 
 def get_pkgs_dir() -> Path:
+    # If the user explicitly sets SHIP_PKGS_DIR or SHIP_DEV, allow local override
+    if "SHIP_PKGS_DIR" in os.environ:
+        return Path(os.environ["SHIP_PKGS_DIR"]).resolve()
+    reg_pkgs = settings.ship_registry_dir / "pkgs"
+    if reg_pkgs.is_dir():
+        return reg_pkgs
+    # Fallback to local repo when registry dir is not yet populated
     if Path("./pkgs").is_dir():
         return Path("./pkgs").resolve()
     script_dir = Path(__file__).resolve().parent.parent
     if (script_dir.parent / "pkgs").is_dir():
         return (script_dir.parent / "pkgs").resolve()
-    return settings.ship_registry_dir / "pkgs"
+    return reg_pkgs

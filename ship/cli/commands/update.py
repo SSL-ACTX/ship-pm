@@ -67,11 +67,9 @@ def run_update(ns: Namespace) -> None:
         if only_github:
             if is_gh:
                 pkg_items.append((n, d))
-        elif include_all:
-            if is_gh or get_pkg_manifest(n):
-                pkg_items.append((n, d))
         else:
-            if not is_gh and get_pkg_manifest(n):
+            # Default to checking ALL installed packages (registry + direct GitHub)
+            if is_gh or get_pkg_manifest(n) or include_all:
                 pkg_items.append((n, d))
 
     pkg_names = [n for n, _ in pkg_items]

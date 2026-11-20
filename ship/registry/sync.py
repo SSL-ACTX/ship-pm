@@ -28,37 +28,53 @@ def sync_registry(refresh_ubuntu: bool = False) -> None:
     git_dir = registry_dir / ".git"
 
     if git_dir.is_dir():
-        # First attempt a fast-forward pull
+        # Get local commit hash before update
+        pre_rev = subprocess.run(
+            ["git", "-C", str(registry_dir), "rev-parse", "HEAD"],
+            capture_output=True,
+            text=True,
+            check=False,
+        ).stdout.strip()
+
+        # Attempt pull / fetch & reset
         res = subprocess.run(
             ["git", "-C", str(registry_dir), "pull", "--ff-only"],
             capture_output=True,
             check=False,
         )
-        if res.returncode == 0:
-            status("Finished", "registry index updated")
-        else:
-            # If the index cache diverged, has local commits, or ff-only failed,
-            # reset to remote tracking branch so user never gets stuck.
-            fetch_res = subprocess.run(
+        if res.returncode != 0:
+            subprocess.run(
                 ["git", "-C", str(registry_dir), "fetch", "--depth", "1", "origin"],
                 capture_output=True,
                 check=False,
             )
-            reset_res = subprocess.run(
+            subprocess.run(
                 ["git", "-C", str(registry_dir), "reset", "--hard", "origin/main"],
                 capture_output=True,
                 check=False,
             )
-            if fetch_res.returncode == 0 and reset_res.returncode == 0:
-                status("Finished", "registry index updated (reset to upstream)")
-            elif _clone_registry(registry_git, str(registry_dir)):
-                status("Finished", "registry index re-cloned")
-            else:
-                err_msg = res.stderr.decode("utf-8", errors="replace").strip()
-                warn(f"Git pull failed: {err_msg}" if err_msg else "Git pull failed.")
+
+        # Get commit hash after update
+        post_rev = subprocess.run(
+            ["git", "-C", str(registry_dir), "rev-parse", "HEAD"],
+            capture_output=True,
+            text=True,
+            check=False,
+        ).stdout.strip()
+
+        if pre_rev and post_rev and pre_rev != post_rev:
+            status("Updated", f"registry updated ({pre_rev[:7]} -> {post_rev[:7]})")
+        else:
+            status("Up to date", "registry is already at latest upstream")
     else:
         if _clone_registry(registry_git, str(registry_dir)):
-            status("Finished", "registry index cloned")
+            rev = subprocess.run(
+                ["git", "-C", str(registry_dir), "rev-parse", "--short", "HEAD"],
+                capture_output=True,
+                text=True,
+                check=False,
+            ).stdout.strip()
+            status("Finished", f"registry index cloned ({rev})")
         else:
             warn("Git clone failed. Checking local package manifests...")
 
