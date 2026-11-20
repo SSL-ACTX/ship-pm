@@ -7,6 +7,13 @@ import sys
 import urllib.error
 import urllib.request
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+from ship.install.asset_matcher import (
+    SIG_EXTENSIONS,
+    filter_asset,
+    parse_asset_target,
+)
+
 # ---------------------------------------------------------------------------
 # Channel classification — single source of truth used throughout this script.
 # Must stay consistent with ship/version.py::classify_channel().
@@ -282,51 +289,6 @@ checksum_map = {}
 checksum_asset_names = set()
 signature_asset_names = set()
 
-SIG_EXTENSIONS = (".sig", ".asc", ".minisig", ".pem", ".cert", ".crt", ".sbom")
-ARCHIVE_EXTENSIONS = (
-    ".tar.gz",
-    ".tgz",
-    ".tar.xz",
-    ".txz",
-    ".tar.bz2",
-    ".tbz2",
-    ".tar.zst",
-    ".zip",
-    ".7z",
-    ".tar",
-    ".gz",
-    ".bz2",
-    ".xz",
-)
-SKIP_EXTENSIONS = (
-    ".whl",
-    ".nupkg",
-    ".snupkg",
-    ".gem",
-    ".jar",
-    ".egg",
-    ".deb",
-    ".rpm",
-    ".apk",
-    ".msi",
-    ".dmg",
-    ".pkg",
-    ".appimage",
-)
-BUILD_ARTIFACT_PATTERNS = (
-    "lean-build-",
-    "-debug.",
-    "-dbg.",
-    "-symbols.",
-    "-sdk.",
-    "-source.",
-    "-src.",
-    "-sources.",
-    "installer",
-    "setup",
-    "-relink-kit",
-)
-
 for asset in assets:
     name = asset.get("name", "").lower()
     if any(
@@ -356,135 +318,6 @@ for asset in assets:
         signature_asset_names.add(asset["name"])
 
 
-def parse_asset_target(filename):
-    fn = filename.lower()
-
-    if any(fn.endswith(ext) for ext in SIG_EXTENSIONS):
-        return None
-    if any(fn.endswith(ext) for ext in SKIP_EXTENSIONS):
-        return None
-    if any(k in fn for k in BUILD_ARTIFACT_PATTERNS):
-        return None
-    if any(k in fn for k in ["doc.zip", "docs.zip", "-doc.", "-docs."]):
-        return None
-
-    clean_name = fn
-    is_archive = False
-    for ext in ARCHIVE_EXTENSIONS:
-        if clean_name.endswith(ext):
-            clean_name = clean_name[: -len(ext)]
-            is_archive = True
-            break
-
-    clean_name = clean_name.removesuffix(".exe")
-
-    # 1. Detect Operating System
-    if any(k in clean_name for k in ["linux", "glibc", "manylinux", "musl", "alpine"]):
-        os_name = "linux"
-    elif any(
-        k in clean_name for k in ["apple", "darwin", "macos", "osx", "mac-", "-mac"]
-    ):
-        os_name = "darwin"
-    elif (
-        any(
-            k in clean_name
-            for k in [
-                "windows",
-                "pc-windows",
-                "win64",
-                "win32",
-                "-win-",
-                "-win.",
-                "_win_",
-                "_win.",
-            ]
-        )
-        or clean_name.endswith(("-win", "_win", "windows"))
-        or fn.endswith(".exe")
-    ):
-        os_name = "windows"
-    elif "openbsd" in clean_name:
-        os_name = "openbsd"
-    elif "freebsd" in clean_name:
-        os_name = "freebsd"
-    elif "netbsd" in clean_name:
-        os_name = "netbsd"
-    elif "android" in clean_name or "termux" in clean_name:
-        os_name = "android"
-    else:
-        return None
-
-    # 2. Detect Architecture
-    if any(k in clean_name for k in ["x86_64", "amd64", "x64"]):
-        arch = "x86_64"
-    elif any(k in clean_name for k in ["aarch64", "arm64", "mac-arm", "-mac-arm"]):
-        arch = "aarch64"
-    elif any(
-        k in clean_name
-        for k in [
-            "armv7",
-            "armhf",
-            "arm32",
-            "arm-unknown",
-            "linux-arm",
-            "-linux-arm",
-            "-arm-linux",
-            "_arm_linux",
-            "-arm.",
-        ]
-    ) or clean_name.endswith(("-arm", "_arm")):
-        arch = "armv7"
-    elif any(k in clean_name for k in ["armv6", "armel"]):
-        arch = "armv6"
-    elif "riscv64" in clean_name:
-        arch = "riscv64"
-    elif "ppc64le" in clean_name:
-        arch = "powerpc64le"
-    elif "s390x" in clean_name:
-        arch = "s390x"
-    elif any(
-        k in clean_name for k in ["i686", "i386", "386", "-x86-", "-x86.", "-x86"]
-    ):
-        arch = "i686"
-    else:
-        # Platform-specific release assets without an architecture token
-        # conventionally target x86_64. Reject explicitly universal/source
-        # artifacts above rather than assigning them a machine architecture.
-        if any(k in clean_name for k in ("universal", "source", "src", "-all", "_all")):
-            return None
-        arch = "x86_64"
-
-    # 3. Detect ABI / Libc
-    if "musl" in clean_name or "alpine" in clean_name:
-        abi = "musl"
-    elif "msvc" in clean_name:
-        abi = "msvc"
-    elif "gnu" in clean_name or "glibc" in clean_name:
-        abi = "gnu"
-    else:
-        abi = "gnu"
-
-    # 4. Formulate Triple Key
-    if os_name == "linux":
-        target_triple = f"{arch}-linux-{abi}"
-    elif os_name == "darwin":
-        target_triple = f"{arch}-apple-darwin"
-    elif os_name == "windows":
-        target_triple = f"{arch}-pc-windows-{abi if abi in ('msvc', 'gnu') else 'msvc'}"
-    elif os_name == "openbsd":
-        target_triple = f"{arch}-openbsd"
-    elif os_name == "freebsd":
-        target_triple = f"{arch}-freebsd"
-    elif os_name == "netbsd":
-        target_triple = f"{arch}-netbsd"
-    elif os_name == "android":
-        target_triple = f"{arch}-android"
-    else:
-        return None
-
-    return target_triple, is_archive
-
-
 targets_found = {}
 target_candidates = {}
 asset_match_results = {}
@@ -507,9 +340,8 @@ for a in assets:
         asset_match_results[asset_name] = target_key
         target_candidates.setdefault(target_key, []).append((a, is_archive))
     else:
-        if any(asset_name.lower().endswith(ext) for ext in SKIP_EXTENSIONS) or any(
-            k in asset_name.lower() for k in BUILD_ARTIFACT_PATTERNS
-        ):
+        skip_reason = filter_asset(asset_name.lower())
+        if skip_reason in ("skip", "build"):
             asset_match_results[asset_name] = "LANGUAGE/INSTALLER"
         else:
             asset_match_results[asset_name] = "IGNORED"

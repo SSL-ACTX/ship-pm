@@ -13,57 +13,15 @@ from ship import __version__
 from ship.core.platform import detect_target_keys
 from ship.core.settings import settings
 from ship.core.version import classify_channel, semver_sort_key
+from ship.install.asset_matcher import (
+    filter_asset,
+)
 from ship.install.pipeline import InstallArtifact, finalize_install
 from ship.net.download import fetch_cached_file
 from ship.net.github import fetch_github_json, parse_repo_slug
 from ship.ui import c, die, status
 
 _CHANNEL_NAMES = frozenset({"stable", "prerelease", "nightly", "pre", "rc", "dev"})
-
-SIG_EXTENSIONS = (
-    ".sig",
-    ".asc",
-    ".minisig",
-    ".pem",
-    ".cert",
-    ".crt",
-    ".sbom",
-)
-SKIP_EXTENSIONS = (
-    ".whl",
-    ".nupkg",
-    ".snupkg",
-    ".gem",
-    ".jar",
-    ".egg",
-    ".deb",
-    ".rpm",
-    ".apk",
-    ".msi",
-    ".dmg",
-    ".pkg",
-    ".appimage",
-    ".txt",
-    ".md",
-    ".rst",
-    ".pdf",
-    ".html",
-    ".htm",
-)
-BUILD_ARTIFACT_PATTERNS = (
-    "lean-build-",
-    "-debug.",
-    "-dbg.",
-    "-symbols.",
-    "-sdk.",
-    "-source.",
-    "-src.",
-    "-sources.",
-    "installer",
-    "setup",
-    "-relink-kit",
-    "relink-kit",
-)
 
 
 def _reconcile_target_label(matched_target: str, asset_name: str) -> str:
@@ -209,16 +167,11 @@ def install_from_github(
 
     for a in assets:
         name = a.get("name", "").lower()
-        if any(name.endswith(ext) for ext in SIG_EXTENSIONS) or any(
-            name.endswith(ext) for ext in SKIP_EXTENSIONS
-        ):
-            continue
-        if any(k in name for k in BUILD_ARTIFACT_PATTERNS):
-            continue
-        if any(k in name for k in ("sha256", "checksum", "hashes", "sha256sum")):
+        reason = filter_asset(name)
+        if reason == "checksum":
             checksum_assets.append(a)
             continue
-        if any(k in name for k in ("doc.zip", "docs.zip", "-doc.", "-docs.")):
+        if reason is not None:
             continue
 
         for idx, target in enumerate(target_keys):
