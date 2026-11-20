@@ -3,24 +3,11 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 
 from ship.core.settings import get_pkgs_dir
 from ship.registry.sync import ensure_registry
 
 _UBUNTU_CACHE: dict | None = None
-
-
-def _bundled_registry_path() -> Path | None:
-    """Fallback: bundled ubuntu-noble.json shipped with the repo."""
-    repo_root = get_pkgs_dir().parent
-    for p in (
-        repo_root / "registries" / "ubuntu-noble.json",
-        Path("registries/ubuntu-noble.json"),
-    ):
-        if p.is_file():
-            return p
-    return None
 
 
 def load_secondary_registries() -> dict[str, dict]:
@@ -31,17 +18,7 @@ def load_secondary_registries() -> dict[str, dict]:
     from ship.registry.ubuntu import load_ubuntu_registry
 
     data = load_ubuntu_registry()
-
-    # If cache is empty fall back to bundled file
-    if not data:
-        p = _bundled_registry_path()
-        if p:
-            try:
-                data = json.loads(p.read_text(encoding="utf-8"))
-            except (json.JSONDecodeError, OSError):
-                data = {}
-
-    _UBUNTU_CACHE = data
+    _UBUNTU_CACHE = data or {}
     return _UBUNTU_CACHE
 
 

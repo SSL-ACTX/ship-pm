@@ -4,7 +4,7 @@ import os
 import sys
 
 PKGS_DIR = "pkgs"
-REGISTRY_FILE = "registry.json"
+REGISTRY_FILE = "registries/registry.json"
 
 # ---------------------------------------------------------------------------
 # Inline channel/key repair — mirrors the logic in resolve_release.py so the
@@ -121,8 +121,7 @@ def main():
     }
 
     with open(REGISTRY_FILE, "w", encoding="utf-8") as f:
-        json.dump(registry, f, indent=2, sort_keys=False)
-        f.write("\n")
+        json.dump(registry, f, separators=(",", ":"))
 
     print(
         f"Successfully compiled {len(packages)} packages ({total_versions} total versions) into {REGISTRY_FILE}"

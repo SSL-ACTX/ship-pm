@@ -6,6 +6,7 @@ import json
 import lzma
 import os
 import time
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -82,12 +83,65 @@ def _fetch_source(url: str) -> bytes:
     return dec.decompress(raw)
 
 
+def _bundled_gz_path() -> Path | None:
+    """Find bundled ubuntu-noble.json.gz in repository registries/ directory."""
+    from ship.core.settings import get_pkgs_dir
+
+    repo_root = get_pkgs_dir().parent
+    for p in (
+        repo_root / "registries" / "ubuntu-noble.json.gz",
+        Path("registries/ubuntu-noble.json.gz"),
+    ):
+        if p.is_file():
+            return p
+    return None
+
+
+def _seed_from_bundled() -> dict[str, dict]:
+    """Seed cache from bundled registries/ubuntu-noble.json.gz if available."""
+    gz_path = _bundled_gz_path()
+    if not gz_path:
+        return {}
+    reg_path = _registry_path()
+    try:
+        import gzip as _gzip
+
+        raw = _gzip.decompress(gz_path.read_bytes())
+        combined: dict[str, dict] = json.loads(raw.decode("utf-8"))
+        if not combined:
+            return {}
+        tmp = reg_path.with_suffix(".tmp")
+        tmp.write_bytes(raw)
+        os.replace(tmp, reg_path)
+        meta_tmp = _meta_path().with_suffix(".tmp")
+        meta_tmp.write_text(
+            json.dumps(
+                {
+                    "expires": time.time() + TTL,
+                    "count": len(combined),
+                    "updated": time.time(),
+                    "source": "bundled_gz",
+                }
+            ),
+            encoding="utf-8",
+        )
+        os.replace(meta_tmp, _meta_path())
+        return combined
+    except (json.JSONDecodeError, OSError, ValueError):
+        return {}
+
+
 def fetch_ubuntu_registry(force: bool = False) -> dict[str, dict]:
     """Download and rebuild the ubuntu-noble registry. Skips if still fresh."""
     reg_path = _registry_path()
 
     if not force and _is_fresh():
         return _load_cached()
+
+    if not force:
+        bundled = _seed_from_bundled()
+        if bundled:
+            return bundled
 
     combined: dict[str, dict] = {}
     for url in UBUNTU_SOURCES:
@@ -116,6 +170,7 @@ def fetch_ubuntu_registry(force: bool = False) -> dict[str, dict]:
                 "expires": time.time() + TTL,
                 "count": len(combined),
                 "updated": time.time(),
+                "source": "live",
             }
         ),
         encoding="utf-8",

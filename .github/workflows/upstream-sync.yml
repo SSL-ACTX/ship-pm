@@ -107,14 +107,44 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Compile and Commit registry.json
+      - name: Compile and Commit registries
         run: |
           python3 .github/scripts/build_registry.py
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add registry.json
+          git add registries/registry.json
           git diff --quiet && git diff --staged --quiet || (
             git commit -m "chore(registry): recompile registry.json [skip ci]"
+            for i in {1..5}; do
+              git pull --rebase origin main && git push origin main && exit 0
+              sleep 2
+            done
+            exit 1
+          )
+
+  sync-ubuntu-registry:
+    name: Sync Ubuntu Noble Registry
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Build and Commit registries/ubuntu-noble.json.gz
+        run: |
+          python3 .github/scripts/build_ubuntu_registry.py
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add registries/ubuntu-noble.json.gz
+          git diff --quiet && git diff --staged --quiet || (
+            git commit -m "chore(registry): sync ubuntu-noble.json.gz [skip ci]"
             for i in {1..5}; do
               git pull --rebase origin main && git push origin main && exit 0
               sleep 2
