@@ -1,0 +1,20 @@
+{
+  "description": "Pre-built binaries for SSL-ACTX/cadical-prebuilts",
+  "author": "SSL-ACTX",
+  "repository": "https://github.com/SSL-ACTX/cadical-prebuilts",
+  "versions": {
+    "3.1.0": {
+      "channel": "stable",
+      "targets": {
+        "aarch64-linux-gnu": {
+          "url": "https://github.com/SSL-ACTX/cadical-prebuilts/releases/download/v3.1.0/cadical-3.1.0-android-aarch64-linux-gnu.deb",
+          "sha256": "a2883ae5cf25df49be91e49ffde85671998c1709daf838d12cfabd20b10ddd17",
+          "binaries": {
+            "cadical-prebuilts": "bin/cadical-prebuilts"
+          },
+          "download_size_bytes": 1019468
+        }
+      }
+    }
+  }
+}
