@@ -22,7 +22,7 @@ _ROCQ_COMMANDS = (
     "menhir",
     "rocq",
     "rocqchk",
-    "exp-rocq-prebuilts",
+    "rocq-prebuilts",
 )
 
 _ROCQ_WORKERS = (
@@ -105,7 +105,7 @@ def _setup_rocq_environment(context: PatchContext) -> None:
 
 
 PATCH = (
-    PackageRecipe("exp-rocq-prebuilts")
+    PackageRecipe("rocq-prebuilts")
     .export(only=_ROCQ_COMMANDS)
     .hook(_setup_rocq_environment, stage="pre_link")
     .runtime(

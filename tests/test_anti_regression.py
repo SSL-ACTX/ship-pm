@@ -13,7 +13,7 @@ from ship.api import (
 )
 from ship.install import remove_package
 from ship.link import clean_package_links
-from ship.packages import get_package_patch
+from ship.patches import get_package_patch
 from ship.runtime import PATCHERS
 from ship.runtime.qemu import QemuRunnerPatcher
 from ship.runtime.termux import TermuxPatcher
@@ -61,7 +61,7 @@ class TestFStarSolverPatchRegression(unittest.TestCase):
             "fstar export policy should only expose fstar, fstar.exe, krml",
         )
 
-    @patch("ship.packages.fstar.apply_patchers")
+    @patch("ship.patches.fstar.apply_patchers")
     def test_fstar_patches_bundled_z3_solvers(self, mock_apply_patchers):
         """Regression test: bundled z3 under lib/fstar/z3-*/bin/z3 must receive apply_patchers."""
         z3_dir = self.install_dir / "lib" / "fstar" / "z3-5.3.0" / "bin"

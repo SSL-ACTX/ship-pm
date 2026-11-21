@@ -176,7 +176,9 @@ def resolve_command_binaries(
     # Resolve package name alias (e.g. yices2 -> yices)
     if pkg_name not in resolved and pool:
         base_name = re.sub(r"\d+$", "", pkg_name)
-        matched = next((p for p in pool if p.name == base_name), None)
+        matched = next(
+            (p for p in pool if p.name == pkg_name or p.name == base_name), None
+        )
         if not matched:
             matched = resolved.get(next(iter(resolved))) if resolved else pool[0]
         resolved[pkg_name] = matched

@@ -13,7 +13,7 @@ Package layout::
     ship.install    install sources, shared pipeline, lifecycle
     ship.link       discovery and linking
     ship.runtime    platform adapters (QEMU, Termux, …)
-    ship.packages   per-package PATCH recipes
+    ship.patches    per-package PATCH recipes
     ship.cli        command-line interface
     ship.admin      registry administration
 """

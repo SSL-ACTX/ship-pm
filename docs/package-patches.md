@@ -1,6 +1,6 @@
 # Package patches
 
-Package-specific behavior lives in `ship/packages/<package_name>.py`; hyphens
+Package-specific behavior lives in `ship/patches/<package_name>.py`; hyphens
 in package names become underscores. Platform-wide compatibility belongs in
 `ship/runtime/`.
 
@@ -101,7 +101,7 @@ PATCH = (
     .on_subcommand(
         binaries=("juliaup",),
         triggers=("add", "update", "install", "default"),
-        post_exec_call="ship.packages.juliaup:patch_toolchain_dir",
+        post_exec_call="ship.patches.juliaup:patch_toolchain_dir",
         targets=("aarch64-*",),
     )
     .on_reapply(patch_toolchain_dir)

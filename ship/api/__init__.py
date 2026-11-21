@@ -25,6 +25,13 @@ from ship.api.scripting import (
     qemu_command,
     resolve_soname_symlinks,
 )
+from ship.api.sources import (
+    HtmlDistIndex,
+    HttpIndex,
+    ManifestRecipe,
+    TargetAsset,
+    compute_url_sha256,
+)
 from ship.api.toolkit import (
     EM_AARCH64,
     PT_INTERP,
@@ -72,6 +79,7 @@ from ship.api.toolkit import (
 #   from ship.api.elf import inspect_elf
 #   from ship.api.fs import write_text
 #   from ship.api.context import PatchContext
+#   from ship.api.sources import ManifestRecipe
 
 __all__ = [
     "EM_AARCH64",
@@ -88,10 +96,13 @@ __all__ = [
     "ElfProgramHeader",
     "ElfType",
     "ExportPolicy",
+    "HtmlDistIndex",
+    "HttpIndex",
     "InlineScript",
     "InstallHandler",
     "InstallPatch",
     "InstallStage",
+    "ManifestRecipe",
     "Mixin",
     "PackagePatch",
     "PackageRecipe",
@@ -106,7 +117,9 @@ __all__ = [
     "RuntimePatch",
     "RuntimeValue",
     "SourcePatcher",
+    "TargetAsset",
     "WrapperBuilder",
+    "compute_url_sha256",
     "create_symlink",
     "find_binaries",
     "inspect_elf",

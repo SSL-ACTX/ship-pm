@@ -1,0 +1,46 @@
+{
+  "description": "Isabelle \u2014 a generic proof assistant",
+  "author": "Lawrence C. Paulson et al.",
+  "repository": "https://isabelle.sketis.net/repos/isabelle",
+  "versions": {
+    "2026": {
+      "channel": "stable",
+      "targets": {
+        "x86_64-linux-gnu": {
+          "url": "https://www.cl.cam.ac.uk/research/hvg/Isabelle/dist/Isabelle2026_linux.tar.gz",
+          "sha256": "858c995b32216b3876bf395c3be843147d1f1eee404bc6c958d7534ee335e48d",
+          "binaries": {
+            "isabelle": "bin/isabelle"
+          },
+          "download_size_bytes": 1412134191
+        },
+        "aarch64-linux-gnu": {
+          "url": "https://www.cl.cam.ac.uk/research/hvg/Isabelle/dist/Isabelle2026_linux_arm.tar.gz",
+          "sha256": "edfb1670d8bdfa42488829ca0379c219b874a1e7548340c9951ffd2250da5a7f",
+          "binaries": {
+            "isabelle": "bin/isabelle"
+          },
+          "download_size_bytes": 1390395140
+        },
+        "x86_64-apple-darwin": {
+          "url": "https://www.cl.cam.ac.uk/research/hvg/Isabelle/dist/Isabelle2026_macos.tar.gz",
+          "sha256": "ac750bf2a124005109df686177405551c9c3a61ad0d1064d5958b0a27af3f079",
+          "binaries": {
+            "isabelle": "bin/isabelle"
+          },
+          "download_size_bytes": 1375462151
+        },
+        "aarch64-apple-darwin": {
+          "url": "https://www.cl.cam.ac.uk/research/hvg/Isabelle/dist/Isabelle2026_macos_arm.tar.gz",
+          "sha256": "7244e596d44ee9fbb8b988ef2990474b3385fa4a7ec1343867b224a13b6ddc28",
+          "binaries": {
+            "isabelle": "bin/isabelle"
+          },
+          "download_size_bytes": 1399884492
+        }
+      }
+    }
+  },
+  "homepage": "https://isabelle.in.tum.de/",
+  "license": "BSD-3-Clause"
+}

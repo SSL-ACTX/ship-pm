@@ -345,7 +345,7 @@ def build_app() -> CliEngine:
             args=(
                 Argument(
                     "entrypoint",
-                    "Module and function, e.g. ship.packages.odin:run_odin",
+                    "Module and function, e.g. ship.patches.odin:run_odin",
                 ),
                 Argument(
                     "args",

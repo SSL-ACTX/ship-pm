@@ -8,6 +8,9 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
+from ship.registry.sources import get_source_recipe
+
 SCHEMA_FILE = Path("docs/registry.schema.json")
 PKGS_DIR = Path("pkgs")
 
@@ -81,6 +84,27 @@ def main():
         # Validate schema
         errors = validate_manifest(pkg_path, data)
         all_errors.extend(errors)
+
+        # Check for custom source recipe (e.g. Racket)
+        recipe = get_source_recipe(pkg_name)
+        if recipe:
+            discovered = recipe.discover_versions()
+            if discovered:
+                # Latest version
+                latest_v = discovered[-1]
+                existing_versions = set(data.get("versions", {}).keys())
+                if latest_v not in existing_versions:
+                    print(
+                        f"Update detected (custom recipe): {pkg_name} needs update to {latest_v}"
+                    )
+                    updates_needed.append(
+                        {
+                            "pkg": pkg_name,
+                            "repo": f"custom:{pkg_name}",
+                            "latest_tag": latest_v,
+                        }
+                    )
+            continue
 
         # Check repository URL
         repo_url = data.get("repository", "")

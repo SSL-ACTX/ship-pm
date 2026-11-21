@@ -112,6 +112,10 @@ class WrapperBuilder:
         )
         if not real_binary.exists():
             binary_path.replace(real_binary)
+            try:
+                real_binary.chmod(real_binary.stat().st_mode | 0o755)
+            except OSError:
+                pass
             context.record(real_binary, "move aside", f"-> {real_binary.name}")
 
         shebang = self.shebang

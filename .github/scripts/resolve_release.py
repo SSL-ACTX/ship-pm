@@ -13,6 +13,7 @@ from ship.install.asset_matcher import (
     filter_asset,
     parse_asset_target,
 )
+from ship.registry.sources import get_source_recipe
 
 # ---------------------------------------------------------------------------
 # Channel classification — single source of truth used throughout this script.
@@ -120,6 +121,71 @@ if not repo:
     print("Error: TARGET_REPO is not set and no repo argument provided.")
     print("Usage: python3 resolve_release.py <owner/repo> [tag] [--dry-run]")
     sys.exit(1)
+
+# Check if this package resolves via a custom ManifestRecipe
+custom_recipe = None
+if repo.startswith("custom:"):
+    custom_recipe = get_source_recipe(repo.removeprefix("custom:"))
+else:
+    custom_recipe = get_source_recipe(repo.split("/")[-1].lower())
+
+if custom_recipe:
+    pkg_name = custom_recipe.name
+    version = (
+        tag
+        if tag and tag not in ("latest", "stable")
+        else (
+            custom_recipe.discover_versions()[-1]
+            if custom_recipe.discover_versions()
+            else "latest"
+        )
+    )
+    targets_found = custom_recipe.resolve_version_targets(version)
+    if not targets_found:
+        print(
+            f"Error: Custom recipe for {pkg_name} could not resolve targets for version {version}"
+        )
+        sys.exit(1)
+
+    pkgs_dir = "pkgs"
+    os.makedirs(pkgs_dir, exist_ok=True)
+    pkg_file = os.path.join(pkgs_dir, f"{pkg_name}.json")
+    existing_pkg_data = {}
+    if os.path.exists(pkg_file):
+        with open(pkg_file, "r", encoding="utf-8") as f:
+            existing_pkg_data = json.load(f)
+
+    channel = "stable"
+    version_entry = {
+        "channel": channel,
+        "targets": targets_found,
+    }
+    if not existing_pkg_data:
+        pkg_entry = {
+            "description": custom_recipe._description,
+            "author": custom_recipe._author,
+            "repository": custom_recipe._repository,
+            "versions": {version: version_entry},
+        }
+        if custom_recipe._homepage:
+            pkg_entry["homepage"] = custom_recipe._homepage
+        if custom_recipe._license:
+            pkg_entry["license"] = custom_recipe._license
+    else:
+        pkg_entry = existing_pkg_data
+        pkg_entry.setdefault("versions", {})[version] = version_entry
+
+    if dry_run:
+        print(f"================ DRY-RUN PKGS/{pkg_name}.json ================")
+        print(json.dumps(pkg_entry, indent=2))
+        print("==============================================================")
+        sys.exit(0)
+
+    with open(pkg_file, "w", encoding="utf-8") as f:
+        json.dump(pkg_entry, f, indent=2)
+        f.write("\n")
+    print(f"Wrote updated package definition to {pkg_file}")
+    sys.exit(0)
 
 # Smart generic repository naming resolution
 owner = repo.split("/")[0].lower()

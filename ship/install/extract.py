@@ -247,10 +247,15 @@ def _extract_single(
             with zipfile.ZipFile(archive_path, "r") as z:
                 members = z.infolist()
                 progress.set_total(len(members))
-                z.extractall(
-                    extract_dir,
-                    members=_tracked_archive_members(members, progress, len(members)),
-                )
+                for info in members:
+                    extracted_path = Path(z.extract(info, extract_dir))
+                    mode = info.external_attr >> 16
+                    if mode & 0o111:
+                        try:
+                            extracted_path.chmod(extracted_path.stat().st_mode | 0o755)
+                        except OSError:
+                            pass
+                    progress.update(progress.current + 1)
         elif name.endswith(".deb"):
             from ship.install.deb_source import DebArchive
 

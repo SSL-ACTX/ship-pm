@@ -6,7 +6,7 @@ from pathlib import Path
 from ship.api import PatchReport
 from ship.core.settings import settings
 from ship.core.state import load_state
-from ship.packages import get_export_policy
+from ship.patches import get_export_policy
 from ship.runtime import apply_patchers
 from ship.ui import c, die, status, warn
 

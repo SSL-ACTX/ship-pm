@@ -1,4 +1,4 @@
-"""Per-package install recipes and runtime hooks."""
+"""Per-package install patch hooks and runtime adapters."""
 
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ HookName = Literal["post_extract", "pre_link"]
 
 
 def get_package_patch(pkg_name: str) -> PackagePatch | None:
-    module_name = f"ship.packages.{pkg_name.replace('-', '_')}"
+    module_name = f"ship.patches.{pkg_name.replace('-', '_')}"
     try:
         mod = importlib.import_module(module_name)
     except ModuleNotFoundError:
@@ -104,7 +104,7 @@ def find_patch_for_binary(binary_name: str) -> PackagePatch | None:
         if mod_name.startswith("_"):
             continue
         try:
-            mod = importlib.import_module(f"ship.packages.{mod_name}")
+            mod = importlib.import_module(f"ship.patches.{mod_name}")
             candidate = getattr(mod, "PATCH", None)
             if isinstance(candidate, PackageRecipe):
                 candidate = candidate.to_patch()

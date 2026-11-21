@@ -14,7 +14,7 @@ from ship.install.extract import extract_archive
 from ship.install.history import record_package_history
 from ship.link.discovery import resolve_command_binaries, scan_executables
 from ship.link.linker import clean_package_links, link_package
-from ship.packages import (
+from ship.patches import (
     allows_foreign_binaries,
     apply_package_patch,
     should_discover_all_bins,

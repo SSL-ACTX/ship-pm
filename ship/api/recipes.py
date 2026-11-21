@@ -780,7 +780,7 @@ class PackageRecipe:
                 ship_lib = Path(__file__).resolve().parents[2]
                 code = (
                     f"import sys; sys.path.insert(0, {str(ship_lib)!r}); "
-                    f"from ship.packages.{binary} import run_{binary}; "
+                    f"from ship.patches.{binary} import run_{binary}; "
                     f"raise SystemExit(run_{binary}(sys.argv[1], sys.argv[2:]))"
                 )
                 return RuntimeCommand(
@@ -793,7 +793,7 @@ class PackageRecipe:
                 argv=(
                     ship_bin,
                     "call",
-                    f"ship.packages.{binary}:run_{binary}",
+                    f"ship.patches.{binary}:run_{binary}",
                     real_binary,
                 ),
                 condition=ArgumentEquals(1, subcommand),

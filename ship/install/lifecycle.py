@@ -13,7 +13,7 @@ from ship.install.history import history_key
 from ship.install.pipeline import _show_patch_report
 from ship.link.discovery import resolve_command_binaries, scan_executables
 from ship.link.linker import clean_package_links, link_package
-from ship.packages import apply_package_patch, apply_reapply_handlers
+from ship.patches import apply_package_patch, apply_reapply_handlers
 from ship.ui import die, status
 
 

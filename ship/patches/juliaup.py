@@ -1,14 +1,11 @@
 """Termux runtime integration for Juliaup and the Julia launcher."""
 
 import json
-from pathlib import Path
 
 from ship.api import (
     PackageRecipe,
     PatchReport,
-    RuntimeCommand,
     patch_external_toolchain,
-    qemu_command,
 )
 from ship.core.settings import settings
 from ship.runtime import apply_patchers
@@ -104,25 +101,13 @@ def patch_toolchain_dir(report: PatchReport | None = None) -> PatchReport:
     return report
 
 
-def juliaup_command(
-    binary_name: str, real_binary: Path, target_key: str
-) -> RuntimeCommand | None:
-    """Use QEMU's Termux sysroot for Juliaup network access only."""
-    return qemu_command(real_binary, arch="aarch64")
-
-
 PATCH = (
     PackageRecipe("juliaup")
     .on_subcommand(
         binaries=("juliaup",),
         triggers=("add", "update", "install", "default"),
-        post_exec_call="ship.packages.juliaup:patch_toolchain_dir",
+        post_exec_call="ship.patches.juliaup:patch_toolchain_dir",
         targets=("aarch64-*",),
-    )
-    .runtime(
-        binaries=("juliaup",),
-        targets=("aarch64-*",),
-        command=juliaup_command,
     )
     .on_reapply(patch_toolchain_dir)
     .to_patch()

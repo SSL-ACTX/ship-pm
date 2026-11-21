@@ -23,6 +23,78 @@ def termux_glibc_prefix() -> Path:
     return get_active_profile().paths.glibc_prefix
 
 
+def ensure_termux_trampoline_loader(
+    architecture: str | None = None,
+    report: PatchReport | None = None,
+) -> Path | None:
+    """Ensure the freestanding PT_INTERP trampoline is compiled and available."""
+    arch = (architecture or platform.machine()).lower()
+    arch = {"arm64": "aarch64", "amd64": "x86_64", "x64": "x86_64"}.get(arch, arch)
+    if arch != "aarch64":
+        return None
+
+    profile = get_active_profile()
+    target_dir = profile.paths.prefix / "share" / "ship" / "runtime"
+    trampoline_bin = target_dir / f"ld-termux-{arch}.so.1"
+    if trampoline_bin.is_file():
+        return trampoline_bin
+
+    local_target = (
+        profile.home
+        / ".local"
+        / "share"
+        / "ship"
+        / "runtime"
+        / f"ld-termux-{arch}.so.1"
+    )
+    if local_target.is_file():
+        return local_target
+
+    c_source = Path(__file__).parent / "c" / f"ld-termux-{arch}.c"
+    if not c_source.is_file():
+        return None
+
+    clang = shutil.which("clang")
+    if not clang:
+        return None
+
+    out_path = trampoline_bin
+    try:
+        target_dir.mkdir(parents=True, exist_ok=True)
+    except OSError:
+        out_path = local_target
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    cmd = [
+        clang,
+        "-nostdlib",
+        "-fPIC",
+        "-shared",
+        "-fno-builtin",
+        "-Wl,-e,_start",
+        "-Wl,-Bsymbolic",
+        "-Os",
+        "-o",
+        str(out_path),
+        str(c_source),
+    ]
+    try:
+        res = subprocess.run(cmd, capture_output=True, check=False)
+        if res.returncode == 0 and out_path.is_file():
+            if report is not None:
+                report.add(out_path, "compile freestanding PT_INTERP trampoline", arch)
+            return out_path
+    except OSError:
+        pass
+
+    return None
+
+
+def termux_trampoline_loader_path(architecture: str | None = None) -> Path | None:
+    """Return the path to the freestanding PT_INTERP trampoline for Termux glibc if present."""
+    return ensure_termux_trampoline_loader(architecture=architecture)
+
+
 def termux_glibc_loader_path(architecture: str | None = None) -> Path | None:
     arch = (architecture or platform.machine()).lower()
     arch = {"arm64": "aarch64", "amd64": "x86_64", "x64": "x86_64"}.get(arch, arch)
@@ -152,7 +224,9 @@ class TermuxPatcher(BinaryPatcher):
         bin_arch = elf_info.architecture if elf_info else target_arch
         is_foreign_arch = (target_arch != host_arch) or (bin_arch != host_arch)
 
-        loader_path = termux_glibc_loader_path(host_arch)
+        loader_path = ensure_termux_trampoline_loader(
+            host_arch, report=report
+        ) or termux_glibc_loader_path(host_arch)
 
         # Glibc ELF binary patching
         if is_glibc and not is_foreign_arch and loader_path and loader_path.is_file():
@@ -185,45 +259,58 @@ class TermuxPatcher(BinaryPatcher):
 
         ensure_termux_resolv_conf(report)
 
-        # Runtime launcher wrapper
+        # Musl static binary patch: relocate /etc/resolv.conf and /etc/hosts directly
+        if not is_glibc and not is_foreign_arch:
+            from ship.runtime.musl import patch_musl_static_paths
+
+            patch_musl_static_paths(binary_path, report=report)
+
+        # Runtime launcher wrapper: only needed if package requests custom hooks/commands
         cert_file = get_termux_ssl_cert_file()
         real_binary = binary_path.parent / f"{binary_path.name}-real"
         if not real_binary.exists():
-            environment: list[str] = []
-            if cert_file:
-                cert_dir = str(Path(cert_file).parent)
-                environment = [
-                    f"export SSL_CERT_FILE={shlex.quote(cert_file)}",
-                    f"export SSL_CERT_DIR={shlex.quote(cert_dir)}",
-                ]
-
-            bash_bin = str(get_active_profile().paths.bash)
-
-            from ship.packages import get_runtime_patch
+            from ship.patches import get_runtime_patch
 
             pre_exec_hook, post_exec_hook, package_exec_cmd = get_runtime_patch(
                 binary_path.name, real_binary, target_key
             )
 
-            # Package runtime command ALWAYS takes precedence
-            if package_exec_cmd:
-                exec_cmd = package_exec_cmd
-            elif post_exec_hook:
-                exec_cmd = f'{shlex.quote(str(real_binary))} "$@"'
-            else:
-                exec_cmd = f'exec -a "$0" {shlex.quote(str(real_binary))} "$@"'
-
-            install_launcher(
-                binary_path,
-                LauncherTemplate(
-                    interpreter=bash_bin,
-                    comment="Termux",
-                    command=exec_cmd,
-                    environment=environment,
-                    before=pre_exec_hook,
-                    after=post_exec_hook,
-                ),
-                report=report,
+            # If the binary has the trampoline loader and needs no custom hooks, it runs purely as a native ELF!
+            has_trampoline = (
+                loader_path and loader_path == termux_trampoline_loader_path(host_arch)
             )
+            has_custom_hooks = bool(package_exec_cmd or pre_exec_hook or post_exec_hook)
+
+            if has_custom_hooks or not has_trampoline:
+                environment: list[str] = []
+                if cert_file:
+                    cert_dir = str(Path(cert_file).parent)
+                    environment = [
+                        f"export SSL_CERT_FILE={shlex.quote(cert_file)}",
+                        f"export SSL_CERT_DIR={shlex.quote(cert_dir)}",
+                    ]
+
+                bash_bin = str(get_active_profile().paths.bash)
+
+                # Package runtime command ALWAYS takes precedence
+                if package_exec_cmd:
+                    exec_cmd = package_exec_cmd
+                elif post_exec_hook:
+                    exec_cmd = f'{shlex.quote(str(real_binary))} "$@"'
+                else:
+                    exec_cmd = f'exec -a "$0" {shlex.quote(str(real_binary))} "$@"'
+
+                install_launcher(
+                    binary_path,
+                    LauncherTemplate(
+                        interpreter=bash_bin,
+                        comment="Termux",
+                        command=exec_cmd,
+                        environment=environment,
+                        before=pre_exec_hook,
+                        after=post_exec_hook,
+                    ),
+                    report=report,
+                )
 
         return binary_path

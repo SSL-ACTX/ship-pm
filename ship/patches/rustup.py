@@ -90,7 +90,7 @@ PATCH = (
     .on_subcommand(
         binaries=("rustup",),
         triggers=("add", "update", "install", "default", "toolchain"),
-        post_exec_call="ship.packages.rustup:patch_rust_toolchain_dir",
+        post_exec_call="ship.patches.rustup:patch_rust_toolchain_dir",
         targets=("aarch64-*",),
     )
     .runtime(

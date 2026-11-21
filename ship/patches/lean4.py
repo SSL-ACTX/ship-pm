@@ -7,7 +7,11 @@ from ship.api import (
     on_termux,
     promote_nested_directory,
 )
-from ship.runtime.termux import termux_glibc_loader_path, termux_glibc_prefix
+from ship.runtime.termux import (
+    termux_glibc_loader_path,
+    termux_glibc_prefix,
+    termux_trampoline_loader_path,
+)
 
 _PUBLIC_COMMANDS = ("lean", "lake", "leanc", "lean4")
 
@@ -49,31 +53,50 @@ def _promote_bins(context: PatchContext) -> None:
 
 def _hijack_bundled_linker(context: PatchContext) -> None:
     """Wrap bundled ld.lld so leanc/lake emit executables with Termux glibc interpreter and RPATH."""
+    from ship.runtime import apply_patchers
+
     target_arch = context.target_key.split("-")[0]
     glibc_pfx = termux_glibc_prefix()
     glibc_lib = glibc_pfx / "lib"
     glibc_loader = termux_glibc_loader_path(target_arch)
+    trampoline_loader = termux_trampoline_loader_path(target_arch)
 
-    if not glibc_loader or not glibc_loader.is_file():
+    effective_loader = trampoline_loader if trampoline_loader else glibc_loader
+
+    if not effective_loader or not effective_loader.is_file():
         return
 
     for lld_path in context.install_dir.glob("**/bin/ld.lld"):
         if lld_path.is_symlink():
             continue
 
-        wrapper = WrapperBuilder(
-            target_binary=lld_path.relative_to(context.install_dir),
-            unset=["LD_PRELOAD"],
-            rewrite_args={
-                r"/lib/ld-linux-*.so.*": glibc_loader,
-                r"/lib64/ld-linux-*.so.*": glibc_loader,
-            },
-            append_args_if=[
-                ("-dynamic-linker", ["-rpath", str(glibc_lib)]),
-                ("--dynamic-linker", ["-rpath", str(glibc_lib)]),
-            ],
-        )
-        wrapper.apply(context)
+        real_binary = lld_path.with_name(f"{lld_path.name}-real")
+        if not real_binary.is_file():
+            # First time: wrap ld.lld
+            apply_patchers(lld_path, context.target_key, context.report)
+            wrapper = WrapperBuilder(
+                target_binary=lld_path.relative_to(context.install_dir),
+                unset=["LD_PRELOAD"],
+                rewrite_args={
+                    r"/lib/ld-linux-*.so.*": effective_loader,
+                    r"/lib64/ld-linux-*.so.*": effective_loader,
+                    r"--dynamic-linker=/lib/ld-linux-*.so.*": f"--dynamic-linker={effective_loader}",
+                    r"--dynamic-linker=/lib64/ld-linux-*.so.*": f"--dynamic-linker={effective_loader}",
+                },
+                append_args_if=[
+                    ("-dynamic-linker", ["-rpath", str(glibc_lib)]),
+                    ("--dynamic-linker", ["-rpath", str(glibc_lib)]),
+                ],
+            )
+            wrapper.apply(context)
+
+        # Ensure the real ld.lld binary has correct loader, RPATH, and executable permissions
+        if real_binary.is_file():
+            try:
+                real_binary.chmod(real_binary.stat().st_mode | 0o755)
+            except OSError:
+                pass
+            apply_patchers(real_binary, context.target_key, context.report)
 
 
 PATCH = (

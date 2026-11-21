@@ -44,6 +44,7 @@ else
   SHIP_DIR="${HOME}/.local/share/ship"
 fi
 
+SHIP_REGISTRY_TARGET="${SHIP_DIR}/registry"
 SHIP_LIB_DIR="${SHIP_DIR}/lib"
 SHIP_BIN_TARGET="$(find_smart_bin_target)"
 mkdir -p "$SHIP_BIN_TARGET" "$SHIP_LIB_DIR" "$SHIP_DIR"
@@ -98,5 +99,34 @@ else
   exit 1
 fi
 mv "$BIN_STAGE" "$SHIP_BIN_TARGET/ship"
+
+# Cleanly synchronize local registry data (pkgs and registries) if present in source
+if [ -d "$INSTALL_SOURCE/pkgs" ]; then
+  mkdir -p "$SHIP_REGISTRY_TARGET/pkgs"
+  cp -R "$INSTALL_SOURCE/pkgs/"* "$SHIP_REGISTRY_TARGET/pkgs/" 2>/dev/null || true
+fi
+if [ -d "$INSTALL_SOURCE/registries" ]; then
+  mkdir -p "$SHIP_REGISTRY_TARGET/registries"
+  cp -R "$INSTALL_SOURCE/registries/"* "$SHIP_REGISTRY_TARGET/registries/" 2>/dev/null || true
+fi
+
+# Build or sync freestanding runtime trampolines for Termux glibc
+if [ -d "$INSTALL_SOURCE/ship/runtime/c" ]; then
+  mkdir -p "${SHIP_DIR}/runtime"
+  if command -v clang >/dev/null 2>&1; then
+    _arch="$(uname -m | tr '[:upper:]' '[:lower:]')"
+    case "$_arch" in
+      aarch64|arm64)
+        if [ -f "$INSTALL_SOURCE/ship/runtime/c/ld-termux-aarch64.c" ]; then
+          ui_status "Compiling" "freestanding PT_INTERP trampoline for Termux glibc"
+          clang -nostdlib -fPIC -shared -fno-builtin \
+            -Wl,-e,_start -Wl,-Bsymbolic -Os \
+            -o "${SHIP_DIR}/runtime/ld-termux-aarch64.so.1" \
+            "$INSTALL_SOURCE/ship/runtime/c/ld-termux-aarch64.c" || true
+        fi
+        ;;
+    esac
+  fi
+fi
 
 ui_status "Finished" "ship installed successfully"
