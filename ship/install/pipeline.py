@@ -72,6 +72,18 @@ def _show_patch_report(report: PatchReport, *, show_empty: bool = False) -> None
         status("Patching", report.describe(change))
 
 
+def _cleanup_previous_store_dirs(pkg_name: str, install_dir: Path) -> None:
+    """Remove older package stores without deleting an ancestor of this install."""
+    for old_store in settings.ship_store_dir.glob(f"{pkg_name}@*"):
+        if (
+            old_store.is_dir()
+            and old_store != install_dir
+            and not install_dir.is_relative_to(old_store)
+        ):
+            shutil.rmtree(old_store, ignore_errors=True)
+            status("Cleaned", f"previous store directory {old_store.name}")
+
+
 def finalize_install(artifact: InstallArtifact, *, record_history: bool = True) -> None:
     """Extract, patch, discover, link, and persist state for one artifact."""
     pkg_name = artifact.package_name
@@ -157,10 +169,7 @@ def finalize_install(artifact: InstallArtifact, *, record_history: bool = True) 
     save_state(state)
 
     # Clean up previous and leftover store directories for this package
-    for old_store in settings.ship_store_dir.glob(f"{pkg_name}@*"):
-        if old_store.is_dir() and old_store != install_dir:
-            shutil.rmtree(old_store, ignore_errors=True)
-            status("Cleaned", f"previous store directory {old_store.name}")
+    _cleanup_previous_store_dirs(pkg_name, install_dir)
 
     if artifact.success_label:
         status("Installed", artifact.success_label)

@@ -219,7 +219,46 @@ class TestProfileDefaults(unittest.TestCase):
         self.assertIn(
             Path("/data/data/com.termux/files/usr/bin"), profile.forbid_bin_dirs
         )
-        self.assertEqual(profile.bin_dir, Path("/tmp/ship-home-test/.local/bin"))
+        self.assertEqual(profile.bin_dir, Path("/tmp/ship-home-test/bin"))
+
+
+class TestInstallStoreCleanup(unittest.TestCase):
+    """Ensure version paths containing slashes survive old-store cleanup."""
+
+    def test_cleanup_preserves_active_nested_install(self):
+        from ship.install.pipeline import _cleanup_previous_store_dirs
+
+        with tempfile.TemporaryDirectory() as temporary_dir:
+            root = Path(temporary_dir)
+            store = root / "store"
+            install_dir = store / "verus@release" / "rolling" / "version"
+            active_binary = install_dir / "verus"
+            active_binary.parent.mkdir(parents=True)
+            active_binary.write_text("active")
+            old_store = store / "verus@old"
+            old_store.mkdir(parents=True)
+
+            fake_settings = SimpleNamespace(ship_store_dir=store)
+            with (
+                patch("ship.install.pipeline.settings", fake_settings),
+                patch("ship.install.pipeline.status"),
+            ):
+                _cleanup_previous_store_dirs("verus", install_dir)
+
+            self.assertTrue(active_binary.is_file())
+            self.assertFalse(old_store.exists())
+
+
+class TestVerusExportPolicy(unittest.TestCase):
+    """Keep Verus's bundled implementation tools off the public command path."""
+
+    def test_only_verus_entrypoints_are_public(self):
+        from ship.patches import get_export_policy
+
+        policy = get_export_policy("verus")
+        self.assertEqual(policy.only, ("verus", "cargo-verus"))
+        self.assertNotIn("z3", policy.only)
+        self.assertNotIn("rust_verify", policy.only)
 
 
 if __name__ == "__main__":
