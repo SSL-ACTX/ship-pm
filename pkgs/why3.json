@@ -47,6 +47,43 @@
           "download_size_bytes": 17782807
         }
       }
+    },
+    "fsf-16.0.0": {
+      "channel": "prerelease",
+      "targets": {
+        "x86_64-apple-darwin": {
+          "url": "https://github.com/AdaCore/why3/releases/download/fsf-16.0.0/why3pack-macos-15-intel.tar.gz",
+          "sha256": "351a2b62a66f977754577954ed0d4da52137665e36df7e359fd22a144f1e8091",
+          "binaries": {
+            "why3": "bin/why3"
+          },
+          "download_size_bytes": 11680645
+        },
+        "aarch64-linux-gnu": {
+          "url": "https://github.com/AdaCore/why3/releases/download/fsf-16.0.0/why3pack-ubuntu-24.04-arm.tar.gz",
+          "sha256": "7b9aabe3125719ce05d674746cc73a60b86d505b40efd90676341b99d5cc0cf1",
+          "binaries": {
+            "why3": "bin/why3"
+          },
+          "download_size_bytes": 20467661
+        },
+        "x86_64-linux-gnu": {
+          "url": "https://github.com/AdaCore/why3/releases/download/fsf-16.0.0/why3pack-ubuntu-24.04.tar.gz",
+          "sha256": "718e5ba7bb6d0a0b8511eae2a2664a0778fe75bd84af0334f816f3e263e59c48",
+          "binaries": {
+            "why3": "bin/why3"
+          },
+          "download_size_bytes": 17496589
+        },
+        "x86_64-pc-windows-gnu": {
+          "url": "https://github.com/AdaCore/why3/releases/download/fsf-16.0.0/why3pack-windows-2025z.zip",
+          "sha256": "4e8b4bcfbb8def169c36fc99fb5669ef0cb9bfae9c942c9066b680909c099c8c",
+          "binaries": {
+            "why3": "bin/why3.exe"
+          },
+          "download_size_bytes": 17211841
+        }
+      }
     }
   }
 }
