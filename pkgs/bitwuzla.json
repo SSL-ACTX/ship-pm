@@ -76,6 +76,43 @@
           "download_size_bytes": 5508443
         }
       }
+    },
+    "0.11.0": {
+      "channel": "stable",
+      "targets": {
+        "aarch64-linux-gnu": {
+          "url": "https://github.com/bitwuzla/bitwuzla/releases/download/0.11.0/Bitwuzla-Linux-arm64-static.zip",
+          "sha256": "cf0fb8d4c68b3689002f2f3c6db5b277c402038b1cf9edc5d0fd925af8be6e08",
+          "binaries": {
+            "bitwuzla": "bin/bitwuzla"
+          },
+          "download_size_bytes": 5204309
+        },
+        "x86_64-linux-gnu": {
+          "url": "https://github.com/bitwuzla/bitwuzla/releases/download/0.11.0/Bitwuzla-Linux-x86_64-static.zip",
+          "sha256": "628e69704085719ddfd5b73bb00910283cedc6dcc1e6581ec148e781bd562414",
+          "binaries": {
+            "bitwuzla": "bin/bitwuzla"
+          },
+          "download_size_bytes": 5682283
+        },
+        "aarch64-apple-darwin": {
+          "url": "https://github.com/bitwuzla/bitwuzla/releases/download/0.11.0/Bitwuzla-macOS-arm64-static.zip",
+          "sha256": "614bdab274dea0451affdb6f75845b0fd435c48a09bec9de7a33929b1d686aec",
+          "binaries": {
+            "bitwuzla": "bin/bitwuzla"
+          },
+          "download_size_bytes": 6734451
+        },
+        "x86_64-pc-windows-gnu": {
+          "url": "https://github.com/bitwuzla/bitwuzla/releases/download/0.11.0/Bitwuzla-Win64-x86_64-static.zip",
+          "sha256": "3a51850b4e055107e9eead3912c9ed7094a11eb6fcf041b0b19701f99b5e49a0",
+          "binaries": {
+            "bitwuzla": "bin/bitwuzla.exe"
+          },
+          "download_size_bytes": 5560972
+        }
+      }
     }
   },
   "homepage": "https://bitwuzla.github.io"
