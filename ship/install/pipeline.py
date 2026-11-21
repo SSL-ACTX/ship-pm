@@ -72,6 +72,48 @@ def _show_patch_report(report: PatchReport, *, show_empty: bool = False) -> None
         status("Patching", report.describe(change))
 
 
+def _cleanup_previous_store_dirs(
+    install_dir: Path,
+    previous_entry: dict | None,
+    source: str,
+) -> None:
+    """Remove only the tracked prior install when it came from the same source."""
+    if not previous_entry:
+        return
+    previous_source = str(previous_entry.get("source", "registry"))
+    if previous_source != source:
+        return
+
+    previous_value = previous_entry.get("install_dir")
+    if not isinstance(previous_value, str) or not previous_value:
+        return
+    previous_dir = Path(previous_value)
+    store_dir = settings.ship_store_dir.resolve()
+    try:
+        previous_resolved = previous_dir.resolve()
+        previous_resolved.relative_to(store_dir)
+    except (OSError, ValueError):
+        return
+    if (
+        previous_resolved == install_dir.resolve()
+        or install_dir.resolve().is_relative_to(previous_resolved)
+    ):
+        return
+    if previous_dir.is_dir():
+        shutil.rmtree(previous_dir, ignore_errors=True)
+        status("Cleaned", f"previous store directory {previous_dir.name}")
+
+    parent = previous_dir.parent
+    while parent != store_dir and parent.is_relative_to(store_dir):
+        if install_dir.resolve().is_relative_to(parent.resolve()):
+            break
+        try:
+            parent.rmdir()
+        except OSError:
+            break
+        parent = parent.parent
+
+
 def finalize_install(artifact: InstallArtifact, *, record_history: bool = True) -> None:
     """Extract, patch, discover, link, and persist state for one artifact."""
     pkg_name = artifact.package_name
@@ -157,10 +199,7 @@ def finalize_install(artifact: InstallArtifact, *, record_history: bool = True) 
     save_state(state)
 
     # Clean up previous and leftover store directories for this package
-    for old_store in settings.ship_store_dir.glob(f"{pkg_name}@*"):
-        if old_store.is_dir() and old_store != install_dir:
-            shutil.rmtree(old_store, ignore_errors=True)
-            status("Cleaned", f"previous store directory {old_store.name}")
+    _cleanup_previous_store_dirs(install_dir, previous_entry, artifact.source)
 
     if artifact.success_label:
         status("Installed", artifact.success_label)

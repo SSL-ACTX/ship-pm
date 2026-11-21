@@ -16,21 +16,26 @@ from ship.api import (
     PatchReport,
     ReapplyHandler,
 )
+from ship.core.package_name import package_lookup_candidates
 from ship.core.profile import get_active_profile
 
 HookName = Literal["post_extract", "pre_link"]
 
 
 def get_package_patch(pkg_name: str) -> PackagePatch | None:
-    module_name = f"ship.patches.{pkg_name.replace('-', '_')}"
-    try:
-        mod = importlib.import_module(module_name)
-    except ModuleNotFoundError:
-        return None
-    patch = getattr(mod, "PATCH", None)
-    if isinstance(patch, PackageRecipe):
-        return patch.to_patch()
-    return patch if isinstance(patch, PackagePatch) else None
+    # Use unified candidate generator for patch resolution
+    for cand in package_lookup_candidates(pkg_name):
+        module_name = f"ship.patches.{cand}"
+        try:
+            mod = importlib.import_module(module_name)
+            patch = getattr(mod, "PATCH", None)
+            if isinstance(patch, PackageRecipe):
+                return patch.to_patch()
+            if isinstance(patch, PackagePatch):
+                return patch
+        except ModuleNotFoundError:
+            continue
+    return None
 
 
 def get_export_policy(pkg_name: str) -> ExportPolicy:

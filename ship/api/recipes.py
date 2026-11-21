@@ -210,6 +210,7 @@ class PackageRecipe:
         self._export_exclude: tuple[str, ...] = ()
         self._export_internal_only: tuple[str, ...] = ()
         self._export_aliases: dict[str, str] = {}
+        self._export_allow_empty: bool = False
         self._discover_all_bins: bool = False
         self._allow_foreign_binaries: bool = False
 
@@ -231,6 +232,7 @@ class PackageRecipe:
         *,
         discover_all_bins: bool | None = None,
         allow_foreign_binaries: bool | None = None,
+        allow_empty: bool = False,
     ) -> PackageRecipe:
         """Configure which package binaries are exposed or kept private."""
         if only is not None:
@@ -245,6 +247,8 @@ class PackageRecipe:
             self._discover_all_bins = discover_all_bins
         if allow_foreign_binaries is not None:
             self._allow_foreign_binaries = allow_foreign_binaries
+        if allow_empty:
+            self._export_allow_empty = True
         return self
 
     # -------------------------------------------------------------------------
@@ -890,6 +894,7 @@ class PackageRecipe:
             exclude=self._export_exclude,
             internal_only=self._export_internal_only,
             aliases=self._export_aliases,
+            allow_empty=self._export_allow_empty,
         )
 
         return PackagePatch(

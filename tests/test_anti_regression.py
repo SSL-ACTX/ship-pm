@@ -219,7 +219,69 @@ class TestProfileDefaults(unittest.TestCase):
         self.assertIn(
             Path("/data/data/com.termux/files/usr/bin"), profile.forbid_bin_dirs
         )
-        self.assertEqual(profile.bin_dir, Path("/tmp/ship-home-test/.local/bin"))
+        self.assertEqual(profile.bin_dir, Path("/tmp/ship-home-test/bin"))
+
+
+class TestInstallStoreCleanup(unittest.TestCase):
+    """Only clean a tracked previous install from the same source."""
+
+    def test_cleanup_removes_previous_same_source_version(self):
+        from ship.install.pipeline import _cleanup_previous_store_dirs
+
+        with tempfile.TemporaryDirectory() as temporary_dir:
+            root = Path(temporary_dir)
+            store = root / "store"
+            install_dir = store / "tool@channel" / "rolling" / "new"
+            active_binary = install_dir / "tool"
+            active_binary.parent.mkdir(parents=True)
+            active_binary.write_text("active")
+            previous_dir = store / "tool@channel" / "rolling" / "old"
+            previous_dir.mkdir(parents=True)
+
+            fake_settings = SimpleNamespace(ship_store_dir=store)
+            with (
+                patch("ship.install.pipeline.settings", fake_settings),
+                patch("ship.install.pipeline.status"),
+            ):
+                _cleanup_previous_store_dirs(
+                    install_dir,
+                    {
+                        "install_dir": str(previous_dir),
+                        "source": "github:vendor/tool",
+                    },
+                    "github:vendor/tool",
+                )
+
+            self.assertTrue(active_binary.is_file())
+            self.assertFalse(previous_dir.exists())
+
+    def test_cleanup_preserves_previous_install_on_source_change(self):
+        from ship.install.pipeline import _cleanup_previous_store_dirs
+
+        with tempfile.TemporaryDirectory() as temporary_dir:
+            store = Path(temporary_dir) / "store"
+            install_dir = store / "tool@2.0.0"
+            install_dir.mkdir(parents=True)
+            previous_dir = store / "tool@channel" / "rolling" / "version"
+            previous_dir.mkdir(parents=True)
+            old_binary = previous_dir / "tool"
+            old_binary.write_text("previous source")
+
+            fake_settings = SimpleNamespace(ship_store_dir=store)
+            with (
+                patch("ship.install.pipeline.settings", fake_settings),
+                patch("ship.install.pipeline.status"),
+            ):
+                _cleanup_previous_store_dirs(
+                    install_dir,
+                    {
+                        "install_dir": str(previous_dir),
+                        "source": "github:vendor/tool",
+                    },
+                    "registry",
+                )
+
+            self.assertTrue(old_binary.is_file())
 
 
 if __name__ == "__main__":

@@ -10,6 +10,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
+from ship.core.package_name import parse_debian_depends
 from ship.core.settings import settings
 from ship.ui import status, warn
 
@@ -64,6 +65,9 @@ def _commit(current: dict, pkgs: dict) -> None:
     ver = current.get("Version", "").strip()
     desc = current.get("Description", "").strip()
     url_path = current.get("Filename", "").strip()
+    depends_str = current.get("Depends", "").strip()
+    deps = parse_debian_depends(depends_str) if depends_str else []
+
     pkgs[name] = {
         "name": name,
         "version": ver,
@@ -72,6 +76,7 @@ def _commit(current: dict, pkgs: dict) -> None:
         if url_path
         else "",
         "_source": "ubuntu-noble",
+        "_depends": deps,
     }
 
 

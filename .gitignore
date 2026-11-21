@@ -18,3 +18,4 @@ __pycache__/
 .cache/*.fst.checked
 .lia.cache
 registries/ubuntu-noble.json
+*.agdai

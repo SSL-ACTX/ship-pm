@@ -183,8 +183,37 @@ def install_from_github(
                 is_universal
                 or (
                     t_arch in ("aarch64", "arm64")
-                    and any(
-                        x in name for x in ("aarch64", "arm64", "mac-arm", "-mac-arm")
+                    and (
+                        any(
+                            x in name
+                            for x in (
+                                "aarch64",
+                                "arm64",
+                                "mac-arm",
+                                "-mac-arm",
+                                "macos-arm",
+                            )
+                        )
+                        or (
+                            t_os in ("linux", "android", "darwin")
+                            and (
+                                any(
+                                    x in name
+                                    for x in (
+                                        "linux-arm",
+                                        "-linux-arm",
+                                        "-arm-linux",
+                                        "_arm_linux",
+                                    )
+                                )
+                                or name.endswith(("-arm", "_arm"))
+                                or "-arm." in name
+                                or "_arm." in name
+                            )
+                            and not any(
+                                x in name for x in ("armv7", "armv6", "armhf", "arm32")
+                            )
+                        )
                     )
                 )
                 or (
@@ -200,14 +229,8 @@ def install_from_github(
                             "armhf",
                             "arm32",
                             "arm-unknown",
-                            "linux-arm",
-                            "-linux-arm",
-                            "-arm-linux",
-                            "_arm_linux",
-                            "-arm.",
                         )
                     )
-                    or name.endswith(("-arm", "_arm"))
                 )
                 or (t_arch == "riscv64" and "riscv64" in name)
                 or (
@@ -263,6 +286,8 @@ def install_from_github(
                             "alpine",
                             "android",
                             "termux",
+                            "ubuntu",
+                            "debian",
                         )
                     )
                 )

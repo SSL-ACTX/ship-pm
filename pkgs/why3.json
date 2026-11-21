@@ -1,0 +1,52 @@
+{
+  "description": "SPARK 2014 repository for the Why3 verification platform.",
+  "author": "AdaCore",
+  "repository": "https://github.com/AdaCore/why3",
+  "versions": {
+    "fsf-15.1.0": {
+      "channel": "stable",
+      "targets": {
+        "aarch64-linux-gnu": {
+          "url": "https://github.com/AdaCore/why3/releases/download/fsf-15.1.0/why3-15.1.0-linux-arm.zip",
+          "sha256": "8b6fc54a2c46f5c67f62a533ff37b5c6141e50b3dbfe6adbc2e276e3b783093d",
+          "binaries": {
+            "why3": "bin/why3"
+          },
+          "download_size_bytes": 19377541
+        },
+        "x86_64-linux-gnu": {
+          "url": "https://github.com/AdaCore/why3/releases/download/fsf-15.1.0/why3-15.1.0-linux-x86_64.zip",
+          "sha256": "fdc5c483255a6fec120383e45ed29a9d2e4c4c3e866aa066d3326ce76bfd9759",
+          "binaries": {
+            "why3": "bin/why3"
+          },
+          "download_size_bytes": 16299113
+        },
+        "aarch64-apple-darwin": {
+          "url": "https://github.com/AdaCore/why3/releases/download/fsf-15.1.0/why3-15.1.0-macos-arm.zip",
+          "sha256": "4d1cad0e40c9c79cbd969f1eb35e8ec79b7dcb13a73462ddecd2f9c5420f79f6",
+          "binaries": {
+            "why3": "bin/why3"
+          },
+          "download_size_bytes": 12941631
+        },
+        "x86_64-apple-darwin": {
+          "url": "https://github.com/AdaCore/why3/releases/download/fsf-15.1.0/why3-15.1.0-macos-x86_64.zip",
+          "sha256": "5956e6f04f83f160cddd6ece8c46fcb1f5f05a721dc364de76f227280eb234a7",
+          "binaries": {
+            "why3": "bin/why3"
+          },
+          "download_size_bytes": 11311924
+        },
+        "x86_64-pc-windows-gnu": {
+          "url": "https://github.com/AdaCore/why3/releases/download/fsf-15.1.0/why3-15.1.0-windows.zip",
+          "sha256": "efb1dee659ebef2a7acdb4f0810f2b118d29325103decd122f6e6d22c06a59be",
+          "binaries": {
+            "why3": "bin/why3.exe"
+          },
+          "download_size_bytes": 17782807
+        }
+      }
+    }
+  }
+}

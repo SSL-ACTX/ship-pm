@@ -812,6 +812,8 @@ class ExportPolicy:
     internal_only: tuple[str, ...] = ()
     # Explicit aliases to create in SHIP_BIN_DIR (e.g. {"lean4": "lean"})
     aliases: dict[str, str] = field(default_factory=dict)
+    # Allow packages without executable binaries (e.g. data or metapackages)
+    allow_empty: bool = False
 
 
 @dataclass(frozen=True)

@@ -127,6 +127,11 @@ def link_package(
         print(f"  {c('Linked', '1;32')} {symlink_name} -> {pub_link}")
 
     if not public_links and not sandboxed_internal:
+        # Check if package is a data/meta package or if it provided non-binary assets
+        policy = get_export_policy(pkg_name)
+        if policy.allow_empty:
+            status("Installed", f"{pkg_name} (data / metapackage, no binaries linked)")
+            return []
         die("No functional binaries could be linked.")
 
     return public_links

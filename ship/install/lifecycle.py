@@ -7,6 +7,7 @@ import shutil
 from pathlib import Path
 
 from ship.api import PatchReport
+from ship.core.package_name import normalize_package_name
 from ship.core.settings import settings
 from ship.core.state import load_state, save_state
 from ship.install.history import history_key
@@ -17,17 +18,31 @@ from ship.patches import apply_package_patch, apply_reapply_handlers
 from ship.ui import die, status
 
 
+def _resolve_installed_pkg_key(installed: dict, query: str) -> str | None:
+    """Find installed package key, accepting exact match or stripped namespace prefix."""
+    if query in installed:
+        return query
+    clean = normalize_package_name(query)
+    for key in installed:
+        if key == clean or normalize_package_name(key) == clean:
+            return key
+    return None
+
+
 def remove_package(pkg_name: str) -> None:
     state = load_state()
-    if pkg_name not in state.get("installed", {}):
+    installed = state.get("installed", {})
+    resolved_key = _resolve_installed_pkg_key(installed, pkg_name)
+    if not resolved_key or resolved_key not in installed:
         die(f"Package '{pkg_name}' is not installed.")
 
-    pkg_data = state["installed"].pop(pkg_name)
-    state.get("history", {}).pop(pkg_name, None)
+    pkg_key = resolved_key
+    pkg_data = state["installed"].pop(pkg_key)
+    state.get("history", {}).pop(pkg_key, None)
     version = pkg_data.get("version", "unknown")
     inst_dir = Path(pkg_data.get("install_dir", ""))
 
-    unlinked = clean_package_links(pkg_name, verbose=True)
+    unlinked = clean_package_links(pkg_key, verbose=True)
 
     removed_files_count = 0
     if inst_dir.is_dir():
@@ -37,13 +52,13 @@ def remove_package(pkg_name: str) -> None:
         status("Cleaned", f"store directory {inst_dir} ({removed_files_count} files)")
 
     # Clean any leftover or historical version directories for this package in the store
-    for leftover in settings.ship_store_dir.glob(f"{pkg_name}@*"):
+    for leftover in settings.ship_store_dir.glob(f"{pkg_key}@*"):
         if leftover.is_dir():
             shutil.rmtree(leftover, ignore_errors=True)
             status("Cleaned", f"leftover store directory {leftover.name}")
 
     save_state(state)
-    status("Removed", f"{pkg_name}@{version} ({len(unlinked)} binaries unlinked)")
+    status("Removed", f"{pkg_key}@{version} ({len(unlinked)} binaries unlinked)")
 
 
 def rollback_package(pkg_name: str, *, assume_yes: bool = False) -> None:

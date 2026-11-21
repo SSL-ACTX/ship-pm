@@ -1,0 +1,27 @@
+module Fibonacci
+  use int.Int
+
+  function fib (n: int) : int
+
+  axiom fib0: fib 0 = 0
+  axiom fib1: fib 1 = 1
+  axiom fibn: forall n: int. n >= 2 -> fib n = fib (n - 1) + fib (n - 2)
+
+  let rec fib_fast (n: int) : int
+    requires { n >= 0 }
+    ensures  { result = fib n }
+    variant  { n }
+  =
+    if n = 0 then 0
+    else
+      let ref a = 0 in
+      let ref b = 1 in
+      for i = 2 to n do
+        invariant { a = fib (i - 2) /\ b = fib (i - 1) }
+        let tmp = a + b in
+        a <- b;
+        b <- tmp
+      done;
+      b
+
+end

@@ -34,6 +34,11 @@ NON_EXEC_EXTENSIONS = (
     ".md",
     ".lock",
     ".log",
+    ".cmx",
+    ".cmxs",
+    ".cmo",
+    ".cmi",
+    ".cma",
 )
 
 NON_EXEC_NAMES = (
@@ -157,12 +162,18 @@ def resolve_command_binaries(
         if candidate.is_file() and is_cli_executable(candidate):
             resolved[cmd_name] = candidate
 
-    # Gather candidates, prioritizing compiled ELFs
+    # Gather candidates, prioritizing compiled ELFs, but never dropping
+    # companion scripts/launchers with matching names (e.g. why3 wrapper vs why3cpulimit ELF)
     all_exes = [
         p for p in scan_executables(install_dir) if not p.name.endswith("-real")
     ]
     compiled = [p for p in all_exes if is_compiled_executable(p)]
-    pool = compiled if compiled else all_exes
+    # If an exact match for pkg_name or any declared binary exists in all_exes, include it in pool
+    exact_names = {pkg_name} | set(declared.keys())
+    name_matched_scripts = [
+        p for p in all_exes if p.name in exact_names and not is_compiled_executable(p)
+    ]
+    pool = compiled + name_matched_scripts if compiled else all_exes
 
     # Handle single-binary manifests with mismatched filenames (e.g. kissat)
     if not resolved:

@@ -128,8 +128,57 @@ def _install_deb_manifest(
     manifest: dict,
     target_override: str | None = None,
     record_history: bool = True,
+    _visited: set[str] | None = None,
 ) -> None:
-    """Install a package directly from an Ubuntu/deb manifest."""
+    """Install a package directly from an Ubuntu/deb manifest, resolving dependencies recursively."""
+    from ship.core.package_name import normalize_package_name
+    from ship.core.state import load_state
+
+    if _visited is None:
+        _visited = set()
+
+    clean_name = normalize_package_name(pkg_name)
+    if clean_name in _visited:
+        return
+    _visited.add(clean_name)
+
+    # Check if already installed
+    state = load_state()
+    installed = state.get("installed", {})
+    already_installed = any(
+        k == pkg_name or normalize_package_name(k) == clean_name for k in installed
+    )
+
+    # Resolve and satisfy dependencies first
+    deps = manifest.get("_depends", [])
+    if deps:
+        for dep in deps:
+            dep_key = f"ubuntu:{dep}"
+            dep_clean = normalize_package_name(dep)
+            # Check if dependency is already satisfied in state
+            if any(
+                k == dep_key or normalize_package_name(k) == dep_clean
+                for k in installed
+            ):
+                status("Satisfied", f"dependency '{dep}' is already installed")
+                continue
+            dep_manifest = get_pkg_manifest(dep_key)
+            if dep_manifest and dep_clean not in _visited:
+                status("Dependency", f"{pkg_name} requires {dep}")
+                _install_deb_manifest(
+                    dep_key,
+                    dep_manifest,
+                    target_override=target_override,
+                    record_history=record_history,
+                    _visited=_visited,
+                )
+                # Reload state after dependency install
+                installed = load_state().get("installed", {})
+
+    if already_installed:
+        status("Satisfied", f"package '{pkg_name}' is already installed")
+        return
+
     url = manifest.get("_deb_url")
     if not url:
         die(f"No package download URL found in manifest for '{pkg_name}'")

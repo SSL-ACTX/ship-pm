@@ -152,7 +152,10 @@ def parse_asset_target(filename: str) -> tuple[str, bool] | None:
     # ------------------------------------------------------------------
     # 1. Operating system
     # ------------------------------------------------------------------
-    if any(k in clean_name for k in ("linux", "glibc", "manylinux", "musl", "alpine")):
+    if any(
+        k in clean_name
+        for k in ("linux", "glibc", "manylinux", "musl", "alpine", "ubuntu", "debian")
+    ):
         os_name = "linux"
     elif any(
         k in clean_name for k in ("apple", "darwin", "macos", "osx", "mac-", "-mac")
@@ -192,7 +195,10 @@ def parse_asset_target(filename: str) -> tuple[str, bool] | None:
     # ------------------------------------------------------------------
     if any(k in clean_name for k in ("x86_64", "amd64", "x64")):
         arch = "x86_64"
-    elif any(k in clean_name for k in ("aarch64", "arm64", "mac-arm", "-mac-arm")):
+    elif any(
+        k in clean_name
+        for k in ("aarch64", "arm64", "mac-arm", "-mac-arm", "macos-arm")
+    ) or (os_name == "darwin" and any(k in clean_name for k in ("-arm", "_arm"))):
         arch = "aarch64"
     elif any(
         k in clean_name
@@ -208,7 +214,10 @@ def parse_asset_target(filename: str) -> tuple[str, bool] | None:
             "-arm.",
         )
     ) or clean_name.endswith(("-arm", "_arm")):
-        arch = "armv7"
+        # Distinguish 64-bit ARM vs 32-bit ARM:
+        # Modern Linux distros (e.g. ubuntu-*-arm) and generic desktop distributions
+        # label 64-bit aarch64 archives simply as 'arm' or 'linux-arm'.
+        arch = "aarch64" if os_name in ("linux", "darwin") else "armv7"
     elif any(k in clean_name for k in ("armv6", "armel")):
         arch = "armv6"
     elif "riscv64" in clean_name:

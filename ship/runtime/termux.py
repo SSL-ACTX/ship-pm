@@ -90,6 +90,72 @@ def ensure_termux_trampoline_loader(
     return None
 
 
+def ensure_termux_glibc_shim(report: PatchReport | None = None) -> Path | None:
+    """Ensure the Termux glibc path virtualizer and redirector shim is compiled."""
+    profile = get_active_profile()
+    if not profile.is_termux:
+        return None
+
+    target_dir = profile.paths.prefix / "share" / "ship" / "runtime"
+    shim_bin = target_dir / "libtermux_glibc_shim.so"
+    if shim_bin.is_file():
+        return shim_bin
+
+    local_target = (
+        profile.home
+        / ".local"
+        / "share"
+        / "ship"
+        / "runtime"
+        / "libtermux_glibc_shim.so"
+    )
+    if local_target.is_file():
+        return local_target
+
+    c_source = Path(__file__).parent / "c" / "termux-glibc-shim.c"
+    if not c_source.is_file():
+        return None
+
+    clang = shutil.which("clang")
+    if not clang:
+        return None
+
+    glibc_lib = profile.paths.glibc_prefix / "lib" / "libc.so.6"
+    glibc_inc = profile.paths.glibc_prefix / "include"
+    if not glibc_lib.is_file():
+        return None
+
+    out_path = shim_bin
+    try:
+        target_dir.mkdir(parents=True, exist_ok=True)
+    except OSError:
+        out_path = local_target
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    cmd = [
+        clang,
+        "-shared",
+        "-fPIC",
+        "-O2",
+        "-nostdlib",
+        f"-I{glibc_inc}",
+        str(c_source),
+        str(glibc_lib),
+        "-o",
+        str(out_path),
+    ]
+    try:
+        res = subprocess.run(cmd, capture_output=True, check=False)
+        if res.returncode == 0 and out_path.is_file():
+            if report is not None:
+                report.add(out_path, "compile glibc root virtualizer shim", "termux")
+            return out_path
+    except OSError:
+        pass
+
+    return None
+
+
 def termux_trampoline_loader_path(architecture: str | None = None) -> Path | None:
     """Return the path to the freestanding PT_INTERP trampoline for Termux glibc if present."""
     return ensure_termux_trampoline_loader(architecture=architecture)
@@ -248,6 +314,18 @@ class TermuxPatcher(BinaryPatcher):
                     changed |= set_elf_rpath(
                         binary_path, effective_rpath, patchelf=patchelf_bin
                     )
+                    shim_path = ensure_termux_glibc_shim(report=report)
+                    if shim_path and shim_path.is_file():
+                        subprocess.run(
+                            [
+                                patchelf_bin,
+                                "--add-needed",
+                                str(shim_path),
+                                str(binary_path),
+                            ],
+                            check=False,
+                            capture_output=True,
+                        )
                     if changed and report is not None:
                         report.add(
                             binary_path,

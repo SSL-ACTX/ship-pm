@@ -204,6 +204,7 @@ class TestScriptingAPI(unittest.TestCase):
                 only=["my-tool", "my-sub"],
                 exclude=["internal-helper"],
                 aliases={"tool": "my-tool"},
+                discover_all_bins=True,
             )
             .write_template(
                 "config.conf",
@@ -221,6 +222,7 @@ class TestScriptingAPI(unittest.TestCase):
         self.assertEqual(patch.export_policy.only, ("my-tool", "my-sub"))
         self.assertEqual(patch.export_policy.exclude, ("internal-helper",))
         self.assertEqual(patch.export_policy.aliases, {"tool": "my-tool"})
+        self.assertTrue(patch.discover_all_bins)
         self.assertEqual(len(patch.runtime), 1)
         self.assertEqual(patch.runtime[0].binaries, ("my-tool",))
 

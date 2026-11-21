@@ -274,7 +274,9 @@ def _layout_for(
     """Return data_root, bin_dir, paths, adapters, forbidden bins."""
     if profile_id == "termux":
         data_root = prefix / "share" / "ship"
-        bin_dir = home / ".local" / "bin"
+        # Termux adds ~/bin to PATH in its shell startup files. ~/.local/bin
+        # is conventional on desktop Linux, but is not on Termux's default PATH.
+        bin_dir = home / "bin"
         paths = _termux_paths(prefix)
         adapters = ("qemu", "termux-glibc")
         forbidden = (

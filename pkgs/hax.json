@@ -1,0 +1,38 @@
+{
+  "description": "A Rust verification tool",
+  "author": "pereq-dev",
+  "repository": "https://github.com/pereq-dev/hax",
+  "versions": {
+    "cargo-hax-v0.5.0": {
+      "channel": "stable",
+      "targets": {
+        "aarch64-apple-darwin": {
+          "url": "https://github.com/pereq-dev/hax/releases/download/cargo-hax-v0.5.0/cargo-hax-aarch64-apple-darwin.tar.zst",
+          "sha256": "e6bbfd54c32de83638ac3570cc7eeb5cbb64ab07bbff0b27e634e6c010a67101",
+          "binaries": {
+            "hax": "bin/hax"
+          },
+          "download_size_bytes": 4473458
+        },
+        "aarch64-linux-gnu": {
+          "url": "https://github.com/pereq-dev/hax/releases/download/cargo-hax-v0.5.0/cargo-hax-aarch64-unknown-linux-gnu.tar.zst",
+          "sha256": "bced6eeee8734452183e3a4aca65ce96e5b591c491a6d3ec83c1dcdcb89a147c",
+          "binaries": {
+            "hax": "bin/hax"
+          },
+          "download_size_bytes": 4871727
+        },
+        "x86_64-linux-gnu": {
+          "url": "https://github.com/pereq-dev/hax/releases/download/cargo-hax-v0.5.0/cargo-hax-x86_64-unknown-linux-gnu.tar.zst",
+          "sha256": "c638e631adee70b19c79bf84203e712e2da9233f85df223afc56e66042a24374",
+          "binaries": {
+            "hax": "bin/hax"
+          },
+          "download_size_bytes": 4865432
+        }
+      }
+    }
+  },
+  "homepage": "https://hax.cryspen.com",
+  "license": "Apache-2.0"
+}

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 
+from ship.core.package_name import normalize_package_name
 from ship.core.settings import get_pkgs_dir
 from ship.registry.sync import ensure_registry
 
@@ -30,14 +31,14 @@ def invalidate_secondary_cache() -> None:
 def get_pkg_manifest(pkg_name: str) -> dict | None:
     ensure_registry()
     name = pkg_name.lower().strip()
+    clean = normalize_package_name(name)
 
     # Direct Ubuntu prefix syntax: ubuntu:package or u:package
     if name.startswith(("ubuntu:", "u:")):
-        clean_name = name.split(":", 1)[1]
-        return load_secondary_registries().get(clean_name)
+        return load_secondary_registries().get(clean)
 
     # Standard registry package lookup
-    path = get_pkgs_dir() / f"{name}.json"
+    path = get_pkgs_dir() / f"{clean}.json"
     if path.is_file():
         try:
             return json.loads(path.read_text(encoding="utf-8"))
@@ -45,4 +46,4 @@ def get_pkg_manifest(pkg_name: str) -> dict | None:
             return None
 
     # Transparent fallback to secondary registries
-    return load_secondary_registries().get(name)
+    return load_secondary_registries().get(clean)
