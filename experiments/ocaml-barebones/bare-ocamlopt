@@ -1,0 +1,100 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+OCAMLOPT="${DIR}/bin/ocamlopt"
+NANOLIB="${DIR}/nanolib"
+RUNTIME="${DIR}/runtime"
+TMPDIR="${TMPDIR:-/data/data/com.termux/files/usr/tmp}"
+mkdir -p "$TMPDIR"
+
+if [ $# -eq 0 ]; then
+    echo "Usage: $0 [options] <source.ml> -o <output_binary>"
+    exit 1
+fi
+
+OUT="a.out"
+SRC=""
+EXTRA_ARGS=()
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -o)
+            OUT="$2"
+            shift 2
+            ;;
+        *.ml)
+            SRC="$1"
+            shift
+            ;;
+        *)
+            EXTRA_ARGS+=("$1")
+            shift
+            ;;
+    esac
+done
+
+if [ -z "$SRC" ]; then
+    echo "Error: No .ml source file provided"
+    exit 1
+fi
+
+BASE_NAME="$(basename "$SRC" .ml)"
+MOD_NAME="$(echo "${BASE_NAME:0:1}" | tr '[:lower:]' '[:upper:]')${BASE_NAME:1}"
+
+TMP_DIR="$(mktemp -d "${TMPDIR}/bare-ocaml.XXXXXX")"
+trap 'rm -rf "$TMP_DIR"' EXIT
+
+# Step 1: Compile the user source with stripped stdlib
+"$OCAMLOPT" -nopervasives -I "$NANOLIB" "${EXTRA_ARGS[@]}" -c -o "${TMP_DIR}/${BASE_NAME}.o" "$SRC"
+
+# Step 2: Dynamically detect the entry point and exported test function from symbol table
+TEST_SYM=$(nm "${TMP_DIR}/${BASE_NAME}.o" | awk '{print $3}' | grep -E "^caml${MOD_NAME}\.(test|run)_[0-9]+" | head -n 1 || true)
+
+cat << EOF > "${TMP_DIR}/glue.c"
+#include <stdint.h>
+typedef intptr_t value;
+#define Val_int(x) (((value)(x) << 1) + 1)
+#define Val_unit 1
+
+extern void camlNano_effects_entry(void) __attribute__((weak)) __asm__("camlNano_effects.entry");
+extern void caml${MOD_NAME}_entry(void) __asm__("caml${MOD_NAME}.entry");
+
+void caml_user_entry(void) {
+    if (camlNano_effects_entry) camlNano_effects_entry();
+    caml${MOD_NAME}_entry();
+}
+EOF
+
+if [ -n "$TEST_SYM" ]; then
+cat << EOF >> "${TMP_DIR}/glue.c"
+extern value user_test_func(value) __asm__("${TEST_SYM}");
+value caml_user_test(value unit) {
+    return user_test_func(unit);
+}
+EOF
+else
+cat << EOF >> "${TMP_DIR}/glue.c"
+value caml_user_test(value unit) {
+    return Val_int(0);
+}
+EOF
+fi
+
+clang -c "${TMP_DIR}/glue.c" -o "${TMP_DIR}/glue.o"
+
+# Step 3: Link with all 100% source micro-runtime objects
+clang \
+    "${RUNTIME}/micro_runtime.o" \
+    "${RUNTIME}/trampoline.o" \
+    "${RUNTIME}/effects_runtime.o" \
+    "${RUNTIME}/effects_arm64.o" \
+    "${RUNTIME}/apply.o" \
+    "${RUNTIME}/alloc_arm64.o" \
+    "${NANOLIB}/nano.o" \
+    "${NANOLIB}/nano_effects.o" \
+    "${TMP_DIR}/glue.o" \
+    "${TMP_DIR}/${BASE_NAME}.o" \
+    -o "$OUT"
+
+echo "[bare-ocamlopt] Standalone binary created: $OUT ($(ls -lh "$OUT" | awk '{print $5}'))"

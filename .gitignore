@@ -20,3 +20,4 @@ __pycache__/
 registries/ubuntu-noble.json
 *.agdai
 .ravel
+experiments/ocaml-barebones/bin
