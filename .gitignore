@@ -19,3 +19,4 @@ __pycache__/
 .lia.cache
 registries/ubuntu-noble.json
 *.agdai
+.ravel

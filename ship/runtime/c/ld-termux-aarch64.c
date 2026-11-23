@@ -90,25 +90,14 @@ uint64_t trampoline_main(uint64_t *sp) {
     while (*e) e++;
     Elf64_auxv_t *auxv = (Elf64_auxv_t *)(e + 1);
 
-    // Strip Termux's Bionic LD_PRELOAD, shifting envp + auxv together
-    // so glibc still finds auxv immediately after envp's terminating NULL.
-    for (size_t i = 0; envp[i] != 0; ) {
-        if (starts_with(envp[i], "LD_PRELOAD=") &&
-            (contains(envp[i], "libtermux-exec") || contains(envp[i], "/com.termux/"))) {
-            uint64_t *dst = (uint64_t *)&envp[i];
-            size_t k = i;
-            while (envp[k] != 0) k++;
-            uint64_t *a = (uint64_t *)&envp[k + 1];
-            while (a[0] != AT_NULL) a += 2;
-            uint64_t *end = a + 2;
-            // Manual memory shift to avoid any compiler intrinsic call to memmove
-            while (dst + 1 < end) {
-                *dst = *(dst + 1);
-                dst++;
-            }
-            auxv = (Elf64_auxv_t *)((uint64_t *)auxv - 1);
-        } else {
-            i++;
+    // Null out Termux/Android LD_PRELOAD variables in-place without shifting
+    // so glibc dynamic linker ignores them and auxv stays intact.
+    for (size_t i = 0; envp[i] != 0; i++) {
+        if (starts_with(envp[i], "LD_PRELOAD=")) {
+            // Overwrite prefix to harmless dummy variable
+            char *p = envp[i];
+            p[0] = '_';
+            p[1] = '_';
         }
     }
 
