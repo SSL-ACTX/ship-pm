@@ -214,6 +214,59 @@
           "download_size_bytes": 27627925
         }
       }
+    },
+    "0.2026.11.24.3ab3127": {
+      "channel": "prerelease",
+      "targets": {
+        "aarch64-linux-gnu": {
+          "url": "https://github.com/verus-lang/verus/releases/download/release/rolling/0.2026.11.24.3ab3127/verus-0.2026.11.24.3ab3127-arm64-linux.zip",
+          "sha256": "38cb7eb842d498250f2b19c0fa64e3d9c6862fcf5c4cd6b5473abde13d87a11e",
+          "binaries": {
+            "verus": "bin/verus"
+          },
+          "download_size_bytes": 37017797
+        },
+        "aarch64-apple-darwin": {
+          "url": "https://github.com/verus-lang/verus/releases/download/release/rolling/0.2026.11.24.3ab3127/verus-0.2026.11.24.3ab3127-arm64-macos.zip",
+          "sha256": "c838ed89f921158a03869b4b3981cea6d3e9ce252707d6088e36f305c9593d20",
+          "binaries": {
+            "verus": "bin/verus"
+          },
+          "download_size_bytes": 31362172
+        },
+        "aarch64-pc-windows-gnu": {
+          "url": "https://github.com/verus-lang/verus/releases/download/release/rolling/0.2026.11.24.3ab3127/verus-0.2026.11.24.3ab3127-arm64-win.zip",
+          "sha256": "a13b23a8495ad63951acfde594ec9a2a24e33c9fe7d2d71904e19c30c603116a",
+          "binaries": {
+            "verus": "bin/verus.exe"
+          },
+          "download_size_bytes": 25933941
+        },
+        "i686-linux-gnu": {
+          "url": "https://github.com/verus-lang/verus/releases/download/release/rolling/0.2026.11.24.3ab3127/verus-0.2026.11.24.3ab3127-x86-linux.zip",
+          "sha256": "bf64d041f5f390e344b834feb307fa4c4a45e1788aaf714a30599431ba0e73e6",
+          "binaries": {
+            "verus": "bin/verus"
+          },
+          "download_size_bytes": 37885592
+        },
+        "i686-apple-darwin": {
+          "url": "https://github.com/verus-lang/verus/releases/download/release/rolling/0.2026.11.24.3ab3127/verus-0.2026.11.24.3ab3127-x86-macos.zip",
+          "sha256": "c1cd11321b0d69cbcca14019fdb77a97e1e900a6baa289ba7308625f6592547c",
+          "binaries": {
+            "verus": "bin/verus"
+          },
+          "download_size_bytes": 42250039
+        },
+        "i686-pc-windows-gnu": {
+          "url": "https://github.com/verus-lang/verus/releases/download/release/rolling/0.2026.11.24.3ab3127/verus-0.2026.11.24.3ab3127-x86-win.zip",
+          "sha256": "79898e2248452baa1075a8b38d8b5e6a932f110e9bb39c34c329bf341790863d",
+          "binaries": {
+            "verus": "bin/verus.exe"
+          },
+          "download_size_bytes": 27635649
+        }
+      }
     }
   },
   "license": "MIT"
