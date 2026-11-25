@@ -259,10 +259,8 @@ def _extract_single(
         elif name.endswith(".deb"):
             from ship.install.deb_source import DebArchive
 
-            progress.unit = "archive"
             deb = DebArchive(archive_path)
-            deb.extract_payload(extract_dir)
-            progress.finish()
+            deb.extract_payload(extract_dir, progress=progress)
         elif name.endswith(".7z"):
             extractor: tuple[str, str] | None = None
             for command in ("7zz", "7z", "7za", "bsdtar"):

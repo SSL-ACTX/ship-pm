@@ -19,7 +19,9 @@ class DebArchive:
         if not self.path.is_file():
             die(f"Debian archive not found: {self.path}")
 
-    def extract_payload(self, destination: Path) -> dict[str, Any]:
+    def extract_payload(
+        self, destination: Path, progress: Any = None
+    ) -> dict[str, Any]:
         """Extract data.tar.* and control.tar.* from .deb, flattening filesystem hierarchy."""
         destination.mkdir(parents=True, exist_ok=True)
         control_info: dict[str, str] = {}
@@ -47,7 +49,9 @@ class DebArchive:
                 if name.startswith("control.tar"):
                     control_info = self._parse_control(raw_data)
                 elif name.startswith("data.tar"):
-                    self._extract_and_flatten_data(raw_data, destination)
+                    self._extract_and_flatten_data(
+                        raw_data, destination, progress=progress
+                    )
 
         return control_info
 
@@ -69,13 +73,21 @@ class DebArchive:
             return info
         return info
 
-    def _extract_and_flatten_data(self, raw_tar: bytes, destination: Path) -> None:
+    def _extract_and_flatten_data(
+        self, raw_tar: bytes, destination: Path, progress: Any = None
+    ) -> None:
         """Extract tar contents and flatten /usr/bin -> bin, /usr/lib -> lib, /usr/share -> share."""
         temp_extract = destination / ".deb_raw_extract"
         temp_extract.mkdir(parents=True, exist_ok=True)
         try:
             with tarfile.open(fileobj=io.BytesIO(raw_tar)) as tf:
-                tf.extractall(temp_extract)
+                members = tf.getmembers()
+                if progress is not None:
+                    progress.set_total(len(members))
+                for idx, member in enumerate(members, 1):
+                    tf.extract(member, temp_extract, filter="fully_trusted")
+                    if progress is not None:
+                        progress.update(idx, len(members))
 
             # Relocate from deep prefix (e.g. Termux's data/data/com.termux/files/usr), usr/, or root
             candidates = [

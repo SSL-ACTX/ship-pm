@@ -29,6 +29,22 @@ def _resolve_installed_pkg_key(installed: dict, query: str) -> str | None:
     return None
 
 
+def _cascade_remove_deps(removed_key: str) -> None:
+    """Remove packages installed solely as dependencies of *removed_key*."""
+    state = load_state()
+    installed = state.get("installed", {})
+    all_dep_of_values = {
+        entry.get("dep_of") for entry in installed.values() if entry.get("dep_of")
+    }
+    to_remove = [
+        key
+        for key, entry in installed.items()
+        if entry.get("dep_of") == removed_key and key not in all_dep_of_values
+    ]
+    for dep_key in to_remove:
+        remove_package(dep_key)
+
+
 def remove_package(pkg_name: str) -> None:
     state = load_state()
     installed = state.get("installed", {})
@@ -59,6 +75,8 @@ def remove_package(pkg_name: str) -> None:
 
     save_state(state)
     status("Removed", f"{pkg_key}@{version} ({len(unlinked)} binaries unlinked)")
+
+    _cascade_remove_deps(pkg_key)
 
 
 def rollback_package(pkg_name: str, *, assume_yes: bool = False) -> None:

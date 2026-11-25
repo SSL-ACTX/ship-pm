@@ -129,6 +129,7 @@ def _install_deb_manifest(
     target_override: str | None = None,
     record_history: bool = True,
     _visited: set[str] | None = None,
+    _dep_of: str | None = None,
 ) -> None:
     """Install a package directly from an Ubuntu/deb manifest, resolving dependencies recursively."""
     from ship.core.package_name import normalize_package_name
@@ -171,6 +172,7 @@ def _install_deb_manifest(
                     target_override=target_override,
                     record_history=record_history,
                     _visited=_visited,
+                    _dep_of=pkg_name,
                 )
                 # Reload state after dependency install
                 installed = load_state().get("installed", {})
@@ -204,6 +206,7 @@ def _install_deb_manifest(
             discover_all_bins=True,
             validate_elf_architecture=False,
             success_label=f"{pkg_name}@{version} (ubuntu deb)",
+            state_extra={"dep_of": _dep_of} if _dep_of else {},
         ),
         record_history=record_history,
     )
