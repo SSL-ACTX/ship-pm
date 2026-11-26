@@ -24,32 +24,32 @@
         }
       }
     },
-    "nightly-2026.11.25-fb44cb4": {
+    "nightly-2026.11.26-69280e0": {
       "channel": "nightly",
       "targets": {
         "aarch64-linux-gnu": {
-          "url": "https://github.com/AeneasVerif/aeneas/releases/download/nightly-2026.11.25-fb44cb4/aeneas-linux-aarch64.tar.gz",
-          "sha256": "6a52677b9deab01077cde221d88e1223cb89fdf9bec69841b5b7af1717d078d2",
+          "url": "https://github.com/AeneasVerif/aeneas/releases/download/nightly-2026.11.26-69280e0/aeneas-linux-aarch64.tar.gz",
+          "sha256": "27d8faa8d3cd54d60467d304273cd2b32f41fbb4237ddac511c2f3c61a598610",
           "binaries": {
             "aeneas": "bin/aeneas"
           },
-          "download_size_bytes": 160486728
+          "download_size_bytes": 160331918
         },
         "x86_64-linux-gnu": {
-          "url": "https://github.com/AeneasVerif/aeneas/releases/download/nightly-2026.11.25-fb44cb4/aeneas-linux-x86_64.tar.gz",
-          "sha256": "5d67d93ed92c50f9d0206c96b437b48d59281c42b8a088512faa1326199d6b40",
+          "url": "https://github.com/AeneasVerif/aeneas/releases/download/nightly-2026.11.26-69280e0/aeneas-linux-x86_64.tar.gz",
+          "sha256": "9ab76ea70d139eb14444dcd48f6a5a936eb79e65b5119bb811681849c5dbe395",
           "binaries": {
             "aeneas": "bin/aeneas"
           },
-          "download_size_bytes": 160069771
+          "download_size_bytes": 159825351
         },
         "aarch64-apple-darwin": {
-          "url": "https://github.com/AeneasVerif/aeneas/releases/download/nightly-2026.11.25-fb44cb4/aeneas-macos-aarch64.tar.gz",
-          "sha256": "67ddca7071efe6e0e3ee8c95a3a3e02db54a83a00030428fcb05b6db773bc83d",
+          "url": "https://github.com/AeneasVerif/aeneas/releases/download/nightly-2026.11.26-69280e0/aeneas-macos-aarch64.tar.gz",
+          "sha256": "d167cfce18a60cd6154c02ae8e25b9ff40a31bb815d643d047fef37f72089550",
           "binaries": {
             "aeneas": "bin/aeneas"
           },
-          "download_size_bytes": 158019458
+          "download_size_bytes": 157893965
         }
       }
     }
